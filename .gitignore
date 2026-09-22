@@ -1,0 +1,22 @@
+# Supabase CLI state is machine-specific and may contain connection metadata.
+supabase/.temp/
+
+# Local Supabase services and generated artifacts.
+supabase/.branches/
+supabase/.env
+
+# Frontend build and dependency artifacts (the frontend is now tracked by this repository).
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+frontend/public/config.local.js
+
+# Editor and operating-system files.
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
