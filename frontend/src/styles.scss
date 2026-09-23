@@ -15,3 +15,103 @@ h1,h2,h3 { letter-spacing:-.025em; font-weight:700; }
 .page{min-width:0}.page img,.page canvas{max-width:100%}.page .table-responsive{width:100%;-webkit-overflow-scrolling:touch}.page .table-responsive table{min-width:680px}.page .card{min-width:0}.page .btn{white-space:nowrap}.audit-detail{padding:.75rem 1rem;border-left:3px solid var(--fima-teal)}
 @media (max-width: 991.98px){.page-heading{align-items:flex-start}.page-heading .btn{flex:0 0 auto}.toolbar{padding:.85rem}.page .table-responsive table{min-width:620px}.metric-card{padding:1rem}.form-card .card-body{padding:1.25rem}}
 @media (max-width: 575.98px){body{overflow:hidden}.page-heading{display:block;margin-bottom:1rem}.page-heading .btn{margin-top:1rem;width:100%}.page-heading h1{font-size:1.6rem}.page-heading p:not(.eyebrow){font-size:.9rem}.toolbar{padding:.75rem;border-radius:13px}.toolbar .btn,.toolbar .form-control,.toolbar .form-select{width:100%}.page .card,.page .form-card{border-radius:14px!important}.page .card-body{padding:1rem}.form-card .card-body{padding:1rem}.page .btn:not(.btn-sm),.page .btn-group{min-height:42px}.page .table-responsive table{min-width:560px;font-size:.88rem}.page .table-responsive td,.page .table-responsive th{padding:.7rem!important}.page canvas{height:auto!important}.empty-state{padding:2rem 1rem}.metric-card strong{font-size:1.15rem}.modal-dialog{margin:.5rem}.form-control,.form-select{font-size:16px}.alert{font-size:.9rem}}
+
+/* Theme system: the preference is set by the application shell and retained locally. */
+:root{--app-bg:#f3f7f8;--app-surface:#ffffff;--app-surface-soft:#f7fbfb;--app-text:#102d36;--app-muted:#70858b;--app-border:#dce7e9;--app-shadow:0 14px 35px rgba(6,43,53,.07);--app-accent:#0792a4;--app-accent-soft:rgba(7,146,164,.12)}
+:root[data-theme='dark']{--app-bg:#07191e;--app-surface:#10272e;--app-surface-soft:#14343c;--app-text:#edf7f8;--app-muted:#acc4c9;--app-border:#28505a;--app-shadow:0 18px 42px rgba(0,0,0,.25);--app-accent:#4bd2dc;--app-accent-soft:rgba(75,210,220,.16);--bs-body-bg:#07191e;--bs-body-color:#edf7f8;--bs-secondary-color:#acc4c9;--bs-tertiary-bg:#14343c;--bs-border-color:#28505a;--bs-card-bg:#10272e;--bs-card-color:#edf7f8;--bs-table-bg:#10272e;--bs-table-color:#edf7f8;--bs-table-border-color:#28505a;--bs-table-striped-bg:#14343c;--bs-table-hover-bg:#173941;--bs-emphasis-color:#fff}
+html,body{background:var(--app-bg);color:var(--app-text)}
+:root[data-theme='dark'] .page-heading h1,:root[data-theme='dark'] .table thead th,:root[data-theme='dark'] .form-card label{color:var(--app-text)}
+:root[data-theme='dark'] .page-heading p:not(.eyebrow),:root[data-theme='dark'] .required-note{color:var(--app-muted)}
+:root[data-theme='dark'] .toolbar,:root[data-theme='dark'] .app-table,:root[data-theme='dark'] .form-card,:root[data-theme='dark'] .metric-card,:root[data-theme='dark'] .card,:root[data-theme='dark'] .table-responsive{background:var(--app-surface)!important;border-color:var(--app-border)!important;box-shadow:var(--app-shadow)}
+:root[data-theme='dark'] .metric-card{background:linear-gradient(145deg,#10272e,#13333b)!important}
+:root[data-theme='dark'] .metric-card small,:root[data-theme='dark'] .metric-card strong{color:var(--app-text)}
+:root[data-theme='dark'] .empty-state{background:rgba(16,39,46,.75);border-color:#37616a;color:var(--app-muted)}
+:root[data-theme='dark'] .form-control,:root[data-theme='dark'] .form-select,:root[data-theme='dark'] textarea{background:#0b2026;color:var(--app-text);border-color:#35606a}
+:root[data-theme='dark'] .form-control::placeholder,:root[data-theme='dark'] textarea::placeholder{color:#89a3a9}
+:root[data-theme='dark'] .form-control:focus,:root[data-theme='dark'] .form-select:focus{background:#0b2026;color:var(--app-text);border-color:var(--app-accent)}
+:root[data-theme='dark'] .table thead th{background:#14343c;border-bottom-color:var(--app-border)}
+:root[data-theme='dark'] .table tbody td{border-color:var(--app-border)}
+:root[data-theme='dark'] .text-muted{color:var(--app-muted)!important}
+:root[data-theme='dark'] .btn-outline-secondary{color:#c8dde0;border-color:#53757c}:root[data-theme='dark'] .btn-outline-secondary:hover{background:#365e66;color:#fff}
+:root[data-theme='dark'] .alert-light{background:#14343c;color:var(--app-text);border-color:var(--app-border)}
+
+/* Application-wide responsive rhythm.  Feature pages use Bootstrap plus these
+   common rules so forms, lists and detail sheets feel like one product. */
+.page{width:100%;max-width:100%;padding-bottom:2.5rem}
+.page > *{min-width:0}
+.page-heading,.toolbar,.form-card,.app-table,.card,.empty-state{max-width:100%}
+.page-heading>div{min-width:0}
+.page-heading h1{overflow-wrap:anywhere}
+.toolbar{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.toolbar .ms-auto{margin-left:auto!important}
+.toolbar .form-control,.toolbar .form-select{min-width:min(100%,190px)}
+.page .row>[class*='col-']{min-width:0}
+.page .card-header{padding:1rem 1.15rem;background:var(--app-surface-soft);border-bottom-color:var(--app-border)}
+.page .card-body{min-width:0}
+.page .btn{display:inline-flex;align-items:center;justify-content:center;gap:.35rem}
+.page .btn-group{max-width:100%;flex-wrap:wrap;gap:.35rem}
+.page .btn-group>.btn{flex:0 0 auto;border-radius:.55rem!important}
+.page .table-responsive{border-radius:16px;scrollbar-color:var(--app-accent) transparent}
+.page .table-responsive::-webkit-scrollbar{height:8px}
+.page .table-responsive::-webkit-scrollbar-thumb{background:var(--app-accent);border-radius:999px}
+.page .table td,.page .table th{vertical-align:middle}
+.page .table td:last-child,.page .table th:last-child{white-space:nowrap}
+.modal-content{border:1px solid var(--app-border);border-radius:18px;background:var(--app-surface);color:var(--app-text);box-shadow:0 24px 60px rgba(0,0,0,.22)}
+.modal-header,.modal-footer{border-color:var(--app-border)}
+.modal-header{background:var(--app-surface-soft)}
+.modal-title{color:var(--app-text);font-weight:800}
+.modal .btn-close{margin-left:auto}
+.contract,.invoice,.inspection-sheet{color:var(--app-text)}
+:root[data-theme='dark'] .contract,:root[data-theme='dark'] .invoice,:root[data-theme='dark'] .inspection-sheet{background:var(--app-surface)!important;border-color:var(--app-border)!important}
+:root[data-theme='dark'] .contract-header,:root[data-theme='dark'] .invoice-head,:root[data-theme='dark'] .fact,:root[data-theme='dark'] .accept,:root[data-theme='dark'] .license,:root[data-theme='dark'] .summary,:root[data-theme='dark'] .invoice-total,:root[data-theme='dark'] .caution{background:var(--app-surface-soft)!important;color:var(--app-text)!important;border-color:var(--app-border)!important}
+:root[data-theme='dark'] .contract h2,:root[data-theme='dark'] .contract h3,:root[data-theme='dark'] .invoice h2,:root[data-theme='dark'] .invoice h3{color:var(--app-text)!important}
+:root[data-theme='dark'] .reservation-calendar .fc-theme-standard td,:root[data-theme='dark'] .reservation-calendar .fc-theme-standard th,:root[data-theme='dark'] .reservation-calendar .fc-theme-standard .fc-scrollgrid{border-color:var(--app-border)}
+:root[data-theme='dark'] .reservation-calendar .fc .fc-daygrid-day,:root[data-theme='dark'] .reservation-calendar .fc .fc-timegrid-slot{background:var(--app-surface)}
+:root[data-theme='dark'] .reservation-calendar .fc .fc-col-header-cell-cushion,:root[data-theme='dark'] .reservation-calendar .fc .fc-daygrid-day-number,:root[data-theme='dark'] .reservation-calendar .fc .fc-toolbar-title{color:var(--app-text)}
+
+@media (max-width: 991.98px){
+  .page{padding-bottom:2rem}
+  .toolbar .form-control,.toolbar .form-select{min-width:160px}
+  .modal-dialog{max-width:calc(100% - 2rem)}
+}
+@media (max-width: 767.98px){
+  .page{padding-bottom:1.5rem}
+  .page-heading{gap:.75rem}
+  .page-heading h1{font-size:clamp(1.45rem,7vw,1.85rem)}
+  .page-heading p:not(.eyebrow){max-width:42rem}
+  .toolbar{align-items:stretch}
+  .toolbar>.btn,.toolbar>.btn-group,.toolbar>.form-control,.toolbar>.form-select,.toolbar>div{max-width:100%}
+  .toolbar .ms-auto{margin-left:0!important}
+  .page .card-header{padding:.9rem 1rem}
+  .page .table-responsive{border-radius:13px}
+  .page .table-responsive table{min-width:540px}
+  .page .table td:last-child,.page .table th:last-child{position:sticky;right:0;background:var(--app-surface);box-shadow:-8px 0 14px rgba(7,31,37,.06)}
+  .page .table th:last-child{background:var(--app-surface-soft)}
+  .page .alert{margin-bottom:1rem}
+  .modal-dialog{margin:.6rem auto;min-height:calc(100% - 1.2rem);display:flex;align-items:center}
+  .modal-content{width:100%;max-height:calc(100dvh - 1.2rem);overflow:auto;border-radius:16px}
+  .modal-footer{gap:.5rem;flex-wrap:wrap}
+}
+@media (max-width: 575.98px){
+  .page-heading .btn,.page-heading>.btn-group{width:100%}
+  .page-heading>.btn-group .btn{flex:1 1 auto}
+  .toolbar .form-control,.toolbar .form-select,.toolbar>.btn,.toolbar>.btn-group{width:100%;min-width:0}
+  .toolbar>.btn-group .btn{flex:1 1 auto}
+  .page .card-body{padding:1rem}
+  .page .table-responsive table{min-width:510px}
+  .page .table td,.page .table th{max-width:210px;white-space:normal}
+  .page .table td:last-child,.page .table th:last-child{max-width:none;white-space:nowrap}
+  .form-card .row{--bs-gutter-x:.8rem}
+  .form-card .row>[class*='col-']{margin-bottom:.1rem}
+  .form-card .form-label{margin-top:.15rem}
+  .modal-header,.modal-body,.modal-footer{padding:1rem}
+  .modal-title{font-size:1.05rem}
+  .contract-header,.invoice-head{padding:1.1rem!important}
+  .contract .body,.contract .toolbar,.invoice-body{padding:1.1rem!important}
+  .contract .facts{grid-template-columns:1fr!important}
+  .contract .signature canvas{width:100%!important;height:auto!important}
+  .reservation-calendar{min-height:470px!important}
+  .reservation-calendar .fc .fc-toolbar{align-items:flex-start}
+  .reservation-calendar .fc .fc-toolbar-chunk{display:flex;flex-wrap:wrap;gap:.25rem}
+  .reservation-calendar .fc .fc-button{padding:.35rem .5rem;font-size:.72rem}
+}
