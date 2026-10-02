@@ -21,9 +21,27 @@ import { ActivityLogsComponent } from './features/activity-logs.component';
 import { ReportsComponent } from './features/reports.component';
 import { ContractTemplatesComponent } from './features/contract-templates.component';
 import { MyProfileComponent } from './features/my-profile.component';
+import { clientGuard } from './core/client.guard';
+import { ClientShellComponent } from './layout/client-shell.component';
+import { ClientAuthComponent } from './features/client-auth.component';
+import { ClientPortalComponent } from './features/client-portal.component';
+import { ClientReservationsComponent } from './features/client-reservations.component';
+import { ClientAccountComponent } from './features/client-account.component';
+import { ClientContractsComponent } from './features/client-contracts.component';
+import { ClientInspectionsComponent } from './features/client-inspections.component';
 
 export const routes: Routes = [
  {path:'login', component:LoginComponent},
+ {path:'client/login', component:ClientAuthComponent},
+ {path:'client/register', component:ClientAuthComponent},
+ {path:'client',component:ClientShellComponent,canActivate:[clientGuard],children:[
+  {path:'vehicles',component:ClientPortalComponent},
+  {path:'reservations',component:ClientReservationsComponent},
+  {path:'contracts',component:ClientContractsComponent},
+  {path:'inspections',component:ClientInspectionsComponent},
+  {path:'account',component:ClientAccountComponent},
+  {path:'',pathMatch:'full',redirectTo:'vehicles'}
+ ]},
  {path:'', component:ShellComponent, canActivate:[authGuard], children:[
   {path:'dashboard',component:DashboardComponent}, {path:'my-profile',component:MyProfileComponent}, {path:'vehicles',component:VehiclesComponent,canActivate:[permissionGuard],data:{module:'vehicles'}}, {path:'clients',component:ClientsComponent,canActivate:[permissionGuard],data:{module:'clients'}}, {path:'reservation-client',component:ReservationClientComponent,canActivate:[permissionGuard],data:{module:'clients'}}, {path:'reservation-rental',component:ReservationRentalComponent,canActivate:[permissionGuard],data:{module:'rentals'}}, {path:'reservations',component:ReservationsComponent,canActivate:[permissionGuard],data:{module:'reservations'}}, {path:'rentals',component:RentalsComponent,canActivate:[permissionGuard],data:{module:'rentals'}}, {path:'contracts',component:ContractsComponent,canActivate:[permissionGuard],data:{module:'contracts'}}, {path:'payments',component:PaymentsComponent,canActivate:[permissionGuard],data:{module:'payments'}}, {path:'inspections',component:InspectionsComponent,canActivate:[permissionGuard],data:{module:'inspections'}}, {path:'maintenance',component:MaintenanceComponent,canActivate:[permissionGuard],data:{module:'maintenance'}}, {path:'incidents',component:IncidentsComponent,canActivate:[permissionGuard],data:{module:'incidents'}}, {path:'notifications',component:NotificationsComponent,canActivate:[permissionGuard],data:{module:'notifications'}}, {path:'settings',component:SettingsComponent,canActivate:[superAdminGuard]}, {path:'activity-logs',component:ActivityLogsComponent,canActivate:[superAdminGuard]},
  {path:'users',component:UsersComponent,canActivate:[superAdminGuard]}, {path:'contract-templates',component:ContractTemplatesComponent,canActivate:[superAdminGuard]}, {path:'reports',component:ReportsComponent,canActivate:[permissionGuard],data:{module:'reports'}}, {path:'',pathMatch:'full',redirectTo:'dashboard'}]},

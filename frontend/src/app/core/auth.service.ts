@@ -21,6 +21,9 @@ const translations: Array<[RegExp, string]> = [
   [/Rental status is calculated automatically/i, 'Le statut de la location est calculé automatiquement par le contrat, les inspections et l’échéance de retour.'],
   [/A rental must begin as draft or reserved/i, 'Une location est créée automatiquement avec le statut « En attente ».'],
   [/Reservation status is managed/i, 'Le statut de la réservation est géré automatiquement par son workflow.'],
+  [/client dossier is incomplete/i, 'Votre dossier est incomplet : renseignez identité, adresse, permis, contact d’urgence et ajoutez les deux pièces justificatives avant de signer.'],
+  [/client signature is unavailable/i, 'Votre signature n’a pas pu être enregistrée. Vérifiez votre connexion puis recommencez la signature.'],
+  [/rental dossier is not ready for signature/i, 'Ce dossier n’est pas encore prêt à être signé.'],
   [/Reservation update is not permitted|Reservation finalization is not permitted/i, 'Vous ne disposez pas de l’autorisation nécessaire pour modifier ou finaliser cette réservation.'],
   [/Only a pending reservation can be (cancelled|finalized)/i, 'Seule une réservation en attente peut être annulée ou finalisée.'],
   [/Reservation does not exist/i, 'Cette réservation est introuvable.'],
@@ -44,7 +47,21 @@ const translations: Array<[RegExp, string]> = [
   [/inspection vehicle must match/i, 'Le véhicule de l’inspection doit correspondre au véhicule de la location.'],
   [/departure inspection must precede/i, 'L’inspection de départ doit être réalisée avant l’activation de la location.'],
   [/return inspection requires/i, 'L’inspection de retour exige une location en cours ou en retard.'],
+  [/No signed contract authorizes this inspection|signed contract.*inspection/i, 'Cette inspection est disponible uniquement après la signature complète du contrat.'],
+  [/This inspection has already been recorded|inspection.*already.*recorded/i, 'Cette inspection a déjà été enregistrée pour cette location.'],
+  [/departure inspection is no longer available/i, 'L’inspection de départ n’est plus disponible pour cette location.'],
+  [/departure inspection is required before the return/i, 'L’inspection de départ doit être enregistrée avant l’inspection de retour.'],
+  [/return inspection is not yet available/i, 'L’inspection de retour n’est pas encore disponible pour cette location.'],
   [/invalid login credentials/i, 'Adresse e-mail ou mot de passe incorrect.'],
+  [/signups? (are |is )?not allowed|signup.*disabled/i, 'Les inscriptions clients sont désactivées dans Supabase. Activez Authentication → Providers → Email → Enable Email Signups.'],
+  [/user already registered|email.*already.*(registered|exists|used)/i, 'Un compte existe déjà avec cette adresse e-mail. Connectez-vous ou utilisez « Mot de passe oublié ».'],
+  [/database error saving new user/i, 'La création du profil client a échoué côté Supabase. La configuration de la base doit être vérifiée.'],
+  [/unexpected[_ ]failure|unexpected error|internal server error/i, 'Supabase a rencontré une erreur interne lors de la création du compte client.'],
+  [/over_email_send_rate_limit|email.*send.*rate.*limit|rate limit/i, 'Trop de demandes d’e-mail ont été envoyées. Attendez une à deux minutes avant de réessayer.'],
+  [/captcha/i, 'La vérification anti-robot a échoué. Rechargez la page puis réessayez.'],
+  [/password.*(weak|short|least|require)/i, 'Le mot de passe ne respecte pas les règles de sécurité demandées par Supabase.'],
+  [/email address.*invalid|invalid email/i, 'L’adresse e-mail saisie est invalide.'],
+  [/unable to validate email|email.*validation/i, 'Supabase ne parvient pas à valider cette adresse e-mail. Utilisez une adresse e-mail réelle et réessayez.'],
   [/email not confirmed/i, 'Votre adresse e-mail doit être confirmée avant la connexion.'],
   [/network|fetch failed/i, 'La connexion au serveur a échoué. Vérifiez votre accès Internet puis réessayez.']
 ];
@@ -61,6 +78,10 @@ export function frenchError(value: unknown): string {
 
 const localizedFetch: typeof fetch = async (input, init) => {
   const response = await fetch(input, init);
+  const requestUrl = typeof input === 'string' ? input : input instanceof Request ? input.url : String(input);
+  // AuthApiError conserve son message natif : les écrans de connexion le
+  // traduisent précisément, sans perdre le code retourné par Supabase Auth.
+  if (requestUrl.includes('/auth/v1/')) return response;
   const type = response.headers.get('content-type') ?? '';
   if (response.ok || !type.includes('application/json')) return response;
   try {
