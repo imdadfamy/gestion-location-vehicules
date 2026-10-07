@@ -49,7 +49,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.74rem;font-weight:800;letter-spacing:.12em;color:#bfe9ef;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:6px 14px;border-radius:var(--radius-full)}
     .hero h1{max-width:760px;font-size:clamp(2.3rem,5.4vw,4.4rem);line-height:1.04;margin:18px 0 10px;font-weight:800;letter-spacing:-.01em}
     .hero p.lead{font-size:1.1rem;color:#d7eef0;max-width:560px}
-    .search-card{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;background:var(--surface);padding:16px;border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow-lg);max-width:1040px;margin-top:34px;color:var(--text);position:relative;top:0}
+    .search-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto;gap:12px;background:var(--surface);padding:16px;border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow-lg);max-width:1040px;margin-top:34px;color:var(--text);position:relative;top:0}
     .search-card .field label{font-size:.72rem;font-weight:800;letter-spacing:.03em;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase}
     .search-card .form-control,.search-card .form-select{border-radius:var(--radius-sm);border:1px solid var(--border-strong);min-height:46px;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
     .search-card .form-control:focus,.search-card .form-select:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--ring)}
@@ -151,7 +151,8 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     @media(max-width:360px){
       .nav .btn-pill{padding:.38rem .65rem;font-size:.74rem}
     }
-    @media(max-width:600px){.search-card{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.vehicles{grid-template-columns:1fr}.footer{grid-template-columns:1fr;text-align:left}.hero{padding:48px 5% 110px}.cta-actions{flex-direction:column;align-items:stretch}.cta-actions .btn{width:100%}}
+    @media(max-width:700px){.search-card{grid-template-columns:1fr}}
+    @media(max-width:600px){.grid{grid-template-columns:1fr}.vehicles{grid-template-columns:1fr}.footer{grid-template-columns:1fr;text-align:left}.hero{padding:48px 5% 110px}.cta-actions{flex-direction:column;align-items:stretch}.cta-actions .btn{width:100%}}
   `],
   template: `
 <main class="landing">
