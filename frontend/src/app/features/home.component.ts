@@ -31,7 +31,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     .topbar::before{content:'';position:absolute;inset:0;z-index:-1;background:rgba(18,57,67,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)}
     .header-spacer{height:78px}
     .brand{display:flex;align-items:center}
-    .logo{display:block;height:48px;width:auto;object-fit:contain;background:#fff;border-radius:var(--radius-sm);padding:6px 10px;box-shadow:var(--shadow-sm)}
+    .logo{display:block;height:36px;width:auto;object-fit:contain}
     .nav{display:flex;flex-wrap:wrap;gap:10px 18px;margin-left:auto;align-items:center}
     .nav-link{position:relative;color:rgba(255,255,255,.88);text-decoration:none;font-size:.92rem;font-weight:600;padding:4px 0;transition:color .2s var(--ease)}
     .nav-link::after{content:'';position:absolute;left:0;bottom:-2px;width:100%;height:2px;background:#8ed3df;border-radius:2px;transform:scaleX(0);transform-origin:left;transition:transform .25s var(--ease)}
@@ -132,18 +132,25 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     /* footer */
     .footer-wrap{background:var(--petrol-deep)}
     .footer{color:#c9dee0;padding:52px 5% 0;max-width:1180px;margin:auto;display:grid;grid-template-columns:2fr 1fr 2fr;gap:30px}
-    .footer .logo{background:#fff}
     .footer p{color:#9fb9bc;margin:10px 0 0;font-size:.9rem}
     .footer h4{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:#7fa3a6;margin-bottom:14px}
     .footer a{position:relative;display:block;color:#c9dee0;text-decoration:none;margin:6px 0;font-size:.92rem;transition:color .2s var(--ease)}
     .footer a:hover{color:#fff}
     .footer-bottom{max-width:1180px;margin:30px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);font-size:.8rem;color:#6d8c8f;text-align:center}
 
-    @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.vehicles{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:1fr}.partner-hero{grid-template-columns:1fr}.partner-hero-media{order:-1}.partner-hero-media img{aspect-ratio:16/9}}
+    @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.vehicles{grid-template-columns:repeat(2,1fr)}.partner-hero{grid-template-columns:1fr}.partner-hero-media{order:-1}.partner-hero-media img{aspect-ratio:16/9}}
+    @media(max-width:680px){
+      .steps{grid-template-columns:1fr;gap:12px}
+      .step{display:grid;grid-template-columns:40px 1fr;column-gap:14px;align-items:start;text-align:left;padding:16px 18px}
+      .step .icon{grid-column:1;grid-row:1/3;margin:0;width:40px;height:40px}
+      .step h3{grid-column:2;grid-row:1;margin:0 0 2px;font-size:.95rem}
+      .step p{grid-column:2;grid-row:2;font-size:.82rem}
+      .step .num{top:10px;right:14px;font-size:.62rem}
+    }
     @media(max-width:800px){.nav-link{display:none}}
     @media(max-width:560px){
       .topbar{padding:10px 4%;gap:8px}
-      .logo{height:38px}
+      .logo{height:30px}
       .nav{gap:8px}
       .nav .btn-pill{padding:.42rem .85rem;font-size:.8rem;white-space:nowrap}
       .header-spacer{height:60px}
@@ -157,7 +164,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
   template: `
 <main class="landing">
   <header class="topbar">
-    <a class="brand" routerLink="/"><img class="logo" src="/logo.jpg" alt="FIMA AUTO"></a>
+    <a class="brand" routerLink="/"><img class="logo" src="/logo-horizontal-white.png" alt="FIMA AUTO"></a>
     <nav class="nav">
       <a class="nav-link" href="#vehicles">Véhicules</a>
       <a class="nav-link" href="#how">Comment ça marche</a>
@@ -198,7 +205,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
         <h3>Véhicules contrôlés</h3><p>Inspectés avant chaque location.</p>
       </article>
       <article class="cardx" appReveal="160">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10 12 2 4 10v10h6v-6h4v6h6V10Z"/></svg></div>
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41 13.41 20.59a2 2 0 0 1-2.82 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1.6" fill="currentColor" stroke="none"/></svg></div>
         <h3>Prix clairs</h3><p>Tarif, caution et total affichés avant de réserver.</p>
       </article>
       <article class="cardx" appReveal="240">
@@ -253,7 +260,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     </div>
   </section>
 
-  <section class="section">
+  <section class="section" id="faq">
     <div class="section-head" appReveal>
       <span class="kicker">Besoin d'aide</span>
       <h2>Questions fréquentes</h2>
@@ -341,8 +348,8 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
 
   <footer class="footer-wrap">
     <div class="footer">
-      <div><img class="logo" src="/logo.jpg" alt="FIMA AUTO"><p>Location de véhicules, mobilités premium.</p></div>
-      <div><h4>Liens</h4><a href="#vehicles">Véhicules</a><a href="#how">FAQ</a><a href="#contact">Contact</a><a routerLink="/partner/login">Espace partenaire</a></div>
+      <div><img class="logo" src="/logo-horizontal-white.png" alt="FIMA AUTO"><p>Location de véhicules, mobilités premium.</p></div>
+      <div><h4>Liens</h4><a href="#vehicles">Véhicules</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><a routerLink="/partner/login">Espace partenaire</a></div>
       <div>
         <h4>Contact</h4>
         <p>Téléphone : {{company().phone||'Non renseigné'}}</p>

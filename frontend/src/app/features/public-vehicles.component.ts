@@ -29,7 +29,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     .topbar{position:fixed;top:0;left:0;right:0;width:100%;z-index:40;color:#fff;padding:12px 5%;display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
     .topbar::before{content:'';position:absolute;inset:0;z-index:-1;background:rgba(18,57,67,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)}
     .header-spacer{height:78px}
-    .logo{display:block;height:48px;width:auto;object-fit:contain;background:#fff;border-radius:var(--radius-sm);padding:6px 10px;box-shadow:var(--shadow-sm)}
+    .logo{display:block;height:36px;width:auto;object-fit:contain}
     .nav{display:flex;flex-wrap:wrap;gap:10px 14px;margin-left:auto;align-items:center}
     .nav a:not(.btn){color:rgba(255,255,255,.88);text-decoration:none;font-weight:600;font-size:.92rem;transition:color .2s var(--ease)}
     .nav a:not(.btn):hover{color:#fff}
@@ -74,7 +74,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
       .nav a:not(.btn){display:none}
       .nav{gap:8px}
       .nav .btn{padding:.42rem .85rem;font-size:.8rem;white-space:nowrap}
-      .logo{height:38px}
+      .logo{height:30px}
       .header-spacer{height:60px}
     }
     @media(max-width:600px){.filters{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
@@ -82,7 +82,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
   template: `
     <main class="public-page">
       <header class="topbar">
-        <a routerLink="/"><img class="logo" src="/logo.jpg" alt="FIMA AUTO"></a>
+        <a routerLink="/"><img class="logo" src="/logo-horizontal-white.png" alt="FIMA AUTO"></a>
         <nav class="nav">
           <a routerLink="/">Accueil</a>
           <a routerLink="/client/login" class="btn btn-pill btn-outline-light btn-sm">Se connecter</a>

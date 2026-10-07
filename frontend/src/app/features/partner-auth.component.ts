@@ -9,7 +9,7 @@ import { DigitsOnlyDirective } from '../shared/digits-only.directive';
   .auth-page{min-height:100dvh;display:grid;grid-template-columns:1fr 1fr;background:#f4f8f9}
   .auth-aside{position:relative;background:radial-gradient(circle at 85% -10%,rgba(142,211,223,.18),transparent 46%),linear-gradient(135deg,#123943,#1c6c7d 70%,#0792a4);color:#fff;padding:48px 52px;display:flex;flex-direction:column;overflow:clip}
   .back-link{display:inline-flex;align-items:center;gap:6px;color:rgba(255,255,255,.82);text-decoration:none;font-size:.88rem;font-weight:650;width:fit-content}.back-link:hover{color:#fff}.back-link svg{width:16px;height:16px}
-  .aside-logo{width:150px;height:52px;object-fit:contain;background:#fff;border-radius:var(--radius-sm);padding:6px 10px;box-shadow:var(--shadow-md);margin:32px 0 28px;display:block}
+  .aside-logo{width:auto;height:36px;object-fit:contain;margin:32px 0 28px;display:block}
   .aside-title{font-size:1.7rem;font-weight:800;letter-spacing:-.01em;max-width:380px;line-height:1.2;margin-bottom:10px}
   .aside-sub{color:#d7eef0;max-width:360px;margin-bottom:34px}
   .perk{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}.perk .icon{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;border-radius:var(--radius-sm);background:rgba(255,255,255,.12);color:#bfe9ef}.perk .icon svg{width:17px;height:17px}.perk strong{display:block;font-size:.92rem}.perk span{color:#c9e4e6;font-size:.84rem}
@@ -29,7 +29,7 @@ import { DigitsOnlyDirective } from '../shared/digits-only.directive';
 <div class="auth-page">
   <aside class="auth-aside">
     <a class="back-link" routerLink="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Retour à l'accueil</a>
-    <img class="aside-logo" src="/fima-auto-logo.jpg" alt="Logo FIMA AUTO">
+    <img class="aside-logo" src="/logo-horizontal-white.png" alt="Logo FIMA AUTO">
     <h2 class="aside-title">Proposez vos véhicules</h2>
     <p class="aside-sub">Ajoutez vos véhicules, fixez votre prix, nous les évaluons et les publions.</p>
     <div class="perk"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10 12 2 4 10v10h6v-6h4v6h6V10Z"/></svg></div><div><strong>Vous fixez votre prix</strong><span>Nous ajoutons notre marge avant publication.</span></div></div>

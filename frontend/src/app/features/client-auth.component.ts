@@ -20,7 +20,7 @@ import { DigitsOnlyDirective } from '../shared/digits-only.directive';
   .back-link{display:inline-flex;align-items:center;gap:6px;color:rgba(255,255,255,.82);text-decoration:none;font-size:.88rem;font-weight:650;transition:color .2s var(--ease);width:fit-content}
   .back-link:hover{color:#fff}
   .back-link svg{width:16px;height:16px}
-  .aside-logo{height:48px;width:auto;object-fit:contain;background:#fff;border-radius:var(--radius-sm);padding:6px 10px;box-shadow:var(--shadow-md);margin:32px 0 28px;display:block}
+  .aside-logo{height:36px;width:auto;object-fit:contain;margin:32px 0 28px;display:block}
   .aside-title{font-size:1.7rem;font-weight:800;letter-spacing:-.01em;max-width:380px;line-height:1.2;margin-bottom:10px}
   .aside-sub{color:#d7eef0;max-width:360px;margin-bottom:34px}
   .perk{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
@@ -32,7 +32,7 @@ import { DigitsOnlyDirective } from '../shared/digits-only.directive';
   .auth-card{width:min(100%,460px);padding:38px;border:0;border-radius:0;box-shadow:none;background:transparent}
   .mobile-back{display:none}
   .brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
-  .brand img{height:44px;width:auto;object-fit:contain;background:#fff;border-radius:var(--radius-sm);padding:4px 8px;border:1px solid var(--border);display:none}
+  .brand img{height:38px;width:auto;object-fit:contain;display:none}
   .auth-card h1{font-weight:800;letter-spacing:-.01em}
   .auth-card .text-muted{color:var(--muted)!important}
   .password-wrap{position:relative}
@@ -68,7 +68,7 @@ import { DigitsOnlyDirective } from '../shared/digits-only.directive';
 <div class="auth-page">
   <aside class="auth-aside">
     <a class="back-link" routerLink="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Retour à l'accueil</a>
-    <img class="aside-logo" src="/fima-auto-logo.jpg" alt="Logo FIMA AUTO">
+    <img class="aside-logo" src="/logo-horizontal-white.png" alt="Logo FIMA AUTO">
     <h2 class="aside-title">Votre location commence ici</h2>
     <p class="aside-sub">Réservez un véhicule, signez votre contrat et suivez vos locations depuis votre espace client.</p>
     <div class="perk"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16M7 16l9-9 3 3-9 9H7v-3Z"/></svg></div><div><strong>Contrat en ligne</strong><span>Signature simple et sécurisée.</span></div></div>
@@ -78,7 +78,7 @@ import { DigitsOnlyDirective } from '../shared/digits-only.directive';
   <main class="auth-main">
     <a class="mobile-back" routerLink="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Retour à l'accueil</a>
     <section class="auth-card">
-      <div class="brand"><img src="/fima-auto-logo.jpg" alt="Logo FIMA AUTO"></div>
+      <div class="brand"><img src="/logo-horizontal-color.png" alt="Logo FIMA AUTO"></div>
       <h1 class="h3">{{register()?'Créer mon compte client':'Espace client'}}</h1>
       <p class="text-muted">{{register()?'Créez votre accès pour réserver un véhicule en ligne.':'Connectez-vous pour suivre vos réservations et signer votre contrat.'}}</p>
       @if(error()){<div class="alert alert-danger">{{error()}}</div>}

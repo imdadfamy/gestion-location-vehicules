@@ -9,7 +9,7 @@ import { AuthService } from '../core/auth.service';
   styles: [`
     .invite{height:100dvh;overflow:hidden;display:grid;place-items:center;padding:16px;background:linear-gradient(135deg,#062b35,#0792a4)}
     .invite-card{width:min(100%,470px);max-height:calc(100dvh - 32px);overflow-y:auto;background:#fff;border-radius:24px;padding:28px;box-shadow:0 22px 60px rgba(0,0,0,.24)}
-    .invite-card img{height:54px;width:auto;margin-bottom:12px}
+    .invite-card img{height:38px;width:auto;margin-bottom:12px}
     .invite-card span{font-size:.72rem;letter-spacing:.13em;color:#0792a4;font-weight:800}
     .invite-card h1{font-size:1.55rem;margin:.3rem 0}
     .invite-card p{color:#6b7c81;margin-bottom:15px}
@@ -19,7 +19,7 @@ import { AuthService } from '../core/auth.service';
   `],
   template: `
     <main class="invite"><section class="invite-card">
-      <img src="/fima-auto-logo.jpg" alt="FIMA AUTO">
+      <img src="/logo-horizontal-color.png" alt="FIMA AUTO">
       <div><span>ESPACE PROFESSIONNEL</span><h1>Bienvenue chez FIMA AUTO</h1></div>
       @if (checking()) {
         <p>Vérification de votre invitation…</p>
