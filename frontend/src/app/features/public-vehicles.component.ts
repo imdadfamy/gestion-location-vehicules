@@ -58,15 +58,56 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     .cat-pill.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm)}
 
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-    .cardx{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:22px;display:flex;flex-direction:column;gap:6px;transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
+    .cardx{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;display:flex;flex-direction:column;transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
     .cardx:hover{transform:translateY(-5px);box-shadow:var(--shadow-md)}
+    .cardx-media{height:170px;background:linear-gradient(135deg,#e7f1f3,#d4e7ea);overflow:hidden}
+    .cardx-media img{width:100%;height:100%;object-fit:cover;display:block}
+    .cardx-media .placeholder{display:grid;place-items:center;height:100%;font-size:2.6rem;color:#54818a}
+    .cardx-body{padding:18px 22px 22px;display:flex;flex-direction:column;gap:6px}
     .badge-cat{align-self:flex-start;background:var(--primary-soft);color:var(--primary-dark);font-weight:750;font-size:.7rem;letter-spacing:.03em;text-transform:uppercase;border-radius:var(--radius-full);padding:5px 12px;margin-bottom:6px}
     .cardx h2{font-size:1.08rem;font-weight:750;margin:0}
     .price{color:var(--primary-dark);font-weight:800;margin-top:6px}
-    .btn-reserve{background:var(--primary);border:1px solid var(--primary);color:#fff;border-radius:var(--radius-sm);font-weight:700;margin-top:4px;transition:background-color .2s var(--ease),transform .15s var(--ease),box-shadow .2s var(--ease);box-shadow:0 8px 16px rgba(7,146,164,.26)}
+    .card-actions{display:flex;gap:8px;margin-top:4px}
+    .card-actions .btn{flex:1}
+    .btn-outline-cta{border:1px solid var(--border-strong);color:var(--text);background:var(--surface);border-radius:var(--radius-sm);font-weight:700;transition:all .2s var(--ease)}
+    .btn-outline-cta:hover{background:var(--petrol);border-color:var(--petrol);color:#fff}
+    .btn-reserve{background:var(--primary);border:1px solid var(--primary);color:#fff;border-radius:var(--radius-sm);font-weight:700;transition:background-color .2s var(--ease),transform .15s var(--ease),box-shadow .2s var(--ease);box-shadow:0 8px 16px rgba(7,146,164,.26)}
     .btn-reserve:hover{background:var(--primary-dark);border-color:var(--primary-dark)}
     .btn-reserve:active{transform:scale(.97)}
     .empty-state{color:var(--muted);text-align:center;padding:44px;border:1px dashed var(--border-strong);border-radius:var(--radius-md);grid-column:1/-1}
+
+    @keyframes drawerInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    @keyframes drawerInBottom{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    @keyframes drawerFade{from{opacity:0}to{opacity:1}}
+    .drawer-overlay{position:fixed;inset:0;z-index:1055;display:flex;justify-content:flex-end;background:rgba(5,29,35,.55);animation:drawerFade .2s ease}
+    .drawer-panel{width:min(460px,100%);height:100dvh;background:#fff;display:flex;flex-direction:column;box-shadow:-20px 0 60px rgba(0,0,0,.25);animation:drawerInRight .28s cubic-bezier(.22,1,.36,1)}
+    .drawer-head{display:flex;justify-content:flex-end;padding:14px 16px 0;flex:0 0 auto}
+    .drawer-close{border:0;background:rgba(10,40,48,.06);width:36px;height:36px;border-radius:50%;font-size:1.25rem;line-height:1;color:#14323a;cursor:pointer}
+    .drawer-close:hover{background:rgba(10,40,48,.12)}
+    .drawer-body{flex:1;overflow-y:auto;padding:2px 24px 24px}
+    .drawer-gallery-main{height:230px;border-radius:16px;overflow:hidden;background:#dbe9eb;margin-bottom:10px}
+    .drawer-gallery-main img{width:100%;height:100%;object-fit:cover;display:block}
+    .drawer-gallery-empty{display:grid;place-items:center;height:100%;font-size:3.4rem;color:#6d969e}
+    .drawer-thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+    .drawer-thumb{width:62px;height:46px;flex:0 0 auto;padding:0;border:2px solid transparent;border-radius:9px;overflow:hidden;background:#fff}
+    .drawer-thumb.active{border-color:#0792a4}
+    .drawer-thumb img{width:100%;height:100%;object-fit:cover}
+    .drawer-eyebrow{margin:16px 0 2px}
+    .drawer-info h2{margin:0 0 4px;font-size:1.4rem;color:#14323a}
+    .drawer-meta{color:#6a7f85;font-size:.9rem;margin:0 0 14px}
+    .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+    .pill{padding:6px 12px;border-radius:999px;background:#f1f6f7;color:#2a4850;font-size:.8rem;font-weight:650}
+    .price-line{display:flex;align-items:baseline;justify-content:space-between;padding:14px 0;border-top:1px solid #e7eef0;border-bottom:1px solid #e7eef0;margin-top:14px}
+    .price-line .label{color:#6a7f85;font-size:.85rem}
+    .price-line strong{font-size:1.3rem;color:#0b2429}
+    .deposit-note{color:#6a7f85;font-size:.82rem;margin:8px 0 18px}
+    .drawer-reserve{width:100%;min-height:48px}
+    @media(max-width:700px){
+      .drawer-overlay{align-items:flex-end;justify-content:center}
+      .drawer-panel{width:100%;height:auto;max-height:92dvh;border-radius:22px 22px 0 0;animation:drawerInBottom .28s cubic-bezier(.22,1,.36,1)}
+      .drawer-gallery-main{height:200px}
+      .drawer-body{padding:2px 18px 18px}
+    }
 
     @media(max-width:900px){.filters{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr 1fr}}
     @media(max-width:560px){
@@ -115,21 +156,65 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
           <div class="grid">
             @for (v of visibleVehicles(); track v.id; let i = $index) {
               <article class="cardx" [appReveal]="i * 60">
-                <span class="badge-cat">{{ v.category || 'Véhicule' }}</span>
-                <h2>{{ v.make }} {{ v.model }}</h2>
-                <p class="text-muted small mb-0">{{ v.transmission === 'automatic' ? 'Boîte automatique' : v.transmission === 'manual' ? 'Boîte manuelle' : 'Boîte non renseignée' }} · {{ v.fuel_type || 'Carburant non renseigné' }}</p>
-                <p class="price">À partir de {{ money(v.rental_price) }} / jour</p>
-                <button class="btn btn-reserve" (click)="reserve(v)">Réserver</button>
+                <div class="cardx-media">
+                  @if (v.photoUrl) { <img [src]="v.photoUrl" alt="{{ v.make }} {{ v.model }}"> }
+                  @else { <div class="placeholder" aria-label="Aucune photo disponible">🚘</div> }
+                </div>
+                <div class="cardx-body">
+                  <span class="badge-cat">{{ v.category || 'Véhicule' }}</span>
+                  <h2>{{ v.make }} {{ v.model }}</h2>
+                  <p class="text-muted small mb-0">{{ v.transmission === 'automatic' ? 'Boîte automatique' : v.transmission === 'manual' ? 'Boîte manuelle' : 'Boîte non renseignée' }} · {{ v.fuel_type || 'Carburant non renseigné' }}</p>
+                  <p class="price">À partir de {{ money(v.rental_price) }} / jour</p>
+                  <div class="card-actions">
+                    <button class="btn btn-outline-cta" (click)="openProduct(v)">Voir la fiche</button>
+                    <button class="btn btn-reserve" (click)="reserve(v)">Réserver</button>
+                  </div>
+                </div>
               </article>
             }
           </div>
         }
       </div>
     </main>
+    @if(product()){
+      <div class="drawer-overlay" (click)="closeProduct()">
+        <section class="drawer-panel" role="dialog" aria-modal="true" aria-label="Fiche véhicule" (click)="$event.stopPropagation()">
+          <div class="drawer-head"><button class="drawer-close" (click)="closeProduct()" aria-label="Fermer">×</button></div>
+          <div class="drawer-body">
+            <div class="drawer-gallery-main">
+              @if(activePhoto()){<img [src]="activePhoto()!" alt="{{product().make}} {{product().model}}">}
+              @else{<div class="drawer-gallery-empty">🚘</div>}
+            </div>
+            @if(product().photos?.length>1){
+              <div class="drawer-thumbs">
+                @for(photo of product().photos;track photo;let i=$index){
+                  <button class="drawer-thumb" [class.active]="activePhoto()===photo" (click)="activePhoto.set(photo)" [attr.aria-label]="'Voir la photo '+(i+1)"><img [src]="photo" alt="Photo {{i+1}} du véhicule"></button>
+                }
+              </div>
+            }
+            <div class="drawer-info">
+              <p class="eyebrow drawer-eyebrow">FICHE VÉHICULE</p>
+              <h2>{{product().make}} {{product().model}}</h2>
+              <p class="drawer-meta">{{product().color||'Couleur non renseignée'}}</p>
+              <div class="pill-row">
+                <span class="pill">{{product().category||'Catégorie non renseignée'}}</span>
+                <span class="pill">{{product().transmission==='automatic'?'Automatique':product().transmission==='manual'?'Manuelle':'Boîte non renseignée'}}</span>
+                <span class="pill">{{product().fuel_type||'Carburant non renseigné'}}</span>
+                <span class="pill">{{product().year||'Année non renseignée'}}</span>
+              </div>
+              <div class="price-line"><span class="label">Tarif de location</span><strong>{{money(product().rental_price)}} / jour</strong></div>
+              <p class="deposit-note">Caution : {{money(product().deposit_amount)}}</p>
+              <button class="btn btn-reserve drawer-reserve" (click)="closeProduct();reserve(product())">Réserver ce véhicule</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    }
   `
 })
 export class PublicVehiclesComponent implements OnInit {
   vehicles = signal<any[]>([]); loading = signal(false); error = signal('');
+  product = signal<any>(null); activePhoto = signal<string | null>(null);
   departure = ''; returnDate = ''; category = ''; transmission = ''; sort = '';
 
   constructor(private auth: AuthService, private router: Router, private route: ActivatedRoute) {}
@@ -160,8 +245,20 @@ export class PublicVehiclesComponent implements OnInit {
     });
     this.loading.set(false);
     if (result.error) { this.error.set(this.auth.errorMessage(result.error)); return; }
-    this.vehicles.set(result.data ?? []);
+    const rows = await Promise.all((result.data ?? []).map(async (vehicle: any) => {
+      const paths: string[] = vehicle.photo_storage_paths ?? [];
+      const urls = await Promise.all(paths.map(async (path: string) => {
+        const signed = await this.auth.supabase().storage.from('rental-documents').createSignedUrl(path, 600);
+        return signed.data?.signedUrl ?? null;
+      }));
+      const photos = urls.filter(Boolean) as string[];
+      return { ...vehicle, photos, photoUrl: photos[0] ?? null };
+    }));
+    this.vehicles.set(rows);
   }
+
+  openProduct(vehicle: any) { this.product.set(vehicle); this.activePhoto.set(vehicle.photos?.[0] ?? null); }
+  closeProduct() { this.product.set(null); this.activePhoto.set(null); }
 
   async reserve(vehicle: any) {
     if (!this.departure || !this.returnDate) { this.error.set('Choisissez d’abord les dates et heures de départ et de retour.'); return; }

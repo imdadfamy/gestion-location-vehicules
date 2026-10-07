@@ -82,8 +82,12 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     .cat-pill:not(.active):hover{color:var(--text)}
 
     .vehicles{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-    .vehicle-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:22px;display:flex;flex-direction:column;gap:6px;transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
+    .vehicle-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;display:flex;flex-direction:column;transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
     .vehicle-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-md)}
+    .vehicle-media{height:170px;background:linear-gradient(135deg,#e7f1f3,#d4e7ea);overflow:hidden}
+    .vehicle-media img{width:100%;height:100%;object-fit:cover;display:block}
+    .vehicle-media .placeholder{display:grid;place-items:center;height:100%;font-size:2.6rem;color:#54818a}
+    .vehicle-card-body{padding:18px 22px 22px;display:flex;flex-direction:column;gap:6px}
     .badge-cat{align-self:flex-start;background:var(--primary-soft);color:var(--primary-dark);font-weight:750;font-size:.7rem;letter-spacing:.03em;text-transform:uppercase;border-radius:var(--radius-full);padding:5px 12px;margin-bottom:6px}
     .vehicle-card h3{font-size:1.08rem;font-weight:750;margin:0}
     .vehicle-card .meta{color:var(--muted);font-size:.86rem;margin:0}
@@ -229,11 +233,17 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     </div></div>
     <div class="vehicles">
       <article class="vehicle-card" *ngFor="let v of visibleVehicles(); let i = index" [appReveal]="i * 70">
-        <span class="badge-cat">{{v.category||'Véhicule'}}</span>
-        <h3>{{v.make}} {{v.model}}</h3>
-        <p class="meta">{{v.transmission==='automatic'?'Boîte automatique':v.transmission==='manual'?'Boîte manuelle':'Boîte non renseignée'}}</p>
-        <p class="price">À partir de {{money(v.rental_price)}} / jour</p>
-        <a routerLink="/vehicules" class="btn btn-outline-cta">Voir</a>
+        <div class="vehicle-media">
+          @if(v.photoUrl){<img [src]="v.photoUrl" alt="{{v.make}} {{v.model}}">}
+          @else{<div class="placeholder" aria-label="Aucune photo disponible">🚘</div>}
+        </div>
+        <div class="vehicle-card-body">
+          <span class="badge-cat">{{v.category||'Véhicule'}}</span>
+          <h3>{{v.make}} {{v.model}}</h3>
+          <p class="meta">{{v.transmission==='automatic'?'Boîte automatique':v.transmission==='manual'?'Boîte manuelle':'Boîte non renseignée'}}</p>
+          <p class="price">À partir de {{money(v.rental_price)}} / jour</p>
+          <a routerLink="/vehicules" class="btn btn-outline-cta">Voir</a>
+        </div>
       </article>
       <p *ngIf="!vehicles().length" class="empty-note">Les véhicules disponibles s'affichent ici dès qu'ils sont publiés.</p>
     </div>
@@ -374,7 +384,15 @@ export class HomeComponent implements OnInit {
     const c = await this.auth.supabase().rpc('public_company_contact');
     if (!c.error && c.data?.[0]) this.company.set(c.data[0]);
     const v = await this.auth.supabase().rpc('public_available_vehicles', {});
-    if (!v.error) this.vehicles.set((v.data ?? []).slice(0, 6));
+    if (!v.error) {
+      const rows = await Promise.all((v.data ?? []).slice(0, 6).map(async (vehicle: any) => {
+        const path = vehicle.photo_storage_paths?.[0];
+        if (!path) return { ...vehicle, photoUrl: null };
+        const signed = await this.auth.supabase().storage.from('rental-documents').createSignedUrl(path, 600);
+        return { ...vehicle, photoUrl: signed.data?.signedUrl ?? null };
+      }));
+      this.vehicles.set(rows);
+    }
   }
 
   visibleVehicles() {
