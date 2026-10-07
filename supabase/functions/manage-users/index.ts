@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
-const modules = new Set(['vehicles', 'clients', 'reservations', 'rentals', 'contracts', 'payments', 'deposits', 'inspections', 'maintenance', 'incidents', 'documents', 'notifications', 'reports', 'users', 'permissions', 'settings', 'contract_templates', 'activity_logs']);
+const modules = new Set(['vehicles', 'clients', 'reservations', 'rentals', 'contracts', 'payments', 'deposits', 'inspections', 'maintenance', 'incidents', 'documents', 'notifications', 'reports', 'users', 'permissions', 'settings', 'contract_templates', 'activity_logs', 'partners']);
 const actions = new Set(['view', 'create', 'update', 'delete', 'validate']);
 
 function normalizePermissions(input: unknown): Record<string, Record<string, boolean>> {

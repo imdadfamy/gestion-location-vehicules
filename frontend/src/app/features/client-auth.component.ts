@@ -2,8 +2,9 @@ import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
+import { DigitsOnlyDirective } from '../shared/digits-only.directive';
 
-@Component({standalone:true,imports:[FormsModule,RouterLink],styles:[`
+@Component({standalone:true,imports:[FormsModule,RouterLink,DigitsOnlyDirective],styles:[`
   :host{
     --bg:#f4f8f9;--surface:#ffffff;--border:#e1ebed;--border-strong:#cfe3e6;
     --text:#15323a;--muted:#5f7a80;
@@ -28,7 +29,7 @@ import { AuthService } from '../core/auth.service';
   .perk strong{display:block;font-size:.92rem}
   .perk span{color:#c9e4e6;font-size:.84rem}
   .auth-main{display:flex;align-items:center;justify-content:center;padding:32px 18px}
-  .auth-card{width:min(100%,460px);padding:38px;border:0;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);background:var(--surface)}
+  .auth-card{width:min(100%,460px);padding:38px;border:0;border-radius:0;box-shadow:none;background:transparent}
   .mobile-back{display:none}
   .brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
   .brand img{height:44px;width:auto;object-fit:contain;background:#fff;border-radius:var(--radius-sm);padding:4px 8px;border:1px solid var(--border);display:none}
@@ -58,6 +59,11 @@ import { AuthService } from '../core/auth.service';
     .auth-card .row{--bs-gutter-y:.75rem}
     .btn-submit{width:100%}
   }
+  @media(min-width:900px){
+    .auth-page{height:100dvh!important;overflow:hidden}
+    .auth-aside{overflow-y:auto;min-height:0}
+    .auth-main{overflow-y:auto;min-height:0}
+  }
 `],template:`
 <div class="auth-page">
   <aside class="auth-aside">
@@ -71,7 +77,7 @@ import { AuthService } from '../core/auth.service';
   </aside>
   <main class="auth-main">
     <a class="mobile-back" routerLink="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Retour à l'accueil</a>
-    <section class="card auth-card">
+    <section class="auth-card">
       <div class="brand"><img src="/fima-auto-logo.jpg" alt="Logo FIMA AUTO"></div>
       <h1 class="h3">{{register()?'Créer mon compte client':'Espace client'}}</h1>
       <p class="text-muted">{{register()?'Créez votre accès pour réserver un véhicule en ligne.':'Connectez-vous pour suivre vos réservations et signer votre contrat.'}}</p>
@@ -81,7 +87,7 @@ import { AuthService } from '../core/auth.service';
         <div class="row g-3">
           <div class="col-md-6"><label>Prénom <span class="required">*</span></label><input class="form-control" autocomplete="given-name" required [(ngModel)]="firstName"></div>
           <div class="col-md-6"><label>Nom <span class="required">*</span></label><input class="form-control" autocomplete="family-name" required [(ngModel)]="lastName"></div>
-          <div class="col-12"><label>Téléphone <span class="required">*</span></label><input class="form-control" type="tel" autocomplete="tel" required [(ngModel)]="phone"></div>
+          <div class="col-12"><label>Téléphone <span class="required">*</span></label><input class="form-control" type="tel" inputmode="numeric" autocomplete="tel" required appDigitsOnly [(ngModel)]="phone"></div>
         </div>
       }
       <div class="mt-3"><label>E-mail <span class="required">*</span></label><input class="form-control" type="email" autocomplete="email" required [(ngModel)]="email"></div>
@@ -93,6 +99,7 @@ import { AuthService } from '../core/auth.service';
       </div>
       <button class="btn btn-submit text-white w-100 mt-4" [disabled]="loading()" (click)="submit()">{{loading()?'Traitement…':register()?'Créer mon compte':'Se connecter'}}</button>
       <p class="switch-line text-center mt-3 mb-0">@if(register()){Déjà inscrit ? <a routerLink="/client/login">Se connecter</a>}@else{Nouveau client ? <a routerLink="/client/register">Créer un compte</a>}</p>
+      <p class="switch-line text-center mt-2 mb-0 small">Vous êtes propriétaire d'un véhicule ? <a routerLink="/partner/login">Devenir partenaire</a></p>
     </section>
   </main>
 </div>

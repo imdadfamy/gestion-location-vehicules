@@ -7,8 +7,8 @@ import { AuthService } from '../core/auth.service';
   standalone: true,
   imports: [FormsModule],
   styles: [`
-    .invite{min-height:100vh;display:grid;place-items:center;padding:16px;background:linear-gradient(135deg,#062b35,#0792a4)}
-    .invite-card{width:min(100%,470px);background:#fff;border-radius:24px;padding:28px;box-shadow:0 22px 60px rgba(0,0,0,.24)}
+    .invite{height:100dvh;overflow:hidden;display:grid;place-items:center;padding:16px;background:linear-gradient(135deg,#062b35,#0792a4)}
+    .invite-card{width:min(100%,470px);max-height:calc(100dvh - 32px);overflow-y:auto;background:#fff;border-radius:24px;padding:28px;box-shadow:0 22px 60px rgba(0,0,0,.24)}
     .invite-card img{height:54px;width:auto;margin-bottom:12px}
     .invite-card span{font-size:.72rem;letter-spacing:.13em;color:#0792a4;font-weight:800}
     .invite-card h1{font-size:1.55rem;margin:.3rem 0}

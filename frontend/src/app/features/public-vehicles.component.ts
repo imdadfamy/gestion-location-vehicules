@@ -26,7 +26,9 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     .reveal-visible{opacity:1;transform:none}
     @media (prefers-reduced-motion: reduce){.reveal{transition:none;opacity:1;transform:none}}
 
-    .topbar{position:sticky;top:0;z-index:40;background:rgba(18,57,67,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08);color:#fff;padding:12px 5%;display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+    .topbar{position:fixed;top:0;left:0;right:0;width:100%;z-index:40;color:#fff;padding:12px 5%;display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+    .topbar::before{content:'';position:absolute;inset:0;z-index:-1;background:rgba(18,57,67,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)}
+    .header-spacer{height:78px}
     .logo{display:block;height:48px;width:auto;object-fit:contain;background:#fff;border-radius:var(--radius-sm);padding:6px 10px;box-shadow:var(--shadow-sm)}
     .nav{display:flex;flex-wrap:wrap;gap:10px 14px;margin-left:auto;align-items:center}
     .nav a:not(.btn){color:rgba(255,255,255,.88);text-decoration:none;font-weight:600;font-size:.92rem;transition:color .2s var(--ease)}
@@ -68,11 +70,12 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
 
     @media(max-width:900px){.filters{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr 1fr}}
     @media(max-width:560px){
-      .topbar{justify-content:center;padding:14px 5%}
+      .topbar{padding:10px 4%;gap:8px}
       .nav a:not(.btn){display:none}
-      .nav{flex:0 0 100%;justify-content:center}
-      .nav .btn{flex:1 1 0;text-align:center;white-space:nowrap}
-      .logo{height:44px}
+      .nav{gap:8px}
+      .nav .btn{padding:.42rem .85rem;font-size:.8rem;white-space:nowrap}
+      .logo{height:38px}
+      .header-spacer{height:60px}
     }
     @media(max-width:600px){.filters{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
   `],
@@ -86,6 +89,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
           <a routerLink="/client/register" class="btn btn-pill btn-light btn-sm">Créer un compte</a>
         </nav>
       </header>
+      <div class="header-spacer" aria-hidden="true"></div>
       <div class="wrap">
         <div class="page-heading" appReveal><p class="eyebrow">CATALOGUE</p><h1>Nos véhicules disponibles</h1><p>Choisissez vos dates pour voir les véhicules réellement disponibles. La connexion n'est demandée qu'au moment de réserver.</p></div>
 

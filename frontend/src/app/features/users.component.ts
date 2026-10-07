@@ -38,7 +38,7 @@ export class UsersComponent implements OnInit {
   users = signal<any[]>([]); invite = signal<any>(null); editing = signal<any>(null); error = signal(''); message = signal(''); saving = signal(false);
   permissions: Record<string, Record<string, boolean>> = {};
   actions = ['view', 'create', 'update', 'delete', 'validate'];
-  modules = [['vehicles', 'Véhicules'], ['clients', 'Clients'], ['reservations', 'Réservations'], ['rentals', 'Locations'], ['contracts', 'Contrats'], ['payments', 'Paiements'], ['deposits', 'Cautions'], ['inspections', 'Inspections'], ['maintenance', 'Maintenance'], ['incidents', 'Incidents'], ['documents', 'Documents'], ['notifications', 'Notifications'], ['reports', 'Rapports'], ['contract_templates', 'Modèles de contrat'], ['activity_logs', 'Journal']].map(([key, label]) => ({ key, label }));
+  modules = [['vehicles', 'Véhicules'], ['clients', 'Clients'], ['reservations', 'Réservations'], ['rentals', 'Locations'], ['contracts', 'Contrats'], ['payments', 'Paiements'], ['deposits', 'Cautions'], ['inspections', 'Inspections'], ['maintenance', 'Maintenance'], ['incidents', 'Incidents'], ['documents', 'Documents'], ['notifications', 'Notifications'], ['reports', 'Rapports'], ['contract_templates', 'Modèles de contrat'], ['activity_logs', 'Journal'], ['partners', 'Partenaires']].map(([key, label]) => ({ key, label }));
   constructor(private auth: AuthService) {}
   ngOnInit() { this.load(); }
   internalUsers() { return this.users().filter(user => user.role === 'super_admin' || user.role === 'responsable'); }

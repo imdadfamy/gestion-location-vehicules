@@ -1,12 +1,13 @@
 ﻿import { Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../core/auth.service';
+import { DigitsOnlyDirective } from '../shared/digits-only.directive';
 
 type DocumentKind = 'identity_document' | 'driving_license';
 
 @Component({
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, DigitsOnlyDirective],
   styles: [`
     .form-card { max-width:980px; }
     .form-card label { display:block; font-size:.88rem; font-weight:700; margin-bottom:6px; }
@@ -36,7 +37,7 @@ type DocumentKind = 'identity_document' | 'driving_license';
         <h2 class="h6 mt-2">Identité</h2><div class="row g-3">
           <div class="col-md-6"><label>Prénom <span class="required">*</span></label><input class="form-control" [(ngModel)]="form()!.first_name"></div>
           <div class="col-md-6"><label>Nom <span class="required">*</span></label><input class="form-control" [(ngModel)]="form()!.last_name"></div>
-          <div class="col-md-6"><label>Téléphone <span class="required">*</span></label><input class="form-control" type="tel" autocomplete="tel" required [(ngModel)]="form()!.phone"></div>
+          <div class="col-md-6"><label>Téléphone <span class="required">*</span></label><input class="form-control" type="tel" inputmode="numeric" autocomplete="tel" required appDigitsOnly [(ngModel)]="form()!.phone"></div>
           <div class="col-md-6"><label>E-mail</label><input class="form-control" type="email" [(ngModel)]="form()!.email"></div>
           <div class="col-md-4"><label>Type de pièce</label><select class="form-select" [(ngModel)]="form()!.id_document_type"><option value="">Sélectionner</option><option value="CNI">CNI</option><option value="Passeport">Passeport</option><option value="Carte de séjour">Carte de séjour</option></select></div>
           <div class="col-md-4"><label>Numéro de pièce</label><input class="form-control" [(ngModel)]="form()!.id_document_number"></div>
@@ -46,7 +47,7 @@ type DocumentKind = 'identity_document' | 'driving_license';
           <div class="col-md-4"><label>Date de délivrance</label><input class="form-control" type="date" [(ngModel)]="form()!.driving_license_issue_date"></div>
           <div class="col-md-4"><label>Expiration du permis</label><input class="form-control" type="date" [(ngModel)]="form()!.driving_license_expiry_date"></div>
           <div class="col-md-6"><label>Contact d’urgence</label><input class="form-control" [(ngModel)]="form()!.emergency_contact_name"></div>
-          <div class="col-md-6"><label>Numéro d’urgence</label><input class="form-control" [(ngModel)]="form()!.emergency_contact_phone"></div>
+          <div class="col-md-6"><label>Numéro d’urgence</label><input class="form-control" type="tel" inputmode="numeric" appDigitsOnly [(ngModel)]="form()!.emergency_contact_phone"></div>
         </div>
 
         <hr><h2 class="h6">Pièces justificatives</h2>

@@ -21,6 +21,7 @@ import { AuthService } from '../core/auth.service';
         @if(a.can('inspections')){<a routerLink="/inspections" routerLinkActive="active"><i>⌕</i><span>Inspections</span></a>}
         @if(a.can('maintenance')){<a routerLink="/maintenance" routerLinkActive="active"><i>✦</i><span>Maintenance</span></a>}
         @if(a.can('incidents')){<a routerLink="/incidents" routerLinkActive="active"><i>!</i><span>Incidents</span></a>}
+        @if(a.can('partners')){<a routerLink="/partners" routerLinkActive="active"><i>◈</i><span>Partenaires</span></a>}
       </nav>
       <p class="nav-label secondary">PILOTAGE</p>
       <nav class="nav-menu" (click)="closeMenu()">

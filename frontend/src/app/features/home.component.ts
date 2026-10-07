@@ -27,7 +27,9 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     @media (prefers-reduced-motion: reduce){.reveal{transition:none;opacity:1;transform:none}}
 
     /* ---------- header ---------- */
-    .topbar{position:sticky;top:0;z-index:40;background:rgba(18,57,67,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08);color:#fff;padding:12px 5%;display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px}
+    .topbar{position:fixed;top:0;left:0;right:0;width:100%;z-index:40;color:#fff;padding:12px 5%;display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px}
+    .topbar::before{content:'';position:absolute;inset:0;z-index:-1;background:rgba(18,57,67,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)}
+    .header-spacer{height:78px}
     .brand{display:flex;align-items:center}
     .logo{display:block;height:48px;width:auto;object-fit:contain;background:#fff;border-radius:var(--radius-sm);padding:6px 10px;box-shadow:var(--shadow-sm)}
     .nav{display:flex;flex-wrap:wrap;gap:10px 18px;margin-left:auto;align-items:center}
@@ -51,11 +53,12 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     .search-card .field label{font-size:.72rem;font-weight:800;letter-spacing:.03em;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase}
     .search-card .form-control,.search-card .form-select{border-radius:var(--radius-sm);border:1px solid var(--border-strong);min-height:46px;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
     .search-card .form-control:focus,.search-card .form-select:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--ring)}
-    .btn-primary-cta{background:var(--primary);border:1px solid var(--primary);border-radius:var(--radius-sm);font-weight:700;padding:0 22px;min-height:46px;transition:background-color .2s var(--ease),transform .15s var(--ease),box-shadow .2s var(--ease);box-shadow:0 8px 18px rgba(7,146,164,.3)}
+    .btn-primary-cta{display:inline-flex;align-items:center;justify-content:center;background:var(--primary);border:1px solid var(--primary);border-radius:var(--radius-sm);font-weight:700;padding:0 22px;min-height:46px;transition:background-color .2s var(--ease),transform .15s var(--ease),box-shadow .2s var(--ease);box-shadow:0 8px 18px rgba(7,146,164,.3)}
     .btn-primary-cta:hover{background:var(--primary-dark);border-color:var(--primary-dark);box-shadow:0 10px 22px rgba(7,146,164,.38)}
     .btn-primary-cta:active{transform:scale(.97)}
 
     /* ---------- sections ---------- */
+    .section,.cta{scroll-margin-top:90px}
     .section{max-width:1180px;margin:auto;padding:76px 5%}
     .section-head{text-align:center;max-width:620px;margin:0 auto 38px}
     .section-head .kicker{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.14em;color:var(--primary);text-transform:uppercase;margin-bottom:8px}
@@ -109,8 +112,21 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     .faq details[open] summary::after{transform:rotate(-135deg)}
     .faq details p{margin:0;padding:0 22px 18px;color:var(--muted)}
 
+    /* partner section */
+    .partner-hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;margin-bottom:60px}
+    .partner-hero-text p{color:var(--muted);font-size:1.02rem;max-width:480px;margin:14px 0 26px}
+    .partner-hero-media{border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg)}
+    .partner-hero-media img{width:100%;height:100%;object-fit:cover;display:block;aspect-ratio:4/3}
+    .partner-steps-wrap{position:relative;border-radius:var(--radius-lg);padding:52px 5%;margin-bottom:60px;background:linear-gradient(135deg,rgba(18,57,67,.86),rgba(7,112,127,.8)),url('/partner-steps-bg.jpg') center/cover no-repeat;box-shadow:var(--shadow-lg)}
+    .partner-steps-wrap .section-head .kicker{color:#bfe9ef}
+    .partner-steps-wrap .section-head h2{color:#fff}
+    .partner-steps-wrap .section-head p{color:#d7eef0}
+    .partner-steps-wrap .step{background:rgba(255,255,255,.97)}
+    .partner-grid{margin-bottom:60px}
+
     /* cta */
     .cta{margin:0 5% 70px;padding:52px 5%;text-align:center;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--petrol),#1c6c7d);color:#fff;box-shadow:var(--shadow-lg)}
+    .cta-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:8px}
     .cta h2{font-weight:800;margin-bottom:18px}
 
     /* footer */
@@ -119,20 +135,23 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     .footer .logo{background:#fff}
     .footer p{color:#9fb9bc;margin:10px 0 0;font-size:.9rem}
     .footer h4{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:#7fa3a6;margin-bottom:14px}
-    .footer a{position:relative;display:inline-block;color:#c9dee0;text-decoration:none;margin:6px 0;font-size:.92rem;transition:color .2s var(--ease)}
+    .footer a{position:relative;display:block;color:#c9dee0;text-decoration:none;margin:6px 0;font-size:.92rem;transition:color .2s var(--ease)}
     .footer a:hover{color:#fff}
     .footer-bottom{max-width:1180px;margin:30px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);font-size:.8rem;color:#6d8c8f;text-align:center}
 
-    @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.vehicles{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:1fr}}
+    @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.vehicles{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:1fr}.partner-hero{grid-template-columns:1fr}.partner-hero-media{order:-1}.partner-hero-media img{aspect-ratio:16/9}}
     @media(max-width:800px){.nav-link{display:none}}
     @media(max-width:560px){
-      .topbar{justify-content:center;padding:14px 5%}
-      .brand{flex:0 0 100%;justify-content:center}
-      .nav{flex:0 0 100%;justify-content:center}
-      .nav .btn-pill{flex:1 1 0;text-align:center;white-space:nowrap}
-      .logo{height:44px}
+      .topbar{padding:10px 4%;gap:8px}
+      .logo{height:38px}
+      .nav{gap:8px}
+      .nav .btn-pill{padding:.42rem .85rem;font-size:.8rem;white-space:nowrap}
+      .header-spacer{height:60px}
     }
-    @media(max-width:600px){.search-card{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.vehicles{grid-template-columns:1fr}.footer{grid-template-columns:1fr;text-align:left}.hero{padding:48px 5% 110px}}
+    @media(max-width:360px){
+      .nav .btn-pill{padding:.38rem .65rem;font-size:.74rem}
+    }
+    @media(max-width:600px){.search-card{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.vehicles{grid-template-columns:1fr}.footer{grid-template-columns:1fr;text-align:left}.hero{padding:48px 5% 110px}.cta-actions{flex-direction:column;align-items:stretch}.cta-actions .btn{width:100%}}
   `],
   template: `
 <main class="landing">
@@ -142,10 +161,12 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
       <a class="nav-link" href="#vehicles">Véhicules</a>
       <a class="nav-link" href="#how">Comment ça marche</a>
       <a class="nav-link" href="#contact">Contact</a>
+      <a class="nav-link" href="#partners">Partenaires</a>
       <a routerLink="/client/login" class="btn btn-pill btn-ghost-light btn-sm">Se connecter</a>
       <a routerLink="/client/register" class="btn btn-pill btn-solid-light btn-sm">Créer un compte</a>
     </nav>
   </header>
+  <div class="header-spacer" aria-hidden="true"></div>
 
   <section class="hero">
     <div class="hero-inner">
@@ -246,16 +267,81 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     </div>
   </section>
 
+  <section class="section" id="partners">
+    <div class="partner-hero" appReveal>
+      <div class="partner-hero-text">
+        <span class="kicker">Devenez partenaire</span>
+        <h2>Rentabilisez votre véhicule inutilisé</h2>
+        <p>Proposez votre véhicule avec vos photos et le prix que vous souhaitez toucher. Nous l'évaluons, le publions et vous reversons votre part à chaque location.</p>
+        <a routerLink="/partner/register" class="btn btn-primary-cta text-white">Devenir partenaire</a>
+      </div>
+      <div class="partner-hero-media"><img src="/partner-hero.jpg" alt="Remise de clés entre un partenaire et un client FIMA AUTO"></div>
+    </div>
+
+    <div class="partner-steps-wrap">
+      <div class="section-head" appReveal>
+        <span class="kicker">Comment ça marche</span>
+        <h2>De votre véhicule à vos revenus</h2>
+      </div>
+      <div class="steps">
+        <article class="step" appReveal="0"><span class="num">01</span>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10 12 2 4 10v10h6v-6h4v6h6V10Z"/></svg></div>
+          <h3>Proposez</h3><p>Photos, conditions et prix souhaité.</p>
+        </article>
+        <article class="step" appReveal="100"><span class="num">02</span>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <h3>On évalue</h3><p>Prix et état du véhicule vérifiés.</p>
+        </article>
+        <article class="step" appReveal="200"><span class="num">03</span>
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 10h3.8a1.7 1.7 0 1 1 0 3.4H9.5"/></svg></div>
+          <h3>Vous touchez vos revenus</h3><p>À chaque location, automatiquement suivi.</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="grid partner-grid">
+      <article class="cardx" appReveal="0">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <h3>Revenu sans effort</h3><p>Vous fixez votre prix, on gère le reste.</p>
+      </article>
+      <article class="cardx" appReveal="80">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16M7 16l9-9 3 3-9 9H7v-3Z"/></svg></div>
+        <h3>Contrats pris en charge</h3><p>Signatures et formalités gérées par nous.</p>
+      </article>
+      <article class="cardx" appReveal="160">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <h3>Vous gardez le contrôle</h3><p>Déclarez une maintenance à tout moment.</p>
+      </article>
+      <article class="cardx" appReveal="240">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+        <h3>Suivi en temps réel</h3><p>Vos locations et revenus dans votre espace.</p>
+      </article>
+    </div>
+
+    <div class="section-head" appReveal>
+      <span class="kicker">Questions fréquentes</span>
+      <h2>Pour les partenaires</h2>
+    </div>
+    <div class="faq" appReveal>
+      <details><summary>Comment est fixé le prix final ?</summary><p>Vous indiquez le prix que vous souhaitez toucher ; nous ajoutons notre marge pour fixer le prix affiché au client.</p></details>
+      <details><summary>Comment et quand suis-je payé ?</summary><p>Vous suivez vos locations et vos revenus directement depuis votre espace partenaire.</p></details>
+      <details><summary>Quels documents dois-je fournir ?</summary><p>Les photos du véhicule et ses informations ; le reste est géré lors de l'évaluation.</p></details>
+      <details><summary>Puis-je retirer mon véhicule à tout moment ?</summary><p>Oui, contactez l'agence pour toute demande de retrait.</p></details>
+    </div>
+  </section>
+
   <section class="cta" id="contact" appReveal>
     <h2 class="h3">Prêt à partir ?</h2>
-    <a routerLink="/client/register" class="btn btn-pill btn-solid-light me-2">Créer mon compte</a>
-    <a [href]="whatsappLink()" target="_blank" class="btn btn-pill btn-ghost-light">Nous contacter sur WhatsApp</a>
+    <div class="cta-actions">
+      <a routerLink="/client/register" class="btn btn-pill btn-solid-light">Créer mon compte</a>
+      <a [href]="whatsappLink()" target="_blank" class="btn btn-pill btn-ghost-light">Nous contacter sur WhatsApp</a>
+    </div>
   </section>
 
   <footer class="footer-wrap">
     <div class="footer">
       <div><img class="logo" src="/logo.jpg" alt="FIMA AUTO"><p>Location de véhicules, mobilités premium.</p></div>
-      <div><h4>Liens</h4><a href="#vehicles">Véhicules</a><a href="#how">FAQ</a><a href="#contact">Contact</a></div>
+      <div><h4>Liens</h4><a href="#vehicles">Véhicules</a><a href="#how">FAQ</a><a href="#contact">Contact</a><a routerLink="/partner/login">Espace partenaire</a></div>
       <div>
         <h4>Contact</h4>
         <p>Téléphone : {{company().phone||'Non renseigné'}}</p>
