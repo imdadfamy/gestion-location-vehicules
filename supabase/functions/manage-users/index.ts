@@ -36,7 +36,8 @@ Deno.serve(async (request) => {
     if (body.action === 'invite') {
       if (typeof body.email !== 'string' || !/^\S+@\S+\.\S+$/.test(body.email) || typeof body.full_name !== 'string' || !body.full_name.trim()) throw new Error('Nom complet et e-mail valides sont requis.');
       const permissions = normalizePermissions(body.permissions);
-      const { data, error } = await admin.auth.admin.inviteUserByEmail(body.email, { data: { full_name: body.full_name } });
+      const redirectTo = typeof body.redirect_to === 'string' && body.redirect_to.trim() ? body.redirect_to.trim() : undefined;
+      const { data, error } = await admin.auth.admin.inviteUserByEmail(body.email, { data: { full_name: body.full_name }, redirectTo });
       if (error) throw new Error(error.message);
       const { error: updateError } = await admin.from('profiles').update({ full_name: body.full_name.trim(), email: body.email.trim().toLowerCase(), role: 'responsable', is_active: true, permissions }).eq('id', data.user.id);
       if (updateError) throw new Error(updateError.message);
@@ -49,6 +50,16 @@ Deno.serve(async (request) => {
       const { data, error } = await admin.from('profiles').update(values).eq('id', body.user_id).eq('role', 'responsable').select('id').maybeSingle();
       if (error) throw new Error(error.message);
       if (!data) throw new Error('Le compte Responsable demandé est introuvable.');
+      return Response.json({ ok: true }, { headers: cors });
+    }
+    if (body.action === 'delete') {
+      if (typeof body.user_id !== 'string') throw new Error('Utilisateur requis.');
+      if (body.user_id === user.id) throw new Error('Vous ne pouvez pas supprimer votre propre compte.');
+      const { data: target, error: targetError } = await admin.from('profiles').select('role').eq('id', body.user_id).single();
+      if (targetError || !target) throw new Error('Ce compte est introuvable.');
+      if (target.role !== 'responsable' && target.role !== 'client') throw new Error('Seuls les comptes Responsable ou Client peuvent être supprimés ici.');
+      const { error: deleteError } = await admin.auth.admin.deleteUser(body.user_id);
+      if (deleteError) throw new Error(deleteError.message);
       return Response.json({ ok: true }, { headers: cors });
     }
     if (body.action === 'update_client_access') {

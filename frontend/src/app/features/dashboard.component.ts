@@ -48,9 +48,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       { label: 'Locations en cours', value: rs.filter(item => ['active', 'overdue'].includes(item.status)).length, detail: 'En cours ou en retard', icon: '▣', tone: 'blue' },
       { label: 'Locations à venir', value: rs.filter(item => item.status === 'pending' && new Date(item.departure_date).getTime() > now).length, detail: 'À préparer', icon: '↗', tone: 'violet' },
       { label: 'Contrats à signer', value: (contracts.data ?? []).length, detail: 'En attente de signature', icon: '▤', tone: 'gold' },
-      { label: 'CA aujourd’hui', value: `${sum(today.getTime()).toLocaleString('fr-FR')} FCFA`, detail: 'Encaissements du jour', icon: '₣', tone: 'teal' },
-      { label: 'CA du mois', value: `${sum(new Date(today.getFullYear(), today.getMonth(), 1).getTime()).toLocaleString('fr-FR')} FCFA`, detail: 'Depuis le 1er', icon: '₣', tone: 'teal' },
-      { label: 'CA de l’année', value: `${sum(new Date(today.getFullYear(), 0, 1).getTime()).toLocaleString('fr-FR')} FCFA`, detail: 'Encaissements annuels', icon: '₣', tone: 'teal' }
+      { label: 'CA aujourd’hui', value: `${sum(today.getTime()).toLocaleString('fr-FR').replace(/\\u202f/g, ' ')} FCFA`, detail: 'Encaissements du jour', icon: '₣', tone: 'teal' },
+      { label: 'CA du mois', value: `${sum(new Date(today.getFullYear(), today.getMonth(), 1).getTime()).toLocaleString('fr-FR').replace(/\\u202f/g, ' ')} FCFA`, detail: 'Depuis le 1er', icon: '₣', tone: 'teal' },
+      { label: 'CA de l’année', value: `${sum(new Date(today.getFullYear(), 0, 1).getTime()).toLocaleString('fr-FR').replace(/\\u202f/g, ' ')} FCFA`, detail: 'Encaissements annuels', icon: '₣', tone: 'teal' }
     ]);
     this.priorities.set([
       { label: 'Contrats à signer', count: (contracts.data ?? []).length, detail: 'À faire signer pour démarrer les locations', path: '/contracts', tone: 'gold' },

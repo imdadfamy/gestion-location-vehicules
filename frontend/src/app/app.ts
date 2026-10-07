@@ -1,5 +1,7 @@
 import { AfterViewInit, Component, OnDestroy } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { filter } from 'rxjs';
 
 @Component({ imports: [RouterOutlet], selector: 'app-root', styleUrl: './app.scss', template: '<router-outlet />' })
 export class App implements AfterViewInit, OnDestroy {
@@ -10,6 +12,14 @@ export class App implements AfterViewInit, OnDestroy {
     'Prix total', 'Caution', 'Location', 'Montant', 'Date', 'Type',
     'Description', 'Statut', 'Nom de l’entreprise', 'Nom complet', 'E-mail professionnel'
   ]);
+  constructor(router: Router, title: Title) {
+    router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe((event) => {
+      const url = (event as NavigationEnd).urlAfterRedirects;
+      const labels: Record<string, string> = { '/': 'Accueil', '/client/vehicles': 'Véhicules disponibles', '/client/reservations': 'Mes réservations', '/client/contracts': 'Mes contrats', '/client/inspections': 'Mes inspections', '/client/account': 'Mon profil', '/login': 'Connexion' };
+      const key = Object.keys(labels).find(path => url === path || (path !== '/' && url.startsWith(path)));
+      title.setTitle(`${labels[key ?? ''] ?? 'Gestion de flotte'} – FIMA AUTO`);
+    });
+  }
   ngAfterViewInit() {
     this.markRequired();
     this.observer = new MutationObserver(() => this.markRequired());

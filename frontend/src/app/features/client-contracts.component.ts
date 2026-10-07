@@ -10,6 +10,19 @@ import { AuthService } from '../core/auth.service';
   imports: [DatePipe, FormsModule, RouterLink],
   styles: [`
     .contract-preview { background:#fff; border-radius:18px; padding:28px; box-shadow:0 10px 32px rgba(11,50,58,.10); }
+    .stepper{display:flex;align-items:center;gap:0;margin:4px 0 26px;max-width:460px}
+    .step-item{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto}
+    .step-dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.9rem;background:#eaf2f3;color:#7e9398;border:2px solid #dfeaec;transition:all .25s ease}
+    .step-label{font-size:.72rem;font-weight:700;color:#8198a0;white-space:nowrap;text-align:center}
+    .step-item.active .step-dot{background:#0792a4;border-color:#0792a4;color:#fff;box-shadow:0 0 0 4px rgba(7,146,164,.18)}
+    .step-item.active .step-label{color:#0b2429}
+    .step-item.done .step-dot{background:#0b7180;border-color:#0b7180;color:#fff}
+    .step-item.done .step-dot::after{content:'✓'}
+    .step-item.done .step-dot{font-size:0}
+    .step-item.done .step-dot::after{font-size:.95rem}
+    .step-line{flex:1 1 32px;height:2px;background:#dfeaec;margin:0 6px 20px;transition:background-color .25s ease}
+    .step-line.done{background:#0b7180}
+    @media(max-width:500px){.stepper{max-width:100%}.step-label{display:none}.step-line{margin-bottom:0}}
     .review-grid { row-gap:1.15rem; }
     .review-card { background:#f3f8f8; border-radius:14px; padding:18px; min-height:120px; line-height:1.55; }
     .review-card strong { display:block; margin-bottom:6px; color:#18323b; }
@@ -45,6 +58,12 @@ import { AuthService } from '../core/auth.service';
           <div><span class="eyebrow">DOSSIER À SIGNER</span><h2 class="h3">{{ title() }}</h2></div>
           <span class="badge text-bg-warning">En attente de votre signature</span>
         </div>
+        <nav class="stepper" aria-label="Étapes du contrat">
+          @for (item of stepperItems; track item.n) {
+            <div class="step-item" [class.active]="step()===item.n" [class.done]="step()>item.n"><span class="step-dot">{{item.n}}</span><span class="step-label">{{item.label}}</span></div>
+            @if (item.n < 3) { <div class="step-line" [class.done]="step()>item.n"></div> }
+          }
+        </nav>
 
         @if (step() === 1) {
           <p>Complétez ou corrigez vos informations avant la signature. Elles seront intégrées au contrat.</p>
@@ -77,6 +96,12 @@ import { AuthService } from '../core/auth.service';
     } @else if (contract()) {
       <section class="contract-preview">
         <div class="d-flex justify-content-between flex-wrap gap-2"><div><span class="eyebrow">CONTRAT N° {{ contract().contract_number }}</span><h2 class="h3">{{ title() }}</h2></div><span class="badge" [class.text-bg-warning]="contract().status === 'pending_signature'" [class.text-bg-success]="contract().status === 'signed'">{{ contract().status === 'signed' ? 'Finalisé' : 'En attente de signature' }}</span></div>
+        <nav class="stepper" aria-label="Étapes du contrat">
+          @for (item of stepperItems; track item.n) {
+            <div class="step-item" [class.active]="step()===item.n" [class.done]="step()>item.n"><span class="step-dot">{{item.n}}</span><span class="step-label">{{item.label}}</span></div>
+            @if (item.n < 3) { <div class="step-line" [class.done]="step()>item.n"></div> }
+          }
+        </nav>
         @if (step() === 1) {
           <p>Vos informations peuvent être complétées ou corrigées avant la signature.</p><a class="btn btn-outline-primary" routerLink="/client/account">Compléter mes informations</a><button class="btn btn-primary ms-2" [disabled]="saving()" (click)="refreshContract()">{{ saving() ? 'Actualisation…' : 'Suivant : vérifier la location' }}</button>
         }
@@ -110,6 +135,7 @@ export class ClientContractsComponent implements OnInit, AfterViewInit, OnDestro
   contract = signal<any>(null); historyContracts = signal<any[]>([]); reservation = signal<any>(null); client = signal<any>({}); documents = signal<any[]>([]);
   step = signal(1); loading = signal(false); saving = signal(false); error = signal(''); message = signal(''); clientSigned = signal(false);
   correction = ''; pad?: SignaturePad;
+  readonly stepperItems = [{ n: 1, label: 'Mes informations' }, { n: 2, label: 'Vérification' }, { n: 3, label: 'Signature' }];
 
   constructor(private auth: AuthService) {}
   async ngOnInit() { await this.load(); }

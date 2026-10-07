@@ -58,6 +58,12 @@ html,body{background:var(--app-bg);color:var(--app-text)}
 .page .table-responsive::-webkit-scrollbar-thumb{background:var(--app-accent);border-radius:999px}
 .page .table td,.page .table th{vertical-align:middle}
 .page .table td:last-child,.page .table th:last-child{white-space:nowrap}
+.app-table tbody tr{transition:background-color .15s ease}
+.app-table tbody tr:hover{background:var(--app-accent-soft)}
+.badge{border-radius:999px;font-weight:700;letter-spacing:.01em;padding:.42em .78em}
+.btn{transition:transform .15s ease,box-shadow .2s ease,background-color .2s ease,border-color .2s ease}
+.btn:active{transform:scale(.97)}
+.form-card,.app-table,.card{transition:box-shadow .2s ease}
 .modal-content{border:1px solid var(--app-border);border-radius:18px;background:var(--app-surface);color:var(--app-text);box-shadow:0 24px 60px rgba(0,0,0,.22)}
 .modal-header,.modal-footer{border-color:var(--app-border)}
 .modal-header{background:var(--app-surface-soft)}

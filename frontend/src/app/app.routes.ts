@@ -29,8 +29,14 @@ import { ClientReservationsComponent } from './features/client-reservations.comp
 import { ClientAccountComponent } from './features/client-account.component';
 import { ClientContractsComponent } from './features/client-contracts.component';
 import { ClientInspectionsComponent } from './features/client-inspections.component';
+import { HomeComponent } from './features/home.component';
+import { PublicVehiclesComponent } from './features/public-vehicles.component';
+import { InviteComponent } from './features/invite.component';
 
 export const routes: Routes = [
+ {path:'', component:HomeComponent},
+ {path:'vehicules', component:PublicVehiclesComponent},
+ {path:'invite', component:InviteComponent},
  {path:'login', component:LoginComponent},
  {path:'client/login', component:ClientAuthComponent},
  {path:'client/register', component:ClientAuthComponent},

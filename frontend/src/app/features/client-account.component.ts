@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
+﻿import { Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../core/auth.service';
 
@@ -10,8 +10,11 @@ type DocumentKind = 'identity_document' | 'driving_license';
   styles: [`
     .form-card { max-width:980px; }
     .form-card label { display:block; font-size:.88rem; font-weight:700; margin-bottom:6px; }
-    .form-card .form-control { min-height:45px; }
-    .document-card { border:1px solid #dce8ea; border-radius:14px; padding:14px; background:#f8fbfb; }
+    .form-card .form-control { min-height:45px; border-radius:12px; transition:border-color .2s ease,box-shadow .2s ease; }
+    .form-card .form-control:focus { border-color:#0792a4; box-shadow:0 0 0 4px rgba(7,146,164,.15); }
+    .progress{border-radius:999px;overflow:hidden}.progress-bar{background:#0792a4}
+    .document-card { border:1px solid #dce8ea; border-radius:14px; padding:14px; background:#f8fbfb; transition:box-shadow .2s ease; }
+    .document-card:hover{box-shadow:0 8px 20px rgba(16,47,56,.08)}
     .document-name { overflow-wrap:anywhere; font-size:.92rem; }
     .document-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
     @media(max-width:575px) {
@@ -24,22 +27,22 @@ type DocumentKind = 'identity_document' | 'driving_license';
     }
   `],
   template: `
-    <div class="page-heading"><div><p class="eyebrow">MON DOSSIER</p><h1>Mes informations</h1><p>Ces informations restent modifiables et compléteront votre contrat.</p></div></div>
+    <div class="page-heading"><div><p class="eyebrow">MON DOSSIER</p><h1>Mes informations</h1><p>Ces informations restent modifiables et compléteront votre contrat.</p><div class="progress mt-3" style="height:10px"><div class="progress-bar" role="progressbar" [style.width.%]="completionPercent()" [attr.aria-valuenow]="completionPercent()" aria-valuemin="0" aria-valuemax="100"></div></div><p class="small text-muted mt-1">Dossier complet : {{completionPercent()}} %</p></div></div>
     @if (error()) { <div class="alert alert-danger">{{ error() }}</div> }
     @if (message()) { <div class="alert alert-success">{{ message() }}</div> }
     @if (loading()) { <div class="empty-state">Chargement de votre dossier…</div> }
     @else if (form()) {
       <section class="card form-card"><div class="card-body">
-        <div class="row g-3">
+        <h2 class="h6 mt-2">Identité</h2><div class="row g-3">
           <div class="col-md-6"><label>Prénom <span class="required">*</span></label><input class="form-control" [(ngModel)]="form()!.first_name"></div>
           <div class="col-md-6"><label>Nom <span class="required">*</span></label><input class="form-control" [(ngModel)]="form()!.last_name"></div>
-          <div class="col-md-6"><label>Téléphone <span class="required">*</span></label><input class="form-control" [(ngModel)]="form()!.phone"></div>
+          <div class="col-md-6"><label>Téléphone <span class="required">*</span></label><input class="form-control" type="tel" autocomplete="tel" required [(ngModel)]="form()!.phone"></div>
           <div class="col-md-6"><label>E-mail</label><input class="form-control" type="email" [(ngModel)]="form()!.email"></div>
-          <div class="col-md-4"><label>Type de pièce</label><input class="form-control" [(ngModel)]="form()!.id_document_type"></div>
+          <div class="col-md-4"><label>Type de pièce</label><select class="form-select" [(ngModel)]="form()!.id_document_type"><option value="">Sélectionner</option><option value="CNI">CNI</option><option value="Passeport">Passeport</option><option value="Carte de séjour">Carte de séjour</option></select></div>
           <div class="col-md-4"><label>Numéro de pièce</label><input class="form-control" [(ngModel)]="form()!.id_document_number"></div>
           <div class="col-md-4"><label>Résidence</label><input class="form-control" [(ngModel)]="form()!.residence"></div>
           <div class="col-12"><label>Adresse / maison / quartier</label><input class="form-control" [(ngModel)]="form()!.address"></div>
-          <div class="col-md-4"><label>Numéro de permis</label><input class="form-control" [(ngModel)]="form()!.driving_license_number"></div>
+          <div class="col-12"><h2 class="h6 mt-3">Permis de conduire</h2></div><div class="col-md-4"><label>Numéro de permis</label><input class="form-control" [(ngModel)]="form()!.driving_license_number"></div>
           <div class="col-md-4"><label>Date de délivrance</label><input class="form-control" type="date" [(ngModel)]="form()!.driving_license_issue_date"></div>
           <div class="col-md-4"><label>Expiration du permis</label><input class="form-control" type="date" [(ngModel)]="form()!.driving_license_expiry_date"></div>
           <div class="col-md-6"><label>Contact d’urgence</label><input class="form-control" [(ngModel)]="form()!.emergency_contact_name"></div>
@@ -48,11 +51,11 @@ type DocumentKind = 'identity_document' | 'driving_license';
 
         <hr><h2 class="h6">Pièces justificatives</h2>
         <p class="text-muted small">Vos champs sont enregistrés avant l’ajout d’un fichier. Vous pouvez remplacer ou retirer une pièce à tout moment avant la signature du contrat.</p>
-        <div class="row g-3">
+        <h2 class="h6 mt-2">Identité</h2><div class="row g-3">
           @for (kind of documentKinds; track kind.type) {
             <div class="col-md-6">
-              <label>{{ kind.label }}</label>
-              <input class="form-control" type="file" accept="image/*,application/pdf" (change)="upload($event, kind.type)">
+              <label>{{ kind.label }}</label><p class="small text-muted mb-1">JPG, PNG ou PDF, 5 Mo max</p>
+              <input class="form-control" type="file" accept="image/*,.pdf" (change)="upload($event, kind.type)">
               @if (documentsFor(kind.type).length) {
                 <div class="mt-2 d-grid gap-2">
                   @for (document of documentsFor(kind.type); track document.id) {
@@ -70,7 +73,7 @@ type DocumentKind = 'identity_document' | 'driving_license';
             </div>
           }
         </div>
-        <input #replacementInput class="d-none" type="file" accept="image/*,application/pdf" (change)="uploadReplacement($event)">
+        <input #replacementInput class="d-none" type="file" accept="image/*,.pdf" (change)="uploadReplacement($event)">
         <button class="btn btn-primary mt-4" [disabled]="saving()" (click)="save()">{{ saving() ? 'Enregistrement…' : 'Enregistrer mon dossier' }}</button>
       </div></section>
     }
@@ -102,9 +105,11 @@ export class ClientAccountComponent implements OnInit {
     const documentsResult = await this.auth.supabase().from('client_documents').select('*').eq('client_id', result.data.id).order('created_at', { ascending: false });
     if (documentsResult.error) this.error.set(this.auth.errorMessage(documentsResult.error)); else this.documents.set(documentsResult.data ?? []);
   }
+  completionPercent(){const f=this.form();if(!f)return 0;const fields=[f.first_name,f.last_name,f.phone,f.email,f.id_document_type,f.id_document_number,f.residence,f.address,f.driving_license_number,f.driving_license_issue_date,f.driving_license_expiry_date,f.emergency_contact_name,f.emergency_contact_phone];const filled=fields.filter(Boolean).length;return Math.round((filled/fields.length)*100);}
   async persistForUpload() {
     const form = this.form();
     if (!form?.first_name?.trim() || !form.last_name?.trim() || !form.phone?.trim()) { this.error.set('Prénom, nom et téléphone sont obligatoires avant l’ajout d’une pièce.'); return null; }
+    if (form.driving_license_issue_date && form.driving_license_expiry_date && new Date(form.driving_license_expiry_date).getTime() <= new Date(form.driving_license_issue_date).getTime()) { this.error.set('La date d expiration du permis doit etre posterieure a sa date de delivrance.'); return null; }
     this.saving.set(true); let result: any;
     if (form.id) result = await this.auth.supabase().from('clients').update({ ...form, profile_id: this.auth.profile().id }).eq('id', form.id).select().single();
     else result = await this.auth.supabase().rpc('ensure_client_profile', { target_first_name: form.first_name, target_last_name: form.last_name, target_phone: form.phone, target_email: form.email || null });
@@ -157,3 +162,6 @@ export class ClientAccountComponent implements OnInit {
     window.open(result.data.signedUrl, '_blank', 'noopener');
   }
 }
+
+
+

@@ -12,10 +12,18 @@ const photoTypes: { key: PhotoType; label: string }[] = [
   standalone: true,
   imports: [DatePipe, FormsModule],
   styles: [`
-    .inspection-card { border:1px solid #dce9eb; border-radius:16px; padding:18px; background:#fff; box-shadow:0 8px 22px rgba(16,47,56,.06); }
+    .inspection-card { border:1px solid #dce9eb; border-radius:16px; padding:18px; background:#fff; box-shadow:0 8px 22px rgba(16,47,56,.06); transition:transform .22s ease,box-shadow .22s ease; }
+    .inspection-card:hover { transform:translateY(-3px); box-shadow:0 14px 30px rgba(16,47,56,.1); }
     .inspection-card strong { color:#17353e; }.inspection-photo { width:100%; height:160px; object-fit:cover; border-radius:10px; background:#edf4f5; }
-    .form-card { max-width:1000px; }.inspection-sheet { width:100%; margin-inline:auto; }.client-page { display:flex; flex-direction:column; }.client-page > .form-card { order:2; width:100%; }.client-page > .row { order:3; }.client-page > .card { order:1; }.client-page > .page-heading { order:0; }.client-page { display:flex; flex-direction:column; }.client-page > .form-card { order:2; width:100%; }.client-page > .row { order:3; }.client-page > .card { order:1; }.client-page > .page-heading { order:0; }.required { color:#b42318; }
+    .inspection-card .badge{border-radius:999px;padding:.4em .8em}
+    .form-card { max-width:1000px; }.client-page { display:flex; flex-direction:column; }.client-page > .form-card { order:2; width:100%; }.client-page > .row { order:3; }.client-page > .card { order:1; }.client-page > .page-heading { order:0; }.required { color:#b42318; }
     @media(max-width:575px) { .inspection-card { padding:15px; }.inspection-card .btn { width:100%; min-height:44px; }.form-card .card-body { padding:18px; } }
+    .inspection-overlay{position:fixed;inset:0;z-index:1055;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(5,29,35,.63);overflow-y:auto;animation:overlay-in .18s ease-out}
+    .inspection-sheet-modal{width:min(100%,860px);margin:auto;border:0;border-radius:22px;box-shadow:0 28px 80px rgba(0,0,0,.35);animation:sheet-in .22s cubic-bezier(.22,1,.36,1)}
+    @keyframes overlay-in{from{opacity:0}to{opacity:1}}
+    @keyframes sheet-in{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+    @media(prefers-reduced-motion:reduce){.inspection-overlay,.inspection-sheet-modal{animation:none}}
+    @media(max-width:700px){.inspection-overlay{align-items:flex-start;padding:12px}.inspection-sheet-modal{border-radius:17px}}
   `],
   template: `
     <div class="client-page"><div class="page-heading"><div><p class="eyebrow">ÉTATS DES LIEUX</p><h1>Mes inspections</h1><p>Réalisez vos états des lieux après la signature complète de votre contrat.</p></div></div>
@@ -31,7 +39,18 @@ const photoTypes: { key: PhotoType; label: string }[] = [
 
     @if (photoInspection()) { <section class="card form-card mt-4"><div class="card-body"><div class="d-flex justify-content-between"><div><p class="eyebrow mb-1">PHOTOS</p><h2 class="h4">Ajouter des photos — inspection de {{ label(photoInspection().inspection_type).toLowerCase() }}</h2></div><button class="btn-close" (click)="closePhotoForm()"></button></div><div class="row g-3">@for (photo of photoTypes; track photo.key) { <div class="col-md"><label>{{ photo.label }}</label><input class="form-control" type="file" accept="image/png,image/jpeg,image/webp" (change)="choose(photo.key, $event)"></div> }</div><button class="btn btn-success mt-4" [disabled]="saving()" (click)="savePhotos()">{{ saving() ? 'Envoi…' : 'Ajouter les photos' }}</button><button class="btn btn-link mt-4" (click)="closePhotoForm()">Annuler</button></div></section> }
 
-    @if (selected()) { <section class="card form-card inspection-sheet mt-4"><div class="card-body"><div class="d-flex justify-content-between gap-2"><div><p class="eyebrow mb-1">HISTORIQUE</p><h2 class="h4">Inspection de {{ label(selected().inspection_type).toLowerCase() }}</h2><p class="text-muted">{{ selected().vehicle?.make }} {{ selected().vehicle?.model }} · {{ selected().vehicle?.registration_number }}</p></div><button class="btn-close" (click)="selected.set(null)"></button></div><div class="row g-3"><div class="col-md-4"><strong>Date</strong><br>{{ selected().inspection_date | date:'medium' }}</div><div class="col-md-4"><strong>Kilométrage</strong><br>{{ selected().mileage }} km</div><div class="col-md-4"><strong>Carburant</strong><br>{{ selected().fuel_level || 'Non renseigné' }}</div><div class="col-md-6"><strong>Dommages</strong><br>{{ damages(selected()) }}</div><div class="col-md-6"><strong>Observations</strong><br>{{ selected().observations || 'Aucune observation.' }}</div></div><hr><h3 class="h6">Photos ajoutées</h3>@if (!photos().length) { <p class="text-muted">Aucune photo ajoutée.</p> } @else { <div class="row g-3">@for (photo of photos(); track photo.id) { <div class="col-sm-6 col-lg-4"><img class="inspection-photo" [src]="photo.url" [alt]="photoLabel(photo.photo_type)"><div class="d-flex justify-content-between align-items-center mt-2"><strong>{{ photoLabel(photo.photo_type) }}</strong><button class="btn btn-sm btn-outline-primary" (click)="openPhoto(photo)">Voir</button></div></div> }</div> }</div></section> }
+    @if (selected()) {
+      <div class="inspection-overlay" (click)="selected.set(null)">
+        <section class="card form-card inspection-sheet-modal" role="dialog" aria-modal="true" aria-label="Fiche d'inspection" (click)="$event.stopPropagation()">
+          <div class="card-body">
+            <div class="d-flex justify-content-between gap-2"><div><p class="eyebrow mb-1">HISTORIQUE</p><h2 class="h4">Inspection de {{ label(selected().inspection_type).toLowerCase() }}</h2><p class="text-muted">{{ selected().vehicle?.make }} {{ selected().vehicle?.model }} · {{ selected().vehicle?.registration_number }}</p></div><button class="btn-close" (click)="selected.set(null)" aria-label="Fermer"></button></div>
+            <div class="row g-3"><div class="col-md-4"><strong>Date</strong><br>{{ selected().inspection_date | date:'medium' }}</div><div class="col-md-4"><strong>Kilométrage</strong><br>{{ selected().mileage }} km</div><div class="col-md-4"><strong>Carburant</strong><br>{{ selected().fuel_level || 'Non renseigné' }}</div><div class="col-md-6"><strong>Dommages</strong><br>{{ damages(selected()) }}</div><div class="col-md-6"><strong>Observations</strong><br>{{ selected().observations || 'Aucune observation.' }}</div></div>
+            <hr><h3 class="h6">Photos ajoutées</h3>
+            @if (!photos().length) { <p class="text-muted">Aucune photo ajoutée.</p> } @else { <div class="row g-3">@for (photo of photos(); track photo.id) { <div class="col-sm-6 col-lg-4"><img class="inspection-photo" [src]="photo.url" [alt]="photoLabel(photo.photo_type)"><div class="d-flex justify-content-between align-items-center mt-2"><strong>{{ photoLabel(photo.photo_type) }}</strong><button class="btn btn-sm btn-outline-primary" (click)="openPhoto(photo)">Voir</button></div></div> }</div> }
+          </div>
+        </section>
+      </div>
+    }
     </div>
   `
 })
@@ -99,7 +118,6 @@ export class ClientInspectionsComponent implements OnInit {
   }
   async show(inspection: any) {
     this.error.set(''); this.selected.set(inspection); this.photos.set([]);
-    setTimeout(() => document.querySelector('.client-page .inspection-sheet')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
     const result = await this.auth.supabase().functions.invoke('client-inspection-photo', { body: { inspection_id: inspection.id } });
     if (result.error) { this.error.set(this.auth.errorMessage(result.error)); return; }
     this.photos.set(result.data?.photos ?? []);
