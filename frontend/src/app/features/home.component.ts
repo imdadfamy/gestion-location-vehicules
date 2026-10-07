@@ -44,7 +44,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
     .btn-solid-light:hover{background:#eaf7f8;box-shadow:var(--shadow-sm)}
 
     /* ---------- hero ---------- */
-    .hero{position:relative;padding:64px 5% 130px;background:radial-gradient(circle at 85% -10%,rgba(142,211,223,.18),transparent 46%),linear-gradient(130deg,var(--petrol),#1c6c7d 60%,var(--primary));color:#fff;overflow:clip}
+    .hero{position:relative;padding:64px 5% 130px;background:linear-gradient(100deg,rgba(6,33,40,.86) 0%,rgba(6,33,40,.58) 34%,rgba(6,33,40,.22) 56%,rgba(6,33,40,.05) 74%),url(/hero-banner.jpg) center/cover no-repeat;color:#fff;overflow:clip}
     .hero-inner{max-width:1180px;margin:auto;position:relative}
     .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.74rem;font-weight:800;letter-spacing:.12em;color:#bfe9ef;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);padding:6px 14px;border-radius:var(--radius-full)}
     .hero h1{max-width:760px;font-size:clamp(2.3rem,5.4vw,4.4rem);line-height:1.04;margin:18px 0 10px;font-weight:800;letter-spacing:-.01em}
