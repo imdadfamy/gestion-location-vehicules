@@ -365,7 +365,7 @@ import { ScrollRevealDirective } from '../shared/scroll-reveal.directive';
         <p>Téléphone : {{company().phone||'Non renseigné'}}</p>
         <p>WhatsApp : {{company().whatsapp_phone||'Non renseigné'}}</p>
         <p>{{company().address||'Adresse à configurer'}}</p>
-        <p>Horaires : à préciser</p>
+        <p>Horaires : {{company().business_hours||'À préciser'}}</p>
       </div>
     </div>
     <div class="footer-bottom">© {{ year }} FIMA AUTO — Tous droits réservés</div>
