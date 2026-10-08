@@ -39,7 +39,7 @@ type DocumentKind = 'identity_document' | 'driving_license';
           <div class="col-md-6"><label>Nom <span class="required">*</span></label><input class="form-control" [(ngModel)]="form()!.last_name"></div>
           <div class="col-md-6"><label>Téléphone <span class="required">*</span></label><input class="form-control" type="tel" inputmode="numeric" autocomplete="tel" required appDigitsOnly [(ngModel)]="form()!.phone"></div>
           <div class="col-md-6"><label>E-mail</label><input class="form-control" type="email" [(ngModel)]="form()!.email"></div>
-          <div class="col-md-4"><label>Type de pièce</label><select class="form-select" [(ngModel)]="form()!.id_document_type"><option value="">Sélectionner</option><option value="CNI">CNI</option><option value="Passeport">Passeport</option><option value="Carte de séjour">Carte de séjour</option></select></div>
+          <div class="col-md-4"><label>Type de pièce</label><select class="form-select" [(ngModel)]="form()!.id_document_type"><option value="">Sélectionner</option><option value="CNI">CNI</option><option value="Carte d'identité">Carte d'identité</option><option value="Passeport">Passeport</option><option value="Carte de séjour">Carte de séjour</option></select></div>
           <div class="col-md-4"><label>Numéro de pièce</label><input class="form-control" [(ngModel)]="form()!.id_document_number"></div>
           <div class="col-md-4"><label>Résidence</label><input class="form-control" [(ngModel)]="form()!.residence"></div>
           <div class="col-12"><label>Adresse / maison / quartier</label><input class="form-control" [(ngModel)]="form()!.address"></div>

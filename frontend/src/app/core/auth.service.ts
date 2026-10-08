@@ -97,8 +97,9 @@ const localizedFetch: typeof fetch = async (input, init) => {
 export class AuthService {
   private config = (globalThis as any).__appConfig ?? environment;
   private client = createClient(this.config.supabaseUrl, this.config.supabaseAnonKey, { global: { fetch: localizedFetch } });
-  profile = signal<any>(null); ready = signal(false);
+  profile = signal<any>(null); ready = signal(false); unreadNotifications = signal(0);
   async init(){ const {data:{session}}=await this.client.auth.getSession(); if(session) await this.load(); this.ready.set(true); }
+  async refreshUnreadNotifications(){ if(!this.can('notifications')||!this.profile()?.id) return; const r=await this.client.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',this.profile()!.id).eq('is_read',false); this.unreadNotifications.set(r.count??0); }
   async login(email:string,password:string){ const r=await this.client.auth.signInWithPassword({email,password}); if(!r.error) await this.load(); return r.error; }
   async load(){ const {data:{user}}=await this.client.auth.getUser(); if(user){const {data}=await this.client.from('profiles').select('*').eq('id',user.id).single(); this.profile.set(data ? { ...data, email: data.email ?? user.email } : null);} }
   async logout(){await this.client.auth.signOut();this.profile.set(null);}

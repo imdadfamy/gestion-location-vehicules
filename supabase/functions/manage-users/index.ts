@@ -76,6 +76,20 @@ Deno.serve(async (request) => {
       if (!data) throw new Error('Le compte Client demandé est introuvable.');
       return Response.json({ ok: true }, { headers: cors });
     }
+    if (body.action === 'update_partner_access') {
+      if (typeof body.user_id !== 'string') throw new Error('Partenaire requis.');
+      if (typeof body.is_active !== 'boolean') throw new Error('Le statut d’accès doit être précisé.');
+      const { data, error } = await admin
+        .from('profiles')
+        .update({ is_active: body.is_active })
+        .eq('id', body.user_id)
+        .eq('role', 'partner')
+        .select('id')
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error('Le compte Partenaire demandé est introuvable.');
+      return Response.json({ ok: true }, { headers: cors });
+    }
     throw new Error('Action non prise en charge.');
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : 'Erreur serveur.' }, { status: 400, headers: cors }); }
 });

@@ -36,9 +36,9 @@ import { AuthService } from '../core/auth.service';
         <div class="col-md-4"><label>Modèle <span class="required">*</span></label><input class="form-control" [(ngModel)]="form()!.model"></div>
         <div class="col-md-3"><label>Couleur</label><input class="form-control" [(ngModel)]="form()!.color"></div>
         <div class="col-md-3"><label>Année</label><input class="form-control" type="number" [(ngModel)]="form()!.year"></div>
-        <div class="col-md-3"><label>Carburant</label><input class="form-control" [(ngModel)]="form()!.fuel_type" placeholder="Essence, diesel…"></div>
-        <div class="col-md-3"><label>Transmission</label><input class="form-control" [(ngModel)]="form()!.transmission" placeholder="Automatique, manuelle"></div>
-        <div class="col-md-4"><label>Catégorie</label><input class="form-control" [(ngModel)]="form()!.category" placeholder="Citadine, Berline, SUV…"></div>
+        <div class="col-md-3"><label>Carburant</label><select class="form-select" [(ngModel)]="form()!.fuel_type"><option value="">Sélectionner</option><option value="essence">Essence</option><option value="diesel">Diesel</option><option value="hybrid">Hybride</option></select></div>
+        <div class="col-md-3"><label>Transmission</label><select class="form-select" [(ngModel)]="form()!.transmission"><option value="">Sélectionner</option><option value="automatic">Automatique</option><option value="manual">Manuelle</option></select></div>
+        <div class="col-md-4"><label>Catégorie</label><select class="form-select" [(ngModel)]="form()!.category"><option value="">Sélectionner</option><option value="Citadine">Citadine</option><option value="Berline">Berline</option><option value="SUV">SUV</option></select></div>
         <div class="col-md-4"><label>Prix souhaité (FCFA/jour) <span class="required">*</span></label><input class="form-control" type="number" min="0" [(ngModel)]="form()!.partner_requested_price"></div>
         <div class="col-md-4"><label>Caution suggérée (FCFA)</label><input class="form-control" type="number" min="0" [(ngModel)]="form()!.deposit_amount"></div>
         <div class="col-12"><label>Conditions d'utilisation / notes</label><textarea class="form-control" rows="3" [(ngModel)]="form()!.notes" placeholder="Kilométrage limite, zone autorisée, carburant à la reprise…"></textarea></div>
