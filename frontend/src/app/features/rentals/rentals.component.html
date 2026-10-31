@@ -32,8 +32,27 @@
 @if (message()) {
   <div class="alert alert-success">{{ message() }}</div>
 }
+<div class="btn-group mb-3" role="group" aria-label="Affichage des locations">
+  <button
+    class="btn btn-sm"
+    [class.btn-primary]="view() === 'list'"
+    [class.btn-outline-primary]="view() !== 'list'"
+    (click)="setView('list')"
+  >
+    Liste</button
+  ><button
+    class="btn btn-sm"
+    [class.btn-primary]="view() === 'calendar'"
+    [class.btn-outline-primary]="view() !== 'calendar'"
+    (click)="setView('calendar')"
+  >
+    Calendrier
+  </button>
+</div>
 @if (loading()) {
   <div class="empty-state">Chargement des locations…</div>
+} @else if (view() === 'calendar') {
+  <app-rentals-calendar [rentals]="rows()" (select)="detail($event)" />
 } @else if (!rows().length) {
   <div class="empty-state">Aucune location.</div>
 } @else {

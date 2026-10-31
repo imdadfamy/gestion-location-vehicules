@@ -9,10 +9,11 @@ import { ClientsService } from '../../core/data/clients.service';
 import { RentalsService } from '../../core/data/rentals.service';
 import { StorageService } from '../../core/data/storage.service';
 import { VehiclesService } from '../../core/data/vehicles.service';
+import { RentalsCalendarComponent } from './rentals-calendar.component';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, DatePipe, RouterLink, DigitsOnlyDirective],
+  imports: [FormsModule, DatePipe, RouterLink, DigitsOnlyDirective, RentalsCalendarComponent],
   styleUrl: './rentals.component.scss',
   templateUrl: './rentals.component.html',
 })
@@ -24,6 +25,23 @@ export class RentalsComponent implements OnInit {
   history = signal<any[]>([]);
   selectedPayments = signal<any[]>([]);
   closureBlockers = signal<string[]>([]);
+  /** Affichage mémorisé pour l'utilisateur (préférence locale, sans incidence métier). */
+  view = signal<'list' | 'calendar'>(this.storedView());
+  private storedView(): 'list' | 'calendar' {
+    try {
+      return globalThis.localStorage?.getItem('rentals-view') === 'calendar' ? 'calendar' : 'list';
+    } catch {
+      return 'list';
+    }
+  }
+  setView(view: 'list' | 'calendar') {
+    this.view.set(view);
+    try {
+      localStorage.setItem('rentals-view', view);
+    } catch {
+      // Stockage indisponible (navigation privée) : la préférence n'est simplement pas gardée.
+    }
+  }
   wizard = signal(false);
   step = signal(1);
   editingId = signal<string | null>(null);
