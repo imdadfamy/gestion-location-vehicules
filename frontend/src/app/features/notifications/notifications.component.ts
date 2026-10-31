@@ -2,6 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { NotificationsService } from '../../core/data/notifications.service';
+import { RentalsService } from '../../core/data/rentals.service';
 
 @Component({
   standalone: true,
@@ -15,7 +17,11 @@ export class NotificationsComponent implements OnInit {
   loading = signal(false);
   error = signal('');
   filter = '';
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private notifications: NotificationsService,
+    private rentalsData: RentalsService,
+  ) {}
   ngOnInit() {
     this.load();
   }
@@ -27,35 +33,11 @@ export class NotificationsComponent implements OnInit {
   async load() {
     this.loading.set(true);
     this.error.set('');
-    const refresh = await this.auth.supabase().rpc('refresh_overdue_rentals');
-    const [notifications, contracts, rentals, payments, maintenance, vehicles, incidents] =
+    const refresh = await this.rentalsData.refreshOverdue();
+    const [notifications, [contracts, rentals, payments, maintenance, vehicles, incidents]] =
       await Promise.all([
-        this.auth
-          .supabase()
-          .from('notifications')
-          .select('*')
-          .eq('user_id', this.auth.profile()?.id)
-          .order('created_at', { ascending: false }),
-        this.auth
-          .supabase()
-          .from('contracts')
-          .select('contract_number')
-          .eq('status', 'pending_signature'),
-        this.auth
-          .supabase()
-          .from('rentals')
-          .select('id,status,return_date,rental_price,vehicles(registration_number)'),
-        this.auth.supabase().from('payments').select('rental_id,amount'),
-        this.auth
-          .supabase()
-          .from('vehicle_maintenance')
-          .select('id,next_maintenance_date,status,vehicles(registration_number)')
-          .neq('status', 'completed'),
-        this.auth
-          .supabase()
-          .from('vehicles')
-          .select('registration_number,insurance_expiry_date,technical_inspection_expiry_date'),
-        this.auth.supabase().from('incidents').select('id').in('status', ['open', 'in_progress']),
+        this.notifications.mine(this.auth.profile()?.id),
+        this.notifications.alertSources(),
       ]);
     this.loading.set(false);
     const problem =
@@ -152,11 +134,7 @@ export class NotificationsComponent implements OnInit {
       .filter((item) => !item.is_read)
       .map((item) => item.id);
     if (unreadIds.length) {
-      const result = await this.auth
-        .supabase()
-        .from('notifications')
-        .update({ is_read: true, read_at: new Date().toISOString() })
-        .in('id', unreadIds);
+      const result = await this.notifications.markRead(unreadIds);
       if (result.error) {
         this.error.set(this.auth.errorMessage(result.error));
         return;

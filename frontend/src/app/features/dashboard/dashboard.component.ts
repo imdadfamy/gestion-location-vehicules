@@ -10,6 +10,8 @@ import {
 import { RouterLink } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { AuthService } from '../../core/auth.service';
+import { DashboardService } from '../../core/data/dashboard.service';
+import { RentalsService } from '../../core/data/rentals.service';
 
 Chart.register(...registerables);
 
@@ -35,7 +37,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   top: any[] = [];
   viewReady = false;
   themeObserver?: MutationObserver;
-  constructor(public auth: AuthService) {}
+  constructor(
+    public auth: AuthService,
+    private dashboard: DashboardService,
+    private rentalsData: RentalsService,
+  ) {}
   greeting() {
     const profile = this.auth.profile() ?? {};
     const fromFields = [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim();
@@ -65,25 +71,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   async load() {
     this.loading.set(true);
     this.error.set('');
-    const refresh = await this.auth.supabase().rpc('refresh_overdue_rentals');
-    const [vehicles, clients, rentals, contracts, payments, maintenance] = await Promise.all([
-      this.auth.supabase().from('vehicles').select('id,status'),
-      this.auth.supabase().from('clients').select('id', { count: 'exact' }),
-      this.auth
-        .supabase()
-        .from('rentals')
-        .select(
-          'id,status,departure_date,return_date,vehicle_id,vehicles(make,model,registration_number)',
-        ),
-      this.auth.supabase().from('contracts').select('id').eq('status', 'pending_signature'),
-      this.auth
-        .supabase()
-        .from('payments')
-        .select(
-          'amount,payment_date,rental_id,rentals(vehicle_id,vehicles(make,model,registration_number))',
-        ),
-      this.auth.supabase().from('vehicle_maintenance').select('id').eq('status', 'in_progress'),
-    ]);
+    const refresh = await this.rentalsData.refreshOverdue();
+    const [vehicles, clients, rentals, contracts, payments, maintenance] =
+      await this.dashboard.sources();
     this.loading.set(false);
     const problem =
       refresh.error ??
