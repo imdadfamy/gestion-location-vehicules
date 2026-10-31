@@ -3,6 +3,9 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { ClientsService } from '../../core/data/clients.service';
+import { IncidentsService } from '../../core/data/incidents.service';
+import { VehiclesService } from '../../core/data/vehicles.service';
 
 @Component({
   standalone: true,
@@ -27,6 +30,9 @@ export class IncidentsComponent implements OnInit {
   constructor(
     public auth: AuthService,
     private route: ActivatedRoute,
+    private incidents: IncidentsService,
+    private vehiclesData: VehiclesService,
+    private clientsData: ClientsService,
   ) {}
   async ngOnInit() {
     await this.load();
@@ -41,11 +47,7 @@ export class IncidentsComponent implements OnInit {
   }
   async load() {
     this.loading.set(true);
-    const result = await this.auth
-      .supabase()
-      .from('incidents')
-      .select('*,vehicles(registration_number),clients(first_name,last_name)')
-      .order('incident_date', { ascending: false });
+    const result = await this.incidents.list();
     this.loading.set(false);
     if (result.error) return this.fail(result.error);
     this.rows.set(result.data ?? []);
@@ -66,19 +68,9 @@ export class IncidentsComponent implements OnInit {
   }
   async openForm(vehicleId = '', rentalId = '') {
     const [vehicles, rentals, clients] = await Promise.all([
-      this.auth
-        .supabase()
-        .from('vehicles')
-        .select('id,registration_number')
-        .order('registration_number'),
-      this.auth
-        .supabase()
-        .from('rentals')
-        .select(
-          'id,vehicle_id,client_id,vehicles(registration_number),clients(first_name,last_name)',
-        )
-        .order('created_at', { ascending: false }),
-      this.auth.supabase().from('clients').select('id,first_name,last_name').order('last_name'),
+      this.vehiclesData.options(),
+      this.incidents.rentalOptions(),
+      this.clientsData.options(),
     ]);
     const failure = vehicles.error ?? rentals.error ?? clients.error;
     if (failure) return this.fail(failure);
@@ -152,40 +144,20 @@ export class IncidentsComponent implements OnInit {
       return this.fail('Description et coût valide sont requis.');
     this.saving.set(true);
     const payload = { ...form, incident_date: new Date(form.incident_date).toISOString() };
-    const result = form.id
-      ? await this.auth
-          .supabase()
-          .from('incidents')
-          .update(payload)
-          .eq('id', form.id)
-          .select()
-          .single()
-      : await this.auth.supabase().from('incidents').insert(payload).select().single();
+    const result = await this.incidents.save(payload);
     if (result.error) {
       this.saving.set(false);
       return this.fail(result.error);
     }
     for (const file of this.files) {
-      const path = `incidents/${result.data.id}/${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const uploaded = await this.auth
-        .supabase()
-        .storage.from('rental-documents')
-        .upload(path, file, { upsert: false });
-      if (uploaded.error) {
+      const failure = await this.incidents.attachDocument(result.data.id, file);
+      if (failure) {
         this.saving.set(false);
         return this.fail(
-          `Incident enregistré, mais document non envoyé : ${this.auth.errorMessage(uploaded.error)}`,
+          failure.step === 'upload'
+            ? `Incident enregistré, mais document non envoyé : ${this.auth.errorMessage(failure.error)}`
+            : `Document non référencé : ${this.auth.errorMessage(failure.error)}`,
         );
-      }
-      const document = await this.auth.supabase().from('incident_documents').insert({
-        incident_id: result.data.id,
-        document_name: file.name,
-        storage_path: path,
-        mime_type: file.type,
-      });
-      if (document.error) {
-        this.saving.set(false);
-        return this.fail(`Document non référencé : ${this.auth.errorMessage(document.error)}`);
       }
     }
     this.saving.set(false);

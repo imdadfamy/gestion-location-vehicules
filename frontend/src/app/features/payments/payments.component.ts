@@ -2,6 +2,9 @@ import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { CompanyService } from '../../core/data/company.service';
+import { PaymentsService } from '../../core/data/payments.service';
+import { RentalsService } from '../../core/data/rentals.service';
 import { ActorNamesService } from '../../core/actor-names.service';
 
 @Component({
@@ -24,26 +27,19 @@ export class PaymentsComponent implements OnInit {
   constructor(
     public auth: AuthService,
     private actors: ActorNamesService,
+    private companyData: CompanyService,
+    private payments: PaymentsService,
+    private rentals: RentalsService,
   ) {}
   async ngOnInit() {
     await Promise.all([this.load(), this.loadCompany()]);
   }
   async loadCompany() {
-    const r = await this.auth
-      .supabase()
-      .from('company_settings')
-      .select('*')
-      .limit(1)
-      .maybeSingle();
+    const r = await this.companyData.get();
     if (r.data) {
       this.company.set(r.data);
-      if (r.data.logo_storage_path) {
-        const s = await this.auth
-          .supabase()
-          .storage.from('rental-documents')
-          .createSignedUrl(r.data.logo_storage_path, 300);
-        if (s.data?.signedUrl) this.logoUrl.set(s.data.signedUrl);
-      }
+      const logo = await this.companyData.logoUrl(r.data.logo_storage_path);
+      if (logo) this.logoUrl.set(logo);
     }
   }
   receiptRef(row: any) {
@@ -63,16 +59,7 @@ export class PaymentsComponent implements OnInit {
   async load() {
     this.loading.set(true);
     this.error.set('');
-    const [rentals, payments] = await Promise.all([
-      this.auth
-        .supabase()
-        .from('rentals')
-        .select(
-          '*,clients(first_name,last_name,phone,email),vehicles(registration_number,make,model)',
-        )
-        .order('created_at', { ascending: false }),
-      this.auth.supabase().from('payments').select('*').order('payment_date', { ascending: false }),
-    ]);
+    const [rentals, payments] = await Promise.all([this.payments.rentals(), this.payments.all()]);
     this.loading.set(false);
     if (rentals.error || payments.error) {
       this.error.set(this.auth.errorMessage(rentals.error ?? payments.error));
@@ -151,9 +138,7 @@ export class PaymentsComponent implements OnInit {
     this.error.set('');
     this.message.set('');
     this.markingId.set(row.id);
-    const result = await this.auth
-      .supabase()
-      .rpc('confirm_rental_payment', { target_rental_id: row.id });
+    const result = await this.rentals.confirmPayment(row.id);
     this.markingId.set(null);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));

@@ -31,6 +31,14 @@ export class VehiclesService {
       .order('registration_number');
   }
 
+  /** Tous les véhicules, pour les listes de choix des formulaires. */
+  options() {
+    return this.db
+      .from('vehicles')
+      .select('id,registration_number,make,model')
+      .order('registration_number');
+  }
+
   /** Tarifs et statut d'un véhicule, pour reprendre une réservation. */
   pricing(vehicleId: string) {
     return this.db

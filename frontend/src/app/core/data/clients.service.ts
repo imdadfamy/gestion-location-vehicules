@@ -23,6 +23,11 @@ export class ClientsService {
     );
   }
 
+  /** Tous les clients, pour les listes de choix des formulaires. */
+  options() {
+    return this.db.from('clients').select('id,first_name,last_name').order('last_name');
+  }
+
   findByPhone(phone: string) {
     return this.db.from('clients').select('*').eq('phone', phone).order('last_name');
   }

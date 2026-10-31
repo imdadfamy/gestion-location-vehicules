@@ -3,6 +3,8 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { MaintenanceService } from '../../core/data/maintenance.service';
+import { VehiclesService } from '../../core/data/vehicles.service';
 
 @Component({
   standalone: true,
@@ -21,6 +23,8 @@ export class MaintenanceComponent implements OnInit {
   constructor(
     public auth: AuthService,
     private route: ActivatedRoute,
+    private maintenance: MaintenanceService,
+    private vehiclesData: VehiclesService,
   ) {}
   async ngOnInit() {
     await this.load();
@@ -33,21 +37,13 @@ export class MaintenanceComponent implements OnInit {
   }
   async load() {
     this.loading.set(true);
-    const result = await this.auth
-      .supabase()
-      .from('vehicle_maintenance')
-      .select('*,vehicles(registration_number,make,model)')
-      .order('maintenance_date', { ascending: false });
+    const result = await this.maintenance.list();
     this.loading.set(false);
     if (result.error) return this.fail(result.error);
     this.rows.set(result.data ?? []);
   }
   async openForm(vehicleId = '') {
-    const result = await this.auth
-      .supabase()
-      .from('vehicles')
-      .select('id,registration_number,make,model')
-      .order('registration_number');
+    const result = await this.vehiclesData.options();
     if (result.error) return this.fail(result.error);
     this.vehicles.set(result.data ?? []);
     this.file = undefined;
@@ -116,41 +112,20 @@ export class MaintenanceComponent implements OnInit {
     )
       return this.fail('Véhicule, type, date et coût valide sont requis.');
     this.saving.set(true);
-    const payload = { ...form };
-    delete payload.vehicles;
-    const result = form.id
-      ? await this.auth
-          .supabase()
-          .from('vehicle_maintenance')
-          .update(payload)
-          .eq('id', form.id)
-          .select()
-          .single()
-      : await this.auth.supabase().from('vehicle_maintenance').insert(payload).select().single();
+    const result = await this.maintenance.save(form);
     if (result.error) {
       this.saving.set(false);
       return this.fail(result.error);
     }
     if (this.file) {
-      const path = `maintenance/${result.data.id}/${this.file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const upload = await this.auth
-        .supabase()
-        .storage.from('rental-documents')
-        .upload(path, this.file, { upsert: false });
-      if (upload.error) {
+      const failure = await this.maintenance.attachInvoice(result.data.id, this.file);
+      if (failure) {
         this.saving.set(false);
         return this.fail(
-          `Maintenance enregistrée, mais facture non envoyée : ${this.auth.errorMessage(upload.error)}`,
+          failure.step === 'upload'
+            ? `Maintenance enregistrée, mais facture non envoyée : ${this.auth.errorMessage(failure.error)}`
+            : failure.error,
         );
-      }
-      const updated = await this.auth
-        .supabase()
-        .from('vehicle_maintenance')
-        .update({ invoice_storage_path: path })
-        .eq('id', result.data.id);
-      if (updated.error) {
-        this.saving.set(false);
-        return this.fail(updated.error);
       }
     }
     this.saving.set(false);
