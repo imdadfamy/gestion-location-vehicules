@@ -2,6 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { StorageService } from '../../core/data/storage.service';
+import { VehiclesService } from '../../core/data/vehicles.service';
 
 @Component({
   standalone: true,
@@ -19,7 +21,11 @@ export class VehiclesComponent implements OnInit {
   loading = signal(false);
   saving = signal(false);
   query = '';
-  constructor(public auth: AuthService) {}
+  constructor(
+    public auth: AuthService,
+    private vehicles: VehiclesService,
+    private storage: StorageService,
+  ) {}
   ngOnInit() {
     this.load();
   }
@@ -30,22 +36,7 @@ export class VehiclesComponent implements OnInit {
   async load() {
     this.loading.set(true);
     this.clear();
-    let q = this.auth
-      .supabase()
-      .from('vehicles')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (this.query.trim())
-      q = q.or(
-        'registration_number.ilike.%' +
-          this.query.trim() +
-          '%,make.ilike.%' +
-          this.query.trim() +
-          '%,model.ilike.%' +
-          this.query.trim() +
-          '%',
-      );
-    const r = await q;
+    const r = await this.vehicles.search(this.query);
     this.rows.set(r.data ?? []);
     if (r.error) this.error.set(this.auth.errorMessage(r.error));
     this.loading.set(false);
@@ -61,15 +52,10 @@ export class VehiclesComponent implements OnInit {
     this.documents.set([]);
     this.photos.set([]);
   }
-  async open(v: any) {
-    this.clear();
+  async open(v: any, keepFeedback = false) {
+    if (!keepFeedback) this.clear();
     this.editing.set({ ...v });
-    const r = await this.auth
-      .supabase()
-      .from('vehicle_documents')
-      .select('*')
-      .eq('vehicle_id', v.id)
-      .order('created_at', { ascending: false });
+    const r = await this.vehicles.documents(v.id);
     if (r.error) {
       this.error.set(this.auth.errorMessage(r.error));
       return;
@@ -81,10 +67,7 @@ export class VehiclesComponent implements OnInit {
     this.documents.set(files.filter((d: any) => !pictures.includes(d)));
     const withUrls = await Promise.all(
       pictures.map(async (d: any) => {
-        const url = await this.auth
-          .supabase()
-          .storage.from('rental-documents')
-          .createSignedUrl(d.storage_path, 600);
+        const url = await this.storage.signedUrl('rental-documents', d.storage_path, 600);
         return { ...d, url: url.data?.signedUrl ?? '' };
       }),
     );
@@ -98,21 +81,19 @@ export class VehiclesComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    const r = v.id
-      ? await this.auth.supabase().from('vehicles').update(v).eq('id', v.id).select().single()
-      : await this.auth.supabase().from('vehicles').insert(v).select().single();
+    const r = await this.vehicles.save(v);
     this.saving.set(false);
     if (r.error) {
       this.error.set(this.auth.errorMessage(r.error));
       return;
     }
+    if (r.data) await this.open(r.data, true);
+    await this.load();
     this.message.set(
       v.id
         ? 'Informations du véhicule mises à jour.'
         : 'Véhicule ajouté. Ajoutez ensuite ses documents ou photos depuis sa fiche.',
     );
-    if (r.data) await this.open(r.data);
-    await this.load();
   }
   async remove() {
     const v = this.editing();
@@ -125,28 +106,19 @@ export class VehiclesComponent implements OnInit {
       return;
     this.clear();
     this.saving.set(true);
-    const files = await this.auth
-      .supabase()
-      .from('vehicle_documents')
-      .select('storage_path')
-      .eq('vehicle_id', v.id);
-    const r = await this.auth.supabase().from('vehicles').delete().eq('id', v.id);
+    const r = await this.vehicles.remove(v.id);
     this.saving.set(false);
     if (r.error) {
       this.error.set(this.auth.errorMessage(r.error));
       return;
     }
-    const paths = (files.data ?? []).map((d: any) => d.storage_path);
-    if (paths.length) {
-      const cleanup = await this.auth.supabase().storage.from('rental-documents').remove(paths);
-      if (cleanup.error)
-        this.message.set(
-          'Véhicule retiré. Certains fichiers associés devront être supprimés depuis Storage.',
-        );
-    }
     this.close();
-    this.message.set(this.message() || 'Véhicule retiré définitivement.');
     await this.load();
+    this.message.set(
+      r.filesCleaned
+        ? 'Véhicule retiré définitivement.'
+        : 'Véhicule retiré. Certains fichiers associés devront être supprimés depuis Storage.',
+    );
   }
   async uploadFiles(event: Event, type: 'document' | 'photo') {
     const v = this.editing();
@@ -160,43 +132,18 @@ export class VehiclesComponent implements OnInit {
     this.saving.set(true);
     let count = 0;
     for (const file of files) {
-      const path =
-        'vehicles/' +
-        v.id +
-        '/' +
-        crypto.randomUUID() +
-        '-' +
-        file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const up = await this.auth
-        .supabase()
-        .storage.from('rental-documents')
-        .upload(path, file, { contentType: file.type });
-      if (up.error) {
-        this.error.set(this.auth.errorMessage(up.error));
-        continue;
-      }
-      const saved = await this.auth.supabase().from('vehicle_documents').insert({
-        vehicle_id: v.id,
-        document_type: type,
-        document_name: file.name,
-        storage_path: path,
-        mime_type: file.type,
-        file_size: file.size,
-      });
-      if (saved.error) this.error.set(this.auth.errorMessage(saved.error));
+      const failure = await this.vehicles.uploadDocument(v.id, type, file);
+      if (failure) this.error.set(this.auth.errorMessage(failure));
       else count++;
     }
     this.saving.set(false);
     (event.target as HTMLInputElement).value = '';
+    await this.open(v, true);
     if (count) this.message.set(count + ' fichier' + (count > 1 ? 's ajoutés.' : ' ajouté.'));
-    await this.open(v);
   }
   async download(d: any, event: Event) {
     event.preventDefault();
-    const r = await this.auth
-      .supabase()
-      .storage.from('rental-documents')
-      .createSignedUrl(d.storage_path, 60);
+    const r = await this.storage.signedUrl('rental-documents', d.storage_path);
     if (r.error) this.error.set(this.auth.errorMessage(r.error));
     else window.open(r.data.signedUrl, '_blank', 'noopener');
   }

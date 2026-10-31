@@ -23,4 +23,8 @@ export class StorageService {
   signedUrl(bucket: Bucket, path: string, seconds = 60) {
     return this.auth.supabase().storage.from(bucket).createSignedUrl(path, seconds);
   }
+
+  remove(bucket: Bucket, paths: string[]) {
+    return this.auth.supabase().storage.from(bucket).remove(paths);
+  }
 }
