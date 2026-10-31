@@ -164,3 +164,29 @@
 .staff-calendar .fc-event {
   cursor: pointer;
 }
+
+/* Impression d'un justificatif ouvert dans un panneau : seul `.print-area` est imprimé. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+  .print-area [data-slot='sheet-close'],
+  .print-area .no-print {
+    display: none !important;
+  }
+}
