@@ -7,3 +7,11 @@ export function frDate(value: string | null | undefined) {
 export function digitsOnly(value: string) {
   return value.replace(/\D+/g, '');
 }
+
+const dateTime = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+const dateTimeLong = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeStyle: 'short' });
+
+/** Date et heure à l'heure locale du poste (« 31/10/2026 14:00 »). */
+export function frDateTime(value: string | null | undefined, long = false) {
+  return value ? (long ? dateTimeLong : dateTime).format(new Date(value)) : '—';
+}
