@@ -24,6 +24,20 @@ insert into public.rentals (id, client_id, vehicle_id, departure_date, return_da
 values ('50000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', :v_internal,
         now() + interval '30 days', now() + interval '33 days', 75000, 100000);
 
+-- Location d'un véhicule partenaire (3 jours) et inspections du client, insérées
+-- sans les triggers métier (contrat signé, etc.) qui ne sont pas l'objet de ces tests.
+set local session_replication_role = replica;
+insert into public.rentals (id, client_id, vehicle_id, departure_date, return_date, rental_price, deposit_amount, status)
+values ('50000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', :v_partner,
+        now() - interval '10 days', now() - interval '7 days', 114000, 150000, 'completed');
+insert into public.vehicle_inspections (id, rental_id, vehicle_id, inspection_type, inspection_date, mileage, created_at)
+values ('60000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', :v_internal, 'departure', now(), 42000, now() - interval '10 minutes'),
+       ('60000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000001', :v_internal, 'return', now(), 42500, now() - interval '2 hours');
+set local session_replication_role = origin;
+
+insert into public.notifications (user_id, notification_type, title, message)
+values (:admin, 'test', 'Réservée au Super Admin', 'Test');
+
 -- ───────────────────────── Visiteur anonyme ─────────────────────────
 set local role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
@@ -57,6 +71,18 @@ select throws_ok($$ select public.set_automatic_rental_status('50000000-0000-000
                  '42501', null, 'client : ne peut pas forcer le statut de sa location');
 select throws_ok($$ select * from public.get_staff_display_names(array['10000000-0000-0000-0000-000000000001'::uuid]) $$,
                  '42501', null, 'client : ne peut pas résoudre les noms des comptes');
+select ok(public.client_can_add_inspection_photo('60000000-0000-0000-0000-000000000001'),
+          'client : peut compléter les photos d''une inspection récente');
+select ok(not public.client_can_add_inspection_photo('60000000-0000-0000-0000-000000000002'),
+          'client : inspection verrouillée une heure après son enregistrement');
+select throws_ok($$ insert into public.inspection_photos (inspection_id, photo_type, storage_path)
+                    values ('60000000-0000-0000-0000-000000000002', 'front', 'inspections/60000000-0000-0000-0000-000000000002/x.jpg') $$,
+                 '42501', null, 'client : ajout de photo refusé sur une inspection verrouillée');
+select throws_ok($$ insert into storage.objects (bucket_id, name)
+                    values ('inspection-photos', 'inspections/60000000-0000-0000-0000-000000000002/x.jpg') $$,
+                 '42501', null, 'client : dépôt de fichier refusé sur une inspection verrouillée');
+select throws_ok($$ select * from public.partner_rental_earnings() $$, '42501', null,
+                 'client : pas d''accès aux revenus partenaires');
 select throws_ok($$ update public.profiles set role = 'super_admin' where id = '10000000-0000-0000-0000-000000000003' $$,
                  '42501', null, 'client : ne peut pas s''attribuer un rôle');
 reset role;
@@ -72,6 +98,9 @@ select throws_ok($$ update public.vehicles set status = 'available' where id = '
                  '23514', null, 'partenaire : ne peut pas remettre en service un véhicule en maintenance');
 select lives_ok($$ update public.vehicles set status = 'unavailable' where id = '30000000-0000-0000-0000-000000000007' $$,
                 'partenaire : peut encore marquer son véhicule indisponible');
+select is((select count(*) from public.rentals), 0::bigint, 'partenaire : aucun accès direct à la table des locations');
+select is((select count(*) from public.partner_rental_earnings()), 1::bigint, 'partenaire : voit la location de son véhicule');
+select is((select payout from public.partner_rental_earnings()), 90000::numeric, 'partenaire : part calculée (3 jours × 30 000)');
 reset role;
 
 -- ───────────────────────── Responsable ─────────────────────────
@@ -80,6 +109,8 @@ select set_config('request.jwt.claims', json_build_object('sub', :responsable, '
 
 select ok((select count(*) from public.vehicles) >= 7, 'responsable : voit le parc');
 select is((select count(*) from public.activity_logs), 0::bigint, 'responsable : journal d''activité non autorisé');
+select is((select count(*) from public.notifications where user_id <> auth.uid()), 0::bigint,
+          'responsable : ne voit pas les notifications des autres comptes');
 delete from public.vehicles where id = :v_internal;
 select ok(exists (select 1 from public.vehicles where id = :v_internal), 'responsable : suppression refusée sans droit delete');
 select throws_ok($$ update public.profiles set permissions = '{"users":{"view":true}}' where id = '10000000-0000-0000-0000-000000000002' $$,

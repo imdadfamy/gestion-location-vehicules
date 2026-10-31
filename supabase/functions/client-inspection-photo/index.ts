@@ -18,8 +18,9 @@ Deno.serve(async request => {
     }
     const form = await request.formData(), inspectionId = String(form.get('inspection_id') ?? ''), photoType = String(form.get('photo_type') ?? ''), file = form.get('file');
     if (!inspectionId || !['front', 'rear', 'left_side', 'right_side', 'interior'].includes(photoType) || !(file instanceof File)) throw new Error('Photo invalide.');
-    const { data: owner } = await admin.from('vehicle_inspections').select('id,rentals!inner(client_id,clients!inner(profile_id))').eq('id', inspectionId).eq('rentals.clients.profile_id', user.id).maybeSingle();
-    if (!owner) throw new Error('Cette inspection ne vous appartient pas.');
+    // Même règle que la RLS : inspection du client, enregistrée il y a moins d'une heure.
+    const { data: allowed, error: allowedError } = await caller.rpc('client_can_add_inspection_photo', { target_inspection_id: inspectionId });
+    if (allowedError || allowed !== true) throw new Error('Les photos ne peuvent plus être ajoutées à cette inspection : elle est verrouillée une heure après son enregistrement.');
     const path = `inspections/${inspectionId}/${photoType}-${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
     const upload = await admin.storage.from('inspection-photos').upload(path, file, { upsert: false, contentType: file.type || 'application/octet-stream' }); if (upload.error) throw new Error(upload.error.message);
     const { error } = await admin.from('inspection_photos').insert({ inspection_id: inspectionId, photo_type: photoType, storage_path: path }); if (error) { await admin.storage.from('inspection-photos').remove([path]); throw new Error(error.message); }
