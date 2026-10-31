@@ -23,6 +23,20 @@ export class ClientsService {
     );
   }
 
+  /** Clients disposant d'un compte du portail, pour leur envoyer un contrat. */
+  searchPortalAccounts(term: string) {
+    const clean = term.replace(/[,%()]/g, '');
+    return this.db
+      .from('clients')
+      .select('id,profile_id,first_name,last_name,phone,email')
+      .not('profile_id', 'is', null)
+      .or(
+        `first_name.ilike.%${clean}%,last_name.ilike.%${clean}%,phone.ilike.%${clean}%,email.ilike.%${clean}%`,
+      )
+      .order('last_name')
+      .limit(12);
+  }
+
   /** Tous les clients, pour les listes de choix des formulaires. */
   options() {
     return this.db.from('clients').select('id,first_name,last_name').order('last_name');

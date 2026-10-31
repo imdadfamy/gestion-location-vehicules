@@ -16,6 +16,9 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { AuthService } from '../../core/auth.service';
+import { ClientsService } from '../../core/data/clients.service';
+import { ReservationsService } from '../../core/data/reservations.service';
+import { VehiclesService } from '../../core/data/vehicles.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
 
 @Component({
@@ -45,6 +48,9 @@ export class ReservationsComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     public auth: AuthService,
     private router: Router,
+    private reservations: ReservationsService,
+    private vehiclesData: VehiclesService,
+    private clientsData: ClientsService,
   ) {}
   ngOnInit() {
     void this.load();
@@ -58,16 +64,8 @@ export class ReservationsComponent implements OnInit, AfterViewInit, OnDestroy {
   async load() {
     this.loading.set(true);
     const [vehicles, reservations] = await Promise.all([
-      this.auth
-        .supabase()
-        .from('vehicles')
-        .select('id,registration_number,make,model')
-        .order('registration_number'),
-      this.auth
-        .supabase()
-        .from('reservations')
-        .select('*,vehicles(registration_number,make,model)')
-        .order('planned_departure_date', { ascending: false }),
+      this.vehiclesData.options(),
+      this.reservations.list(),
     ]);
     this.loading.set(false);
     this.vehicles.set(vehicles.data ?? []);
@@ -216,9 +214,7 @@ export class ReservationsComponent implements OnInit, AfterViewInit, OnDestroy {
       planned_return_date: new Date(value.planned_return_date).toISOString(),
       observation: value.observation || null,
     };
-    const result = value.id
-      ? await this.auth.supabase().from('reservations').update(payload).eq('id', value.id)
-      : await this.auth.supabase().from('reservations').insert(payload);
+    const result = await this.reservations.save(value.id, payload);
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -239,9 +235,7 @@ export class ReservationsComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
   async validate(item: any) {
-    const result = await this.auth
-      .supabase()
-      .rpc('validate_reservation', { target_reservation_id: item.id });
+    const result = await this.reservations.validate(item.id);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
       return;
@@ -271,17 +265,7 @@ export class ReservationsComponent implements OnInit, AfterViewInit, OnDestroy {
       this.recipients.set([]);
       return;
     }
-    const escaped = term.replace(/[,%()]/g, '');
-    const result = await this.auth
-      .supabase()
-      .from('clients')
-      .select('id,profile_id,first_name,last_name,phone,email')
-      .not('profile_id', 'is', null)
-      .or(
-        `first_name.ilike.%${escaped}%,last_name.ilike.%${escaped}%,phone.ilike.%${escaped}%,email.ilike.%${escaped}%`,
-      )
-      .order('last_name')
-      .limit(12);
+    const result = await this.clientsData.searchPortalAccounts(term);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
       return;
@@ -307,13 +291,8 @@ export class ReservationsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.saving.set(true);
     this.error.set('');
     const result = this.isOnlineReservation(item)
-      ? await this.auth
-          .supabase()
-          .rpc('send_reservation_to_client', { target_reservation_id: item.id })
-      : await this.auth.supabase().rpc('send_reservation_to_selected_client', {
-          target_reservation_id: item.id,
-          target_client_profile_id: recipient.profile_id,
-        });
+      ? await this.reservations.sendToOwner(item.id)
+      : await this.reservations.sendToClient(item.id, recipient.profile_id);
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -321,7 +300,7 @@ export class ReservationsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.dispatch.set(null);
     this.message.set(
-      'Location et contrat préparés. La location est maintenant visible dans Locations : ouvrez sa fiche pour confirmer « Paiement reçu » après l’encaissement réel.',
+      'Dossier envoyé au client. La location et le contrat seront créés dès qu’il aura complété son dossier et signé depuis son espace client.',
     );
     await this.load();
   }
@@ -329,9 +308,7 @@ export class ReservationsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!confirm('Annuler la réservation de ' + item.first_name + ' ' + item.last_name + ' ?'))
       return;
     const reason = prompt('Motif d’annulation (facultatif)') ?? '';
-    const result = await this.auth
-      .supabase()
-      .rpc('cancel_reservation', { target_reservation_id: item.id, reason });
+    const result = await this.reservations.cancel(item.id, reason);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
       return;
