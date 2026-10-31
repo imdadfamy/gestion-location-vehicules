@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../auth.service';
+import { blankToNull } from './form-values';
 import { StorageService } from './storage.service';
 
 /** Maintenances des véhicules et leurs factures. */
@@ -20,7 +21,8 @@ export class MaintenanceService {
 
   /** Crée ou met à jour ; les relations jointes (`vehicles`) ne sont pas envoyées. */
   save(maintenance: any) {
-    const { vehicles, ...values } = maintenance;
+    const { vehicles, ...rest } = maintenance;
+    const values = blankToNull(rest);
     return values.id
       ? this.db.from('vehicle_maintenance').update(values).eq('id', values.id).select().single()
       : this.db.from('vehicle_maintenance').insert(values).select().single();

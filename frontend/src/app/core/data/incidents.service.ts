@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../auth.service';
+import { blankToNull } from './form-values';
 import { StorageService } from './storage.service';
 
 /** Incidents (pannes, accidents, dommages…) et leurs justificatifs. */
@@ -28,7 +29,8 @@ export class IncidentsService {
 
   /** Crée ou met à jour ; les relations jointes (`vehicles`, `clients`) ne sont pas envoyées. */
   save(incident: any) {
-    const { vehicles, clients, ...values } = incident;
+    const { vehicles, clients, ...rest } = incident;
+    const values = blankToNull(rest);
     return values.id
       ? this.db.from('incidents').update(values).eq('id', values.id).select().single()
       : this.db.from('incidents').insert(values).select().single();

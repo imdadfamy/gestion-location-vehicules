@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../auth.service';
+import { blankToNull } from './form-values';
 import { StorageService } from './storage.service';
 import type { Database } from '../database.types';
 import { edgeFunctionError } from './edge-function';
@@ -41,7 +42,7 @@ export class ClientPortalService {
     if (form.id)
       return this.db
         .from('clients')
-        .update({ ...form, profile_id: profileId })
+        .update({ ...blankToNull(form), profile_id: profileId })
         .eq('id', form.id)
         .select()
         .single();

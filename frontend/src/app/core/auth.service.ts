@@ -241,12 +241,42 @@ const translations: Array<[RegExp, string]> = [
   ],
 ];
 
+/** Libellés des colonnes obligatoires, pour nommer le champ manquant. */
+const requiredFieldLabels: Record<string, string> = {
+  registration_number: 'Immatriculation',
+  make: 'Marque',
+  model: 'Modèle',
+  first_name: 'Prénom',
+  last_name: 'Nom',
+  phone: 'Téléphone',
+  vehicle_id: 'Véhicule',
+  client_id: 'Client',
+  rental_id: 'Location',
+  departure_date: 'Date de départ',
+  return_date: 'Date de retour',
+  planned_departure_date: 'Départ prévu',
+  planned_return_date: 'Retour prévu',
+  rental_price: 'Prix de location',
+  amount: 'Montant',
+  maintenance_type: 'Type de maintenance',
+  maintenance_date: 'Date de maintenance',
+  incident_type: 'Type d’incident',
+  description: 'Description',
+  company_name: 'Nom de l’entreprise',
+  contact_name: 'Nom du contact',
+  name: 'Nom',
+};
+
 export function frenchError(value: unknown): string {
   const error = value as any;
   const message =
     typeof value === 'string'
       ? value
       : (error?.message ?? error?.error_description ?? error?.details ?? '');
+  const column =
+    typeof message === 'string' ? /null value in column "(\w+)"/i.exec(message)?.[1] : null;
+  if (column && requiredFieldLabels[column])
+    return `Le champ « ${requiredFieldLabels[column]} » est obligatoire.`;
   const found = translations.find(([pattern]) => pattern.test(message));
   if (found) return found[1];
   if (typeof message === 'string' && /[àâçéèêëîïôûùüÿñæœ]/i.test(message)) return message;

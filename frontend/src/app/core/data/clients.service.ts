@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../auth.service';
+import { blankToNull } from './form-values';
 import { StorageService } from './storage.service';
 import type { TablesUpdate } from '../database.types';
 
@@ -47,14 +48,15 @@ export class ClientsService {
   }
 
   /** Crée ou met à jour la fiche et renvoie la ligne enregistrée. */
-  save(client: any) {
+  save(form: any) {
+    const client = blankToNull(form);
     return client.id
       ? this.db.from('clients').update(client).eq('id', client.id).select().single()
       : this.db.from('clients').insert(client).select().single();
   }
 
   update(id: string, values: TablesUpdate<'clients'>) {
-    return this.db.from('clients').update(values).eq('id', id);
+    return this.db.from('clients').update(blankToNull(values)).eq('id', id);
   }
 
   rentals(clientId: string) {

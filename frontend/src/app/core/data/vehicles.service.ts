@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../auth.service';
+import { blankToNull } from './form-values';
 import { StorageService } from './storage.service';
 
 /** Parc automobile et documents des véhicules. */
@@ -48,7 +49,8 @@ export class VehiclesService {
       .single();
   }
 
-  save(vehicle: any) {
+  save(form: any) {
+    const vehicle = blankToNull(form);
     return vehicle.id
       ? this.db.from('vehicles').update(vehicle).eq('id', vehicle.id).select().single()
       : this.db.from('vehicles').insert(vehicle).select().single();

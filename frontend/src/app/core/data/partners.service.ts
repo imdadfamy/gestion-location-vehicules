@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../auth.service';
+import { blankToNull } from './form-values';
 import { StorageService } from './storage.service';
 import type { TablesUpdate } from '../database.types';
 
@@ -56,6 +57,6 @@ export class PartnersService {
   }
 
   updatePartner(partnerId: string, values: TablesUpdate<'partners'>) {
-    return this.db.from('partners').update(values).eq('id', partnerId);
+    return this.db.from('partners').update(blankToNull(values)).eq('id', partnerId);
   }
 }

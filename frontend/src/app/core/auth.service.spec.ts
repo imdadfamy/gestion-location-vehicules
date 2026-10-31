@@ -52,6 +52,14 @@ describe('frenchError', () => {
     );
   });
 
+  it('nomme le champ obligatoire manquant', () => {
+    expect(
+      frenchError(
+        'null value in column "registration_number" of relation "vehicles" violates not-null constraint',
+      ),
+    ).toBe('Le champ « Immatriculation » est obligatoire.');
+  });
+
   it('conserve un message déjà en français', () => {
     expect(frenchError('Veuillez choisir un véhicule.')).toBe('Veuillez choisir un véhicule.');
   });

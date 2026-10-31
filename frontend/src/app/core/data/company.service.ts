@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../auth.service';
+import { blankToNull } from './form-values';
 import { StorageService } from './storage.service';
 
 /** Paramètres de l'entreprise (ligne unique de company_settings). */
@@ -15,7 +16,8 @@ export class CompanyService {
     return this.db.from('company_settings').select(columns).limit(1).maybeSingle<any>();
   }
 
-  save(settings: any) {
+  save(form: any) {
+    const settings = blankToNull(form);
     return settings.id
       ? this.db.from('company_settings').update(settings).eq('id', settings.id).select().single()
       : this.db.from('company_settings').insert(settings).select().single();
