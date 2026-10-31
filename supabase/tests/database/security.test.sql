@@ -33,6 +33,20 @@ values ('50000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-0000000
 insert into public.vehicle_inspections (id, rental_id, vehicle_id, inspection_type, inspection_date, mileage, created_at)
 values ('60000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', :v_internal, 'departure', now(), 42000, now() - interval '10 minutes'),
        ('60000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000001', :v_internal, 'return', now(), 42500, now() - interval '2 hours');
+-- Contrat en attente de signature pour la location du client du portail, et contrat
+-- d'un autre client (sans compte) pour vérifier le cloisonnement.
+insert into public.contracts (id, rental_id, status, generated_content)
+values ('70000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000001', 'pending_signature', '{}'),
+       ('70000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000002', 'pending_signature', '{}');
+-- Réservations en attente : une du client du portail, une d'un autre client.
+update public.reservations set status = 'pending' where client_profile_id = :client;
+insert into public.reservations (id, first_name, last_name, phone, vehicle_id, planned_departure_date, planned_return_date, status)
+values ('80000000-0000-0000-0000-000000000002', 'Autre', 'Client', '+229 00', :v_internal,
+        now() + interval '200 days', now() + interval '202 days', 'pending');
+insert into public.inspection_photos (inspection_id, photo_type, storage_path)
+values ('60000000-0000-0000-0000-000000000001', 'front', 'inspections/60000000-0000-0000-0000-000000000001/front-a.jpg');
+insert into storage.objects (bucket_id, name)
+values ('inspection-photos', 'inspections/60000000-0000-0000-0000-000000000001/front-a.jpg');
 set local session_replication_role = origin;
 
 insert into public.notifications (user_id, notification_type, title, message)
@@ -71,6 +85,33 @@ select throws_ok($$ select public.set_automatic_rental_status('50000000-0000-000
                  '42501', null, 'client : ne peut pas forcer le statut de sa location');
 select throws_ok($$ select * from public.get_staff_display_names(array['10000000-0000-0000-0000-000000000001'::uuid]) $$,
                  '42501', null, 'client : ne peut pas résoudre les noms des comptes');
+select lives_ok($$ select public.client_cancel_reservation(
+                     (select id from public.reservations where client_profile_id = '10000000-0000-0000-0000-000000000003' limit 1)) $$,
+                'client : peut annuler sa réservation en attente');
+select is((select status from public.reservations where client_profile_id = '10000000-0000-0000-0000-000000000003' limit 1),
+          'cancelled', 'client : la réservation est réellement annulée en base');
+select throws_ok($$ select public.client_cancel_reservation('80000000-0000-0000-0000-000000000002') $$,
+                 '23503', null, 'client : ne peut pas annuler la réservation d''un autre');
+select is((select count(*) from public.contracts), 1::bigint, 'client : voit son contrat, et seulement le sien');
+select lives_ok($$ insert into storage.objects (bucket_id, name)
+                   values ('contract-assets', 'contracts/70000000-0000-0000-0000-000000000001/signatures/client.png') $$,
+                'client : peut déposer la signature de son contrat en attente');
+select lives_ok($$ insert into public.contract_signatures (contract_id, signer_type, signer_name, signature_storage_path, created_by)
+                   values ('70000000-0000-0000-0000-000000000001', 'client', 'Koffi Client',
+                           'contracts/70000000-0000-0000-0000-000000000001/signatures/client.png',
+                           '10000000-0000-0000-0000-000000000003') $$,
+                'client : peut enregistrer sa signature');
+select is((select count(*) from public.contract_signatures), 1::bigint, 'client : voit sa signature');
+select throws_ok($$ insert into storage.objects (bucket_id, name)
+                    values ('contract-assets', 'contracts/70000000-0000-0000-0000-000000000002/signatures/client.png') $$,
+                 '42501', null, 'client : ne peut pas signer le contrat d''un autre client');
+select throws_ok($$ insert into public.contract_signatures (contract_id, signer_type, signer_name, signature_storage_path, created_by)
+                    values ('70000000-0000-0000-0000-000000000001', 'responsable', 'Faux', 'x.png',
+                            '10000000-0000-0000-0000-000000000003') $$,
+                 '42501', null, 'client : ne peut pas signer à la place du responsable');
+select is((select count(*) from public.inspection_photos), 1::bigint, 'client : voit les photos de ses inspections');
+select is((select count(*) from storage.objects where bucket_id = 'inspection-photos'), 1::bigint,
+          'client : peut ouvrir les fichiers photo de ses inspections');
 select ok(public.client_can_add_inspection_photo('60000000-0000-0000-0000-000000000001'),
           'client : peut compléter les photos d''une inspection récente');
 select ok(not public.client_can_add_inspection_photo('60000000-0000-0000-0000-000000000002'),

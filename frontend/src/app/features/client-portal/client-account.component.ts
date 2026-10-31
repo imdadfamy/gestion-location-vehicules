@@ -1,6 +1,7 @@
 ﻿import { Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { ClientPortalService } from '../../core/data/client-portal.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
 
 type DocumentKind = 'identity_document' | 'driving_license';
@@ -24,7 +25,10 @@ export class ClientAccountComponent implements OnInit {
     { type: 'identity_document', label: 'Pièce d’identité' },
     { type: 'driving_license', label: 'Permis de conduire' },
   ];
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private portal: ClientPortalService,
+  ) {}
   async ngOnInit() {
     await this.load();
   }
@@ -36,12 +40,7 @@ export class ClientAccountComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     const profile = this.auth.profile();
-    const result = await this.auth
-      .supabase()
-      .from('clients')
-      .select('*')
-      .eq('profile_id', profile.id)
-      .maybeSingle();
+    const result = await this.portal.myRecord(profile.id);
     this.loading.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -58,12 +57,7 @@ export class ClientAccountComponent implements OnInit {
       return;
     }
     this.form.set({ ...result.data });
-    const documentsResult = await this.auth
-      .supabase()
-      .from('client_documents')
-      .select('*')
-      .eq('client_id', result.data.id)
-      .order('created_at', { ascending: false });
+    const documentsResult = await this.portal.documents(result.data.id);
     if (documentsResult.error) this.error.set(this.auth.errorMessage(documentsResult.error));
     else this.documents.set(documentsResult.data ?? []);
   }
@@ -106,22 +100,7 @@ export class ClientAccountComponent implements OnInit {
       return null;
     }
     this.saving.set(true);
-    let result: any;
-    if (form.id)
-      result = await this.auth
-        .supabase()
-        .from('clients')
-        .update({ ...form, profile_id: this.auth.profile().id })
-        .eq('id', form.id)
-        .select()
-        .single();
-    else
-      result = await this.auth.supabase().rpc('ensure_client_profile', {
-        target_first_name: form.first_name,
-        target_last_name: form.last_name,
-        target_phone: form.phone,
-        target_email: form.email || null,
-      });
+    const result: any = await this.portal.saveRecord(this.auth.profile().id, form);
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -162,30 +141,7 @@ export class ClientAccountComponent implements OnInit {
     const form = await this.persistForUpload();
     if (!form) return;
     this.saving.set(true);
-    const path = `clients/${form.id}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-    const upload = await this.auth
-      .supabase()
-      .storage.from('rental-documents')
-      .upload(path, file, { contentType: file.type });
-    if (upload.error) {
-      this.saving.set(false);
-      this.error.set(this.auth.errorMessage(upload.error));
-      return;
-    }
-    const inserted = await this.auth
-      .supabase()
-      .from('client_documents')
-      .insert({
-        client_id: form.id,
-        document_type: type,
-        document_name: file.name,
-        storage_path: path,
-        mime_type: file.type,
-        file_size: file.size,
-        uploaded_by: this.auth.profile().id,
-      })
-      .select()
-      .single();
+    const inserted = await this.portal.addDocument(form.id, this.auth.profile().id, type, file);
     if (inserted.error) {
       this.saving.set(false);
       this.error.set(this.auth.errorMessage(inserted.error));
@@ -206,23 +162,10 @@ export class ClientAccountComponent implements OnInit {
       return;
     this.saving.set(true);
     this.error.set('');
-    const storage = await this.auth
-      .supabase()
-      .storage.from('rental-documents')
-      .remove([document.storage_path]);
-    if (storage.error) {
-      this.saving.set(false);
-      this.error.set(this.auth.errorMessage(storage.error));
-      return;
-    }
-    const result = await this.auth
-      .supabase()
-      .from('client_documents')
-      .delete()
-      .eq('id', document.id);
+    const failure = await this.portal.removeDocument(document);
     this.saving.set(false);
-    if (result.error) {
-      this.error.set(this.auth.errorMessage(result.error));
+    if (failure) {
+      this.error.set(this.auth.errorMessage(failure));
       return;
     }
     this.documents.update((documents) => documents.filter((row) => row.id !== document.id));
@@ -233,10 +176,7 @@ export class ClientAccountComponent implements OnInit {
   }
   async view(document: any) {
     this.error.set('');
-    const result = await this.auth
-      .supabase()
-      .storage.from('rental-documents')
-      .createSignedUrl(document.storage_path, 60);
+    const result = await this.portal.documentUrl(document.storage_path);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
       return;

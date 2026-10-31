@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import SignaturePad from 'signature_pad';
 import { AuthService } from '../../core/auth.service';
+import { ClientPortalService } from '../../core/data/client-portal.service';
 
 @Component({
   standalone: true,
@@ -40,7 +41,10 @@ export class ClientContractsComponent implements OnInit, AfterViewInit, OnDestro
     { n: 3, label: 'Signature' },
   ];
 
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private portal: ClientPortalService,
+  ) {}
   async ngOnInit() {
     await this.load();
   }
@@ -112,13 +116,8 @@ export class ClientContractsComponent implements OnInit, AfterViewInit, OnDestro
     this.loading.set(true);
     this.error.set('');
     const [historyResult, clientResult] = await Promise.all([
-      this.auth.supabase().rpc('client_contract_history'),
-      this.auth
-        .supabase()
-        .from('clients')
-        .select('*')
-        .eq('profile_id', this.auth.profile()?.id ?? '')
-        .maybeSingle(),
+      this.portal.contractHistory(),
+      this.portal.myRecord(this.auth.profile()?.id ?? ''),
     ]);
     const contracts = Array.isArray(historyResult.data) ? (historyResult.data as any[]) : [];
     this.historyContracts.set(
@@ -133,11 +132,7 @@ export class ClientContractsComponent implements OnInit, AfterViewInit, OnDestro
     };
     this.client.set(clientResult.data ?? {});
     if (clientResult.data?.id) {
-      const documentsResult = await this.auth
-        .supabase()
-        .from('client_documents')
-        .select('document_type')
-        .eq('client_id', clientResult.data.id);
+      const documentsResult = await this.portal.documents(clientResult.data.id, 'document_type');
       this.documents.set(documentsResult.data ?? []);
     } else this.documents.set([]);
     if (contractResult.error) {
@@ -148,16 +143,10 @@ export class ClientContractsComponent implements OnInit, AfterViewInit, OnDestro
     this.contract.set(contractResult.data);
     this.reservation.set(null);
     if (contractResult.data) {
-      const signature = await this.auth
-        .supabase()
-        .from('contract_signatures')
-        .select('id')
-        .eq('contract_id', contractResult.data.id)
-        .eq('signer_type', 'client')
-        .maybeSingle();
+      const signature = await this.portal.hasSigned(contractResult.data.id);
       this.clientSigned.set(!!signature.data);
     } else {
-      const dossier = await this.auth.supabase().rpc('client_pending_contract_dossier');
+      const dossier = await this.portal.pendingDossier();
       if (dossier.error) this.error.set(this.auth.errorMessage(dossier.error));
       else this.reservation.set(dossier.data);
     }
@@ -203,9 +192,7 @@ export class ClientContractsComponent implements OnInit, AfterViewInit, OnDestro
   async refreshContract() {
     this.saving.set(true);
     this.error.set('');
-    const result = await this.auth
-      .supabase()
-      .rpc('client_refresh_contract_content', { target_contract_id: this.contract().id });
+    const result = await this.portal.refreshContractContent(this.contract().id);
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -221,10 +208,7 @@ export class ClientContractsComponent implements OnInit, AfterViewInit, OnDestro
     }
     this.saving.set(true);
     this.error.set('');
-    const result = await this.auth.supabase().rpc('report_contract_correction', {
-      target_contract_id: this.contract().id,
-      correction_message: this.correction.trim(),
-    });
+    const result = await this.portal.reportCorrection(this.contract().id, this.correction.trim());
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -253,40 +237,27 @@ export class ClientContractsComponent implements OnInit, AfterViewInit, OnDestro
     this.error.set('');
     try {
       const fromReservation = !!this.reservation();
-      const path = fromReservation
-        ? `reservations/${this.reservation().id}/signatures/client.png`
-        : `contracts/${this.contract().id}/signatures/client.png`;
       const blob = await (await fetch(this.pad.toDataURL('image/png'))).blob();
-      const upload = await this.auth
-        .supabase()
-        .storage.from('contract-assets')
-        .upload(path, blob, { upsert: false, contentType: 'image/png' });
-      if (upload.error) throw upload.error;
+      const person = this.content().client ?? {};
+      const failure = await this.portal.sign(
+        fromReservation
+          ? { reservationId: this.reservation().id }
+          : {
+              contractId: this.contract().id,
+              signerName:
+                `${person.first_name ?? ''} ${person.last_name ?? ''}`.trim() || 'Locataire',
+            },
+        this.auth.profile().id,
+        blob,
+      );
+      if (failure) throw failure;
       if (fromReservation) {
-        const result = await this.auth.supabase().rpc('client_submit_reservation_contract', {
-          target_reservation_id: this.reservation().id,
-          client_signature_storage_path: path,
-        });
-        if (result.error) throw result.error;
+        await this.load();
         this.message.set(
           'Votre signature a été envoyée. La location et le contrat ont été créés ; le Responsable doit maintenant signer.',
         );
-        await this.load();
         return;
       }
-      const person = this.content().client ?? {};
-      const insert = await this.auth
-        .supabase()
-        .from('contract_signatures')
-        .insert({
-          contract_id: this.contract().id,
-          signer_type: 'client',
-          signer_name: `${person.first_name ?? ''} ${person.last_name ?? ''}`.trim() || 'Locataire',
-          signature_storage_path: path,
-          created_by: this.auth.profile().id,
-          signer_user_agent: navigator.userAgent,
-        });
-      if (insert.error) throw insert.error;
       this.clientSigned.set(true);
       this.message.set(
         'Votre signature a été enregistrée. Le Responsable a été informé et doit maintenant signer.',
@@ -301,10 +272,8 @@ export class ClientContractsComponent implements OnInit, AfterViewInit, OnDestro
     await this.downloadContract(this.contract());
   }
   async downloadContract(contract: any) {
-    const result = await this.auth
-      .supabase()
-      .functions.invoke('client-contract-download', { body: { contract_id: contract.id } });
-    if (result.error) this.error.set(this.auth.errorMessage(result.error));
-    else window.open(result.data.signedUrl, '_blank', 'noopener');
+    const result = await this.portal.contractPdfUrl(contract.id);
+    if (result.error || !result.url) this.error.set(this.auth.errorMessage(result.error));
+    else window.open(result.url, '_blank', 'noopener');
   }
 }

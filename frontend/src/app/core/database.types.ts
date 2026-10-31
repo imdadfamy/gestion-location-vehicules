@@ -1645,6 +1645,10 @@ export type Database = {
         Args: { target_inspection_id: string };
         Returns: boolean;
       };
+      client_cancel_reservation: {
+        Args: { target_reservation_id: string };
+        Returns: undefined;
+      };
       client_contract_history: { Args: never; Returns: Json };
       client_create_inspection: {
         Args: {
@@ -1702,6 +1706,18 @@ export type Database = {
       };
       client_inspection_eligible_rentals: { Args: never; Returns: Json };
       client_inspection_history: { Args: never; Returns: Json };
+      client_owns_contract: {
+        Args: { pending_only?: boolean; target_contract_id: string };
+        Returns: boolean;
+      };
+      client_owns_inspection: {
+        Args: { target_inspection_id: string };
+        Returns: boolean;
+      };
+      client_owns_rental: {
+        Args: { target_rental_id: string };
+        Returns: boolean;
+      };
       client_pending_contract_dossier: { Args: never; Returns: Json };
       client_refresh_contract_content: {
         Args: { target_contract_id: string };

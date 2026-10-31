@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { ClientPortalService } from '../../core/data/client-portal.service';
 
 @Component({
   standalone: true,
@@ -28,6 +29,7 @@ export class ClientPortalComponent implements OnInit {
   constructor(
     private auth: AuthService,
     private route: ActivatedRoute,
+    private portal: ClientPortalService,
   ) {}
   ngOnInit() {
     const q = this.route.snapshot.queryParamMap;
@@ -75,10 +77,10 @@ export class ClientPortalComponent implements OnInit {
   async load() {
     this.loading.set(true);
     this.error.set('');
-    const result = await this.auth.supabase().rpc('client_available_vehicles', {
-      target_departure: this.departure ? new Date(this.departure).toISOString() : undefined,
-      target_return: this.returnDate ? new Date(this.returnDate).toISOString() : undefined,
-    });
+    const result = await this.portal.availableVehicles(
+      this.departure ? new Date(this.departure).toISOString() : undefined,
+      this.returnDate ? new Date(this.returnDate).toISOString() : undefined,
+    );
     this.loading.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -92,13 +94,9 @@ export class ClientPortalComponent implements OnInit {
           (vehicle.photo_storage_path ? [vehicle.photo_storage_path] : []);
         const urls = await Promise.all(
           paths.map(async (path) => {
-            const storage = this.auth.supabase().storage.from('rental-documents');
-            const signed = await storage.createSignedUrl(path, 600);
-            if (signed.data?.signedUrl) return signed.data.signedUrl;
-            const file = await storage.download(path);
-            if (file.data) return URL.createObjectURL(file.data);
-            failedPhotos++;
-            return null;
+            const url = await this.portal.vehiclePhotoUrl(path);
+            if (!url) failedPhotos++;
+            return url;
           }),
         );
         return { ...vehicle, photos: urls.filter(Boolean) };
@@ -139,12 +137,12 @@ export class ClientPortalComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    const result = await this.auth.supabase().rpc('client_create_reservation', {
-      target_vehicle_id: vehicle.id,
-      target_departure: new Date(this.departure).toISOString(),
-      target_return: new Date(this.returnDate).toISOString(),
-      target_observation: this.observation || undefined,
-    });
+    const result = await this.portal.createReservation(
+      vehicle.id,
+      new Date(this.departure).toISOString(),
+      new Date(this.returnDate).toISOString(),
+      this.observation || undefined,
+    );
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));

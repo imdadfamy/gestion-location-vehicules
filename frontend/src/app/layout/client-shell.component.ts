@@ -1,6 +1,7 @@
 ﻿import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth.service';
+import { ClientPortalService } from '../core/data/client-portal.service';
 
 @Component({
   standalone: true,
@@ -12,24 +13,15 @@ export class ClientShellComponent implements OnInit {
   menuOpen = signal(false);
   company = signal<any>({});
   logoUrl = signal('/logo-horizontal-white.png');
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private portal: ClientPortalService,
+  ) {}
   async ngOnInit() {
-    const result = await this.auth
-      .supabase()
-      .from('company_settings')
-      .select('company_name,phone,secondary_phone,whatsapp_phone,logo_storage_path')
-      .limit(1)
-      .maybeSingle();
-    if (result.data) {
-      this.company.set(result.data);
-      if (result.data.logo_storage_path) {
-        const signed = await this.auth
-          .supabase()
-          .storage.from('rental-documents')
-          .createSignedUrl(result.data.logo_storage_path, 300);
-        if (signed.data?.signedUrl) this.logoUrl.set(signed.data.signedUrl);
-      }
-    }
+    // Les paramètres complets sont réservés au personnel (RLS) : le client lit les
+    // coordonnées publiques ; le logo reste celui livré avec l'application.
+    const result = await this.portal.companyContact();
+    if (result.data) this.company.set(result.data);
   }
   async logout() {
     await this.auth.logout();

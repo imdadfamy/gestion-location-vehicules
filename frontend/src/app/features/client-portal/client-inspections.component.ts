@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { ClientPortalService } from '../../core/data/client-portal.service';
 
 type PhotoType = 'front' | 'rear' | 'left_side' | 'right_side' | 'interior';
 const photoTypes: { key: PhotoType; label: string }[] = [
@@ -31,7 +32,10 @@ export class ClientInspectionsComponent implements OnInit {
   error = signal('');
   message = signal('');
   private files = new Map<PhotoType, File>();
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private portal: ClientPortalService,
+  ) {}
   async ngOnInit() {
     await this.load();
   }
@@ -75,8 +79,8 @@ export class ClientInspectionsComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     const [history, rentals] = await Promise.all([
-      this.auth.supabase().rpc('client_inspection_history'),
-      this.auth.supabase().rpc('client_inspection_eligible_rentals'),
+      this.portal.inspectionHistory(),
+      this.portal.inspectionEligibleRentals(),
     ]);
     this.loading.set(false);
     if (history.error || rentals.error) {
@@ -137,7 +141,7 @@ export class ClientInspectionsComponent implements OnInit {
     this.error.set('');
     this.message.set('');
     try {
-      const result = await this.auth.supabase().rpc('client_create_inspection', {
+      const result = await this.portal.createInspection({
         target_rental_id: form.rental.id,
         target_inspection_type: form.inspection_type,
         target_mileage: Number(form.mileage),
@@ -187,36 +191,27 @@ export class ClientInspectionsComponent implements OnInit {
   }
   private async uploadPhotos(inspectionId: string) {
     for (const [type, file] of this.files) {
-      const path = `inspections/${inspectionId}/${type}-${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
       const form = new FormData();
       form.append('inspection_id', inspectionId);
       form.append('photo_type', type);
       form.append('file', file, file.name);
-      const result = await this.auth
-        .supabase()
-        .functions.invoke('client-inspection-photo', { body: form });
-      const upload = result.error;
-      if (upload) throw upload;
+      const failure = await this.portal.uploadInspectionPhoto(form);
+      if (failure) throw failure;
     }
   }
   async show(inspection: any) {
     this.error.set('');
     this.selected.set(inspection);
     this.photos.set([]);
-    const result = await this.auth
-      .supabase()
-      .functions.invoke('client-inspection-photo', { body: { inspection_id: inspection.id } });
+    const result = await this.portal.inspectionPhotos(inspection.id);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
       return;
     }
-    this.photos.set(result.data?.photos ?? []);
+    this.photos.set(result.photos);
   }
   async openPhoto(photo: any) {
-    const result = await this.auth
-      .supabase()
-      .storage.from('inspection-photos')
-      .createSignedUrl(photo.storage_path, 60);
+    const result = await this.portal.inspectionPhotoUrl(photo.storage_path);
     if (result.error) this.error.set(this.auth.errorMessage(result.error));
     else window.open(result.data.signedUrl, '_blank', 'noopener');
   }

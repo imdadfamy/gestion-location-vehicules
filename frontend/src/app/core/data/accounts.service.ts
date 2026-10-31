@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../auth.service';
+import { edgeFunctionError } from './edge-function';
 
 /**
  * Gestion des comptes via l'Edge Function `manage-users` (seule à détenir la clé
@@ -12,8 +13,7 @@ export class AccountsService {
   /** Appelle la fonction ; renvoie l'erreur éventuelle (réseau ou métier) et la réponse. */
   async manage(body: Record<string, unknown>) {
     const result = await this.auth.supabase().functions.invoke('manage-users', { body });
-    const error = result.error ?? (result.data?.error ? new Error(result.data.error) : null);
-    return { data: result.data, error };
+    return { data: result.data, error: await edgeFunctionError(result) };
   }
 
   /** Variante qui lève l'erreur, pour les écrans qui enchaînent dans un try/catch. */

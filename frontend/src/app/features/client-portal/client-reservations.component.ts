@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../core/auth.service';
+import { ClientPortalService } from '../../core/data/client-portal.service';
 
 @Component({
   standalone: true,
@@ -12,11 +13,14 @@ export class ClientReservationsComponent implements OnInit {
   rows = signal<any[]>([]);
   loading = signal(false);
   error = signal('');
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private portal: ClientPortalService,
+  ) {}
   async ngOnInit() {
     this.loading.set(true);
     this.error.set('');
-    const result = await this.auth.supabase().rpc('client_reservation_history');
+    const result = await this.portal.reservationHistory();
     this.loading.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -41,11 +45,7 @@ export class ClientReservationsComponent implements OnInit {
     );
   }
   async cancel(reservation: any) {
-    const result = await this.auth
-      .supabase()
-      .from('reservations')
-      .update({ status: 'cancelled' })
-      .eq('id', reservation.id);
+    const result = await this.portal.cancelReservation(reservation.id);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
       return;
