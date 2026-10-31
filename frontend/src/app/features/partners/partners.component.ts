@@ -2,6 +2,9 @@ import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { AccountsService } from '../../core/data/accounts.service';
+import { CompanyService } from '../../core/data/company.service';
+import { PartnersService } from '../../core/data/partners.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
 
 @Component({
@@ -31,7 +34,12 @@ export class PartnersComponent implements OnInit {
   rejectionReason = '';
   partnerForm: any = {};
   minMargin = signal(5000);
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private partnersData: PartnersService,
+    private companyData: CompanyService,
+    private accounts: AccountsService,
+  ) {}
 
   async ngOnInit() {
     await this.load();
@@ -112,23 +120,9 @@ export class PartnersComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     const [vehicles, partners, settings] = await Promise.all([
-      this.auth
-        .supabase()
-        .from('vehicles')
-        .select('*,partners(id,company_name,contact_name)')
-        .eq('owner_type', 'partner')
-        .order('submitted_at', { ascending: false }),
-      this.auth
-        .supabase()
-        .from('partners')
-        .select('*,profiles!partners_profile_id_fkey(is_active)')
-        .order('created_at', { ascending: false }),
-      this.auth
-        .supabase()
-        .from('company_settings')
-        .select('partner_minimum_margin')
-        .limit(1)
-        .maybeSingle(),
+      this.partnersData.vehicles(),
+      this.partnersData.partners(),
+      this.companyData.get('partner_minimum_margin'),
     ]);
     if (vehicles.error) {
       this.loading.set(false);
@@ -142,11 +136,7 @@ export class PartnersComponent implements OnInit {
 
     const vehicleIds = (vehicles.data ?? []).map((v: any) => v.id);
     if (vehicleIds.length) {
-      const rentalsResult = await this.auth
-        .supabase()
-        .from('rentals')
-        .select('vehicle_id,departure_date,return_date,status')
-        .in('vehicle_id', vehicleIds);
+      const rentalsResult = await this.partnersData.rentalsOf(vehicleIds);
       if (!rentalsResult.error) this.rentals.set(rentalsResult.data ?? []);
     }
 
@@ -154,22 +144,7 @@ export class PartnersComponent implements OnInit {
       .filter((v: any) => v.approval_status === 'pending')
       .map((v: any) => v.id);
     if (pendingIds.length) {
-      const docs = await this.auth
-        .supabase()
-        .from('vehicle_documents')
-        .select('*')
-        .in('vehicle_id', pendingIds)
-        .eq('document_type', 'photo');
-      const byVehicle: Record<string, any[]> = {};
-      for (const doc of docs.data ?? []) {
-        const signed = await this.auth
-          .supabase()
-          .storage.from('rental-documents')
-          .createSignedUrl((doc as any).storage_path, 600);
-        const url = signed.data?.signedUrl ?? '';
-        (byVehicle[(doc as any).vehicle_id] ??= []).push({ ...doc, url });
-      }
-      this.allPhotos.set(byVehicle);
+      this.allPhotos.set(await this.partnersData.photosToReview(pendingIds));
     }
     this.loading.set(false);
   }
@@ -223,7 +198,7 @@ export class PartnersComponent implements OnInit {
             reviewed_at: new Date().toISOString(),
             reviewed_by: this.auth.profile()?.id,
           };
-    const result = await this.auth.supabase().from('vehicles').update(payload).eq('id', vehicle.id);
+    const result = await this.partnersData.updateVehicle(vehicle.id, payload);
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -243,15 +218,11 @@ export class PartnersComponent implements OnInit {
     }
     this.saving.set(true);
     this.error.set('');
-    const result = await this.auth
-      .supabase()
-      .from('vehicles')
-      .update({
-        rental_price: Number(this.finalPrice),
-        deposit_amount: Number(this.finalDeposit || 0),
-        commission_amount: Number(this.finalPrice) - Number(vehicle.partner_requested_price),
-      })
-      .eq('id', vehicle.id);
+    const result = await this.partnersData.updateVehicle(vehicle.id, {
+      rental_price: Number(this.finalPrice),
+      deposit_amount: Number(this.finalDeposit || 0),
+      commission_amount: Number(this.finalPrice) - Number(vehicle.partner_requested_price),
+    });
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -268,11 +239,7 @@ export class PartnersComponent implements OnInit {
     this.saving.set(true);
     this.error.set('');
     const next = vehicle.status === 'available' ? 'unavailable' : 'available';
-    const result = await this.auth
-      .supabase()
-      .from('vehicles')
-      .update({ status: next })
-      .eq('id', vehicle.id);
+    const result = await this.partnersData.updateVehicle(vehicle.id, { status: next });
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -294,11 +261,10 @@ export class PartnersComponent implements OnInit {
       return;
     this.saving.set(true);
     this.error.set('');
-    const result = await this.auth
-      .supabase()
-      .from('vehicles')
-      .update({ approval_status: 'pending', status: 'unavailable' })
-      .eq('id', vehicle.id);
+    const result = await this.partnersData.updateVehicle(vehicle.id, {
+      approval_status: 'pending',
+      status: 'unavailable',
+    });
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -332,11 +298,7 @@ export class PartnersComponent implements OnInit {
     }
     this.saving.set(true);
     this.error.set('');
-    const result = await this.auth
-      .supabase()
-      .from('partners')
-      .update(this.partnerForm)
-      .eq('id', partner.id);
+    const result = await this.partnersData.updatePartner(partner.id, this.partnerForm);
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -357,11 +319,8 @@ export class PartnersComponent implements OnInit {
     this.error.set('');
     const enable = !partner.profiles?.is_active;
     try {
-      const result = await this.auth.supabase().functions.invoke('manage-users', {
-        body: { action: 'update_partner_access', user_id: partner.profile_id, is_active: enable },
-      });
+      const result = await this.accounts.setPartnerAccess(partner.profile_id, enable);
       if (result.error) throw result.error;
-      if (result.data?.error) throw new Error(result.data.error);
       this.message.set(enable ? 'Compte partenaire réactivé.' : 'Compte partenaire désactivé.');
       this.selectedPartner.set(null);
       await this.load();
