@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.116.0';
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
 Deno.serve(async request => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -7,6 +7,7 @@ Deno.serve(async request => {
     const url = Deno.env.get('SUPABASE_URL')!; const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const caller = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authorization } } });
     const { data: { user }, error: userError } = await caller.auth.getUser(); if (userError || !user) throw new Error('Session invalide.');
+    const { data: profile } = await admin.from('profiles').select('role,is_active').eq('id', user.id).maybeSingle(); if (profile?.role !== 'client' || !profile.is_active) throw new Error('Ce compte client est désactivé ou invalide.');
     if (request.headers.get('content-type')?.includes('application/json')) {
       const body = await request.json(); const inspectionId = String(body.inspection_id ?? '');
       const { data: owner } = await admin.from('vehicle_inspections').select('id,rentals!inner(client_id,clients!inner(profile_id))').eq('id', inspectionId).eq('rentals.clients.profile_id', user.id).maybeSingle();

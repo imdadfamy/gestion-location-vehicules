@@ -23,6 +23,8 @@ npm start                   # http://localhost:4200
 - Studio (base locale) : http://127.0.0.1:54323
 - E-mails de test (Mailpit) : http://127.0.0.1:54324
 - Comptes de test : voir l'en-tête de [supabase/seed.sql](supabase/seed.sql).
+- Tests de sécurité de la base (RLS, RPC, Storage) : `cd supabase && npx supabase test db`
+  (à lancer après un `db reset`, ils s'appuient sur le seed).
 
 À ne **pas** lancer pendant le développement (ces commandes visent le projet en ligne) :
 `supabase db push`, `supabase functions deploy`, `supabase link`.

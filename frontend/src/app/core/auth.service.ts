@@ -37,6 +37,7 @@ const translations: Array<[RegExp, string]> = [
   [/Required client information is missing/i, 'Veuillez renseigner toutes les informations client obligatoires.'],
   [/Rental details are locked once|Rental details are locked after payment/i, 'Les informations de cette location sont verrouillées après son activation ou la confirmation du paiement.'],
   [/A partial payment already exists/i, 'Un paiement partiel existe déjà. Utilisez une correction comptable explicite pour finaliser la situation.'],
+  [/Partner cannot change an operational vehicle status/i, 'Ce véhicule est en location ou en maintenance : seul le personnel FIMA AUTO peut modifier son statut.'],
   [/Invalid rental status transition/i, 'Cette transition de statut de location n’est pas autorisée.'],
   [/overlap|conflict.*rental|exclusion constraint/i, 'Ce véhicule est déjà réservé sur cette période.'],
   [/vehicle.*maintenance|vehicle.*unavailable/i, 'Ce véhicule est indisponible ou en maintenance pour cette location.'],

@@ -73,11 +73,11 @@ values
 insert into public.vehicles (id, registration_number, make, model, color, year, mileage, fuel_type, transmission, category,
                              rental_price, deposit_amount, status, insurance_expiry_date, technical_inspection_expiry_date)
 values
-  ('30000000-0000-0000-0000-000000000001', 'AB 1001 RB', 'Toyota', 'Corolla', 'Blanc', 2021, 42000, 'Essence', 'Automatique', 'Berline', 25000, 100000, 'available', current_date + 200, current_date + 150),
-  ('30000000-0000-0000-0000-000000000002', 'AB 1002 RB', 'Toyota', 'RAV4', 'Gris', 2022, 31000, 'Essence', 'Automatique', 'SUV', 40000, 150000, 'available', current_date + 20, current_date + 300),
-  ('30000000-0000-0000-0000-000000000003', 'AB 1003 RB', 'Hyundai', 'Tucson', 'Noir', 2020, 78000, 'Diesel', 'Manuelle', 'SUV', 35000, 150000, 'available', current_date + 90, current_date + 10),
-  ('30000000-0000-0000-0000-000000000004', 'AB 1004 RB', 'Kia', 'Picanto', 'Rouge', 2019, 95000, 'Essence', 'Manuelle', 'Citadine', 15000, 50000, 'maintenance', current_date + 120, current_date + 120),
-  ('30000000-0000-0000-0000-000000000005', 'AB 1005 RB', 'Mercedes', 'Classe E', 'Noir', 2018, 120000, 'Diesel', 'Automatique', 'Berline', 60000, 250000, 'unavailable', current_date + 60, current_date + 60);
+  ('30000000-0000-0000-0000-000000000001', 'AB 1001 RB', 'Toyota', 'Corolla', 'Blanc', 2021, 42000, 'essence', 'automatic', 'Berline', 25000, 100000, 'available', current_date + 200, current_date + 150),
+  ('30000000-0000-0000-0000-000000000002', 'AB 1002 RB', 'Toyota', 'RAV4', 'Gris', 2022, 31000, 'essence', 'automatic', 'SUV', 40000, 150000, 'available', current_date + 20, current_date + 300),
+  ('30000000-0000-0000-0000-000000000003', 'AB 1003 RB', 'Hyundai', 'Tucson', 'Noir', 2020, 78000, 'diesel', 'manual', 'SUV', 35000, 150000, 'available', current_date + 90, current_date + 10),
+  ('30000000-0000-0000-0000-000000000004', 'AB 1004 RB', 'Kia', 'Picanto', 'Rouge', 2019, 95000, 'essence', 'manual', 'Citadine', 15000, 50000, 'maintenance', current_date + 120, current_date + 120),
+  ('30000000-0000-0000-0000-000000000005', 'AB 1005 RB', 'Mercedes', 'Classe E', 'Noir', 2018, 120000, 'diesel', 'automatic', 'Berline', 60000, 250000, 'unavailable', current_date + 60, current_date + 60);
 
 -- 6. Partenaire et ses véhicules (un approuvé, un en attente de validation).
 insert into public.partners (id, profile_id, company_name, contact_name, phone, email)
@@ -86,8 +86,8 @@ values ('40000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000
 insert into public.vehicles (id, registration_number, make, model, color, year, mileage, fuel_type, transmission, category,
                              rental_price, deposit_amount, status, owner_type, partner_id, partner_requested_price, approval_status, submitted_at)
 values
-  ('30000000-0000-0000-0000-000000000006', 'PB 2001 RB', 'Nissan', 'X-Trail', 'Bleu', 2021, 54000, 'Essence', 'Automatique', 'SUV', 38000, 150000, 'available', 'partner', '40000000-0000-0000-0000-000000000001', 30000, 'approved', now() - interval '20 days'),
-  ('30000000-0000-0000-0000-000000000007', 'PB 2002 RB', 'Suzuki', 'Swift', 'Blanc', 2023, 12000, 'Essence', 'Manuelle', 'Citadine', 20000, 50000, 'unavailable', 'partner', '40000000-0000-0000-0000-000000000001', 15000, 'pending', now() - interval '1 day');
+  ('30000000-0000-0000-0000-000000000006', 'PB 2001 RB', 'Nissan', 'X-Trail', 'Bleu', 2021, 54000, 'essence', 'automatic', 'SUV', 38000, 150000, 'available', 'partner', '40000000-0000-0000-0000-000000000001', 30000, 'approved', now() - interval '20 days'),
+  ('30000000-0000-0000-0000-000000000007', 'PB 2002 RB', 'Suzuki', 'Swift', 'Blanc', 2023, 12000, 'essence', 'manual', 'Citadine', 20000, 50000, 'unavailable', 'partner', '40000000-0000-0000-0000-000000000001', 15000, 'pending', now() - interval '1 day');
 
 -- 7. Réservation en attente pour le client du portail.
 insert into public.reservations (first_name, last_name, phone, vehicle_id, planned_departure_date, planned_return_date,
