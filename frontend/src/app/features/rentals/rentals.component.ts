@@ -5,6 +5,10 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { ActorNamesService } from '../../core/actor-names.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
+import { ClientsService } from '../../core/data/clients.service';
+import { RentalsService } from '../../core/data/rentals.service';
+import { StorageService } from '../../core/data/storage.service';
+import { VehiclesService } from '../../core/data/vehicles.service';
 
 @Component({
   standalone: true,
@@ -37,6 +41,10 @@ export class RentalsComponent implements OnInit {
   constructor(
     public auth: AuthService,
     private actors: ActorNamesService,
+    private rentals: RentalsService,
+    private clients: ClientsService,
+    private vehiclesData: VehiclesService,
+    private storage: StorageService,
   ) {}
   ngOnInit() {
     void this.load();
@@ -46,22 +54,14 @@ export class RentalsComponent implements OnInit {
     this.message.set('');
   }
   async refreshStatuses() {
-    const result = await this.auth.supabase().rpc('refresh_overdue_rentals');
+    const result = await this.rentals.refreshOverdue();
     if (result.error) this.error.set(this.auth.errorMessage(result.error));
   }
   async load() {
     this.loading.set(true);
     this.clearFeedback();
     await this.refreshStatuses();
-    let query = this.auth
-      .supabase()
-      .from('rentals')
-      .select(
-        '*,clients(first_name,last_name,phone),vehicles(registration_number,make,model),payments(amount)',
-      )
-      .order('departure_date', { ascending: false });
-    if (this.filter) query = query.eq('status', this.filter);
-    const result = await query;
+    const result = await this.rentals.list(this.filter);
     let data = result.data ?? [];
     if (this.search) {
       const term = this.search.toLowerCase();
@@ -91,12 +91,7 @@ export class RentalsComponent implements OnInit {
     this.loading.set(false);
   }
   async loadVehicles() {
-    const result = await this.auth
-      .supabase()
-      .from('vehicles')
-      .select('id,registration_number,make,model,rental_price,deposit_amount')
-      .eq('status', 'available')
-      .order('registration_number');
+    const result = await this.vehiclesData.listAvailable();
     this.vehicles.set(result.data ?? []);
     if (result.error) this.error.set(this.auth.errorMessage(result.error));
   }
@@ -152,12 +147,7 @@ export class RentalsComponent implements OnInit {
       this.error.set('Saisissez le téléphone avant de rechercher un client.');
       return;
     }
-    const result = await this.auth
-      .supabase()
-      .from('clients')
-      .select('*')
-      .eq('phone', phone)
-      .order('last_name');
+    const result = await this.clients.findByPhone(phone);
     this.matches.set(result.data ?? []);
     if (result.error) this.error.set(this.auth.errorMessage(result.error));
   }
@@ -248,30 +238,22 @@ export class RentalsComponent implements OnInit {
     const client = this.clientForm(),
       rental = this.rentalForm();
     if (this.editingId()) {
-      const clientUpdate = await this.auth
-        .supabase()
-        .from('clients')
-        .update(this.clientPayload(client))
-        .eq('id', client.id);
+      const clientUpdate = await this.clients.update(client.id, this.clientPayload(client));
       const rentalUpdate = clientUpdate.error
         ? null
-        : await this.auth
-            .supabase()
-            .from('rentals')
-            .update(this.rentalPayload(rental))
-            .eq('id', this.editingId()!);
+        : await this.rentals.update(this.editingId()!, this.rentalPayload(rental));
       this.saving.set(false);
       if (clientUpdate.error || rentalUpdate?.error) {
         this.error.set(this.auth.errorMessage(clientUpdate.error ?? rentalUpdate?.error));
         return;
       }
       await this.uploadDocuments(client.id);
-      this.message.set('Location et informations client mises à jour.');
       this.closeWizard();
       await this.load();
+      this.message.set('Location et informations client mises à jour.');
       return;
     }
-    const result = await this.auth.supabase().rpc('create_rental_from_wizard', {
+    const result = await this.rentals.createFromWizard({
       target_existing_client_id: client.id || null,
       target_first_name: client.first_name,
       target_last_name: client.last_name,
@@ -301,13 +283,14 @@ export class RentalsComponent implements OnInit {
     }
     const data = result.data as any;
     const documentsOk = await this.uploadDocuments(data.client_id);
+    this.closeWizard();
+    // load() efface les messages : on affiche le résultat après le rechargement.
+    await this.load();
     this.message.set(
       documentsOk
         ? 'Location créée avec succès.'
         : 'Location créée, mais une ou plusieurs pièces n’ont pas pu être envoyées.',
     );
-    this.closeWizard();
-    await this.load();
   }
   clientPayload(c: any) {
     return {
@@ -340,25 +323,7 @@ export class RentalsComponent implements OnInit {
   async uploadDocuments(clientId: string) {
     let success = true;
     for (const [type, file] of this.files) {
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const path = 'clients/' + clientId + '/' + crypto.randomUUID() + '-' + safe;
-      const upload = await this.auth
-        .supabase()
-        .storage.from('rental-documents')
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (upload.error) {
-        success = false;
-        continue;
-      }
-      const saved = await this.auth.supabase().from('client_documents').insert({
-        client_id: clientId,
-        document_type: type,
-        document_name: file.name,
-        storage_path: path,
-        mime_type: file.type,
-        file_size: file.size,
-      });
-      if (saved.error) success = false;
+      if (!(await this.clients.uploadDocument(clientId, type, file))) success = false;
     }
     return success;
   }
@@ -366,24 +331,9 @@ export class RentalsComponent implements OnInit {
     this.clearFeedback();
     await this.refreshStatuses();
     const [latest, history, payments] = await Promise.all([
-      this.auth
-        .supabase()
-        .from('rentals')
-        .select('*,clients(*),vehicles(registration_number,make,model)')
-        .eq('id', rental.id)
-        .single(),
-      this.auth
-        .supabase()
-        .from('rental_status_history')
-        .select('*')
-        .eq('rental_id', rental.id)
-        .order('created_at'),
-      this.auth
-        .supabase()
-        .from('payments')
-        .select('id,amount,payment_date,recorded_by,reference')
-        .eq('rental_id', rental.id)
-        .order('payment_date', { ascending: false }),
+      this.rentals.get(rental.id),
+      this.rentals.statusHistory(rental.id),
+      this.rentals.payments(rental.id),
     ]);
     this.selected.set(latest.data ?? rental);
     this.history.set(history.data ?? []);
@@ -393,12 +343,7 @@ export class RentalsComponent implements OnInit {
       ...(payments.data ?? []).map((item) => item.recorded_by),
     ]);
     if (latest.data?.client_id) {
-      const docs = await this.auth
-        .supabase()
-        .from('client_documents')
-        .select('*')
-        .eq('client_id', latest.data.client_id)
-        .order('created_at', { ascending: false });
+      const docs = await this.clients.documents(latest.data.client_id);
       this.documents.set(docs.data ?? []);
       if (docs.error) this.error.set(this.auth.errorMessage(docs.error));
     }
@@ -467,25 +412,20 @@ export class RentalsComponent implements OnInit {
       return;
     }
     this.paymentSaving.set(true);
-    const result = await this.auth
-      .supabase()
-      .rpc('confirm_rental_payment', { target_rental_id: rental.id });
+    const result = await this.rentals.confirmPayment(rental.id);
     this.paymentSaving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
       return;
     }
+    await this.detail(rental);
+    await this.load();
     this.message.set(
       'Paiement total reçu et enregistré. Les informations sont maintenant verrouillées.',
     );
-    await this.detail(rental);
-    await this.load();
   }
   async openDocument(document: any) {
-    const result = await this.auth
-      .supabase()
-      .storage.from('rental-documents')
-      .createSignedUrl(document.storage_path, 60);
+    const result = await this.storage.signedUrl('rental-documents', document.storage_path);
     if (result.error) this.error.set(this.auth.errorMessage(result.error));
     else window.open(result.data.signedUrl, '_blank', 'noopener');
   }
