@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { connection } from 'next/server';
 import type { Database } from '@/lib/database.types';
 import { resolveSupabaseConfig } from './config';
 import { localizedFetch } from './localized-fetch';
@@ -9,6 +10,9 @@ import { localizedFetch } from './localized-fetch';
  * par requête : la session vient des cookies de la requête en cours.
  */
 export async function createClient() {
+  // Toujours à la requête : la session dépend de l'heure courante (expiration des jetons),
+  // ce que Next refuse pendant un pré-rendu, même après lecture des cookies.
+  await connection();
   const cookieStore = await cookies();
   const { url, anonKey } = resolveSupabaseConfig();
   return createServerClient<Database>(url, anonKey, {

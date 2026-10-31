@@ -68,7 +68,8 @@
   --input: oklch(0.922 0 0);
   --ring: oklch(0.6 0.11 213);
   --chart-1: oklch(0.6 0.11 213);
-  --chart-2: oklch(0.556 0 0);
+  /* Deuxième série des graphiques : ambre, distinct du teal de la marque. */
+  --chart-2: oklch(0.7 0.15 65);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
@@ -103,7 +104,7 @@
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.74 0.12 205);
   --chart-1: oklch(0.74 0.12 205);
-  --chart-2: oklch(0.556 0 0);
+  --chart-2: oklch(0.7 0.15 65);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);

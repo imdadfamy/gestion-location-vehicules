@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
-import { currentProfile, homeFor, type Role } from '@/lib/auth';
-import { createClient } from '@/lib/supabase/server';
+import { homeFor, type Role } from '@/lib/auth';
+import { sessionProfile } from '@/lib/session';
 
 /**
  * Contrôle serveur de l'accès à un espace : sans session ou compte désactivé → page de
@@ -16,7 +16,7 @@ export async function RequireRole({
   loginPath: string;
   children: React.ReactNode;
 }) {
-  const profile = await currentProfile(await createClient());
+  const profile = await sessionProfile();
   if (!profile || !profile.is_active) redirect(loginPath);
   if (!allow.includes(profile.role as Role)) redirect(homeFor(profile.role));
   return <>{children}</>;
