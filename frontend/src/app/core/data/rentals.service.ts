@@ -66,6 +66,11 @@ export class RentalsService {
     return this.db.from('rentals').update(values).eq('id', id);
   }
 
+  /** Ce qui empêche la clôture : 'balance', 'deposit', 'incidents' (vide = clôturable). */
+  closureBlockers(rentalId: string) {
+    return this.db.rpc('rental_closure_blockers', { target_rental_id: rentalId });
+  }
+
   confirmPayment(rentalId: string) {
     return this.db.rpc('confirm_rental_payment', { target_rental_id: rentalId });
   }

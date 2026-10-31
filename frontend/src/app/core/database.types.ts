@@ -1933,6 +1933,14 @@ export type Database = {
         }[];
       };
       refresh_overdue_rentals: { Args: never; Returns: number };
+      rental_closure_blockers: {
+        Args: { target_rental_id: string };
+        Returns: string[];
+      };
+      rental_closure_blockers_internal: {
+        Args: { target_rental_id: string };
+        Returns: string[];
+      };
       report_contract_correction: {
         Args: { correction_message: string; target_contract_id: string };
         Returns: undefined;

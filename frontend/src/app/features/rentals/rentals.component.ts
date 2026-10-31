@@ -23,6 +23,7 @@ export class RentalsComponent implements OnInit {
   documents = signal<any[]>([]);
   history = signal<any[]>([]);
   selectedPayments = signal<any[]>([]);
+  closureBlockers = signal<string[]>([]);
   wizard = signal(false);
   step = signal(1);
   editingId = signal<string | null>(null);
@@ -330,14 +331,16 @@ export class RentalsComponent implements OnInit {
   async detail(rental: any) {
     this.clearFeedback();
     await this.refreshStatuses();
-    const [latest, history, payments] = await Promise.all([
+    const [latest, history, payments, blockers] = await Promise.all([
       this.rentals.get(rental.id),
       this.rentals.statusHistory(rental.id),
       this.rentals.payments(rental.id),
+      this.rentals.closureBlockers(rental.id),
     ]);
     this.selected.set(latest.data ?? rental);
     this.history.set(history.data ?? []);
     this.selectedPayments.set(payments.data ?? []);
+    this.closureBlockers.set(blockers.data ?? []);
     await this.actors.load([
       ...(history.data ?? []).map((item) => item.changed_by),
       ...(payments.data ?? []).map((item) => item.recorded_by),
@@ -350,7 +353,19 @@ export class RentalsComponent implements OnInit {
     if (latest.error || history.error || payments.error)
       this.error.set(this.auth.errorMessage(latest.error ?? history.error ?? payments.error));
   }
+  blockerLabel(code: string) {
+    return (
+      (
+        {
+          balance: 'Solde de paiement restant à encaisser',
+          deposit: 'Caution à recevoir puis à restituer ou retenir',
+          incidents: 'Incident lié encore ouvert',
+        } as Record<string, string>
+      )[code] ?? code
+    );
+  }
   closeDetail() {
+    this.closureBlockers.set([]);
     this.selected.set(null);
     this.documents.set([]);
     this.history.set([]);

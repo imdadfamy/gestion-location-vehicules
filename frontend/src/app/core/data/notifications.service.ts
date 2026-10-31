@@ -30,7 +30,9 @@ export class NotificationsService {
       this.db.from('contracts').select('contract_number').eq('status', 'pending_signature'),
       this.db
         .from('rentals')
-        .select('id,status,return_date,rental_price,vehicles(registration_number)'),
+        .select(
+          'id,status,return_date,rental_price,vehicles(registration_number),vehicle_inspections(inspection_type)',
+        ),
       this.db.from('payments').select('rental_id,amount'),
       this.db
         .from('vehicle_maintenance')

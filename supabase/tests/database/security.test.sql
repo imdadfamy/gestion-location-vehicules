@@ -167,6 +167,37 @@ select set_config('request.jwt.claims', json_build_object('sub', :responsable, '
 select is((select count(*) from public.vehicles), 0::bigint, 'responsable désactivé : plus aucun accès');
 reset role;
 
+-- ───────────────────────── Clôture conditionnée (workflow §24) ─────────────────────────
+set local session_replication_role = replica;
+insert into public.rentals (id, client_id, vehicle_id, departure_date, return_date, rental_price, deposit_amount, status)
+values ('92000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000003',
+        now() - interval '4 days', now() - interval '1 day', 60000, 100000, 'active');
+set local session_replication_role = origin;
+insert into public.vehicle_inspections (rental_id, vehicle_id, inspection_type, inspection_date, mileage)
+values ('92000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000003', 'return', now(), 1000);
+select is((select status from public.rentals where id = '92000000-0000-0000-0000-000000000001'), 'active',
+          'clôture : le retour seul ne termine pas une location non réglée (ni « en retard »)');
+select is(public.rental_closure_blockers_internal('92000000-0000-0000-0000-000000000001'), array['balance', 'deposit'],
+          'clôture : solde et caution signalés comme bloquants');
+insert into public.payments (rental_id, amount, payment_method) values ('92000000-0000-0000-0000-000000000001', 25000, 'cash');
+insert into public.payments (rental_id, amount, payment_method) values ('92000000-0000-0000-0000-000000000001', 35000, 'mobile_money');
+select throws_ok($$ insert into public.payments (rental_id, amount, payment_method)
+                    values ('92000000-0000-0000-0000-000000000001', 1, 'cash') $$,
+                 '23514', null, 'paiement : impossible d''encaisser au-delà du prix');
+insert into public.incidents (rental_id, vehicle_id, incident_type, description, status)
+values ('92000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000003', 'damage', 'Rayure', 'open');
+insert into public.deposits (rental_id, amount, status, received_at)
+values ('92000000-0000-0000-0000-000000000001', 100000, 'received', now());
+update public.deposits set status = 'returned', returned_amount = 100000, returned_at = now()
+where rental_id = '92000000-0000-0000-0000-000000000001';
+select is((select status from public.rentals where id = '92000000-0000-0000-0000-000000000001'), 'active',
+          'clôture : un incident ouvert bloque encore la clôture');
+update public.incidents set status = 'resolved' where rental_id = '92000000-0000-0000-0000-000000000001';
+select is((select status from public.rentals where id = '92000000-0000-0000-0000-000000000001'), 'completed',
+          'clôture : la location se termine d''elle-même une fois tout réglé');
+select throws_ok($$ update public.deposits set observation = 'modif' where rental_id = '92000000-0000-0000-0000-000000000001' $$,
+                 '55000', null, 'caution : une caution réglée ne peut plus être modifiée');
+
 -- ───────────────────────── Règles d'intégrité ─────────────────────────
 select throws_ok($$ insert into public.rentals (client_id, vehicle_id, departure_date, return_date, rental_price)
                     values ('20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001',

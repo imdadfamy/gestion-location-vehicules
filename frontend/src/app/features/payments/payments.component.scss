@@ -117,3 +117,11 @@
     min-width: 640px;
   }
 }
+
+.settle-card {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px dashed var(--bs-border-color);
+  border-radius: 0.75rem;
+  background: var(--bs-tertiary-bg);
+}

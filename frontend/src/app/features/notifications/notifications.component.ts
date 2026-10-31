@@ -70,7 +70,16 @@ export class NotificationsComponent implements OnInit {
       const end = new Date(rental.return_date).getTime(),
         vehicle: any = Array.isArray(rental.vehicles) ? rental.vehicles[0] : rental.vehicles,
         name = vehicle?.registration_number ?? 'Véhicule';
-      if (rental.status === 'overdue')
+      const returned = (rental.vehicle_inspections ?? []).some(
+        (inspection: any) => inspection.inspection_type === 'return',
+      );
+      if (returned && rental.status !== 'completed')
+        alerts.push({
+          key: `closure-${rental.id}`,
+          title: 'Location à clôturer',
+          message: `${name} est rentré : réglez le solde, la caution ou l’incident restant pour clôturer.`,
+        });
+      else if (rental.status === 'overdue')
         alerts.push({
           key: `late-${rental.id}`,
           title: 'Véhicule en retard',

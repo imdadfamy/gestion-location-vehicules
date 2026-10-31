@@ -356,6 +356,21 @@
           </div>
         </div>
       </div>
+      @if (closureBlockers().length && selected().status !== 'completed') {
+        <div class="alert alert-warning mt-3 mb-0">
+          <strong>Avant la clôture :</strong>
+          <ul class="mb-1 mt-1">
+            @for (blocker of closureBlockers(); track blocker) {
+              <li>{{ blockerLabel(blocker) }}</li>
+            }
+          </ul>
+          <small
+            >La location passe automatiquement à « Terminée » après l’inspection de retour, une fois
+            ces points réglés. <a routerLink="/payments">Paiements et caution</a> ·
+            <a routerLink="/incidents">Incidents</a></small
+          >
+        </div>
+      }
       <hr />
       <div class="row g-3">
         <div class="col-md-6">
@@ -401,7 +416,12 @@
               role="switch"
               id="payment-received"
               [checked]="paymentReceived()"
-              [disabled]="paymentSaving() || paymentReceived() || !auth.can('payments', 'create')"
+              [disabled]="
+                paymentSaving() ||
+                paymentReceived() ||
+                receivedAmount() > 0 ||
+                !auth.can('payments', 'create')
+              "
               (change)="togglePayment($event)"
             /><label class="form-check-label" for="payment-received">{{
               paymentReceived() ? 'Oui' : 'Non'
@@ -412,9 +432,15 @@
           <small class="d-block text-success mt-2"
             >Paiement confirmé. Les informations de location sont verrouillées.</small
           >
+        } @else if (receivedAmount() > 0) {
+          <small class="d-block text-warning mt-2"
+            >Paiement partiel : enregistrez le solde depuis
+            <a routerLink="/payments">Paiements</a>.</small
+          >
         } @else {
           <small class="d-block text-muted mt-2"
-            >Le paiement peut être confirmé ici plus tard.</small
+            >Le paiement total peut être confirmé ici ; un paiement partiel s’enregistre depuis
+            <a routerLink="/payments">Paiements</a>.</small
           >
         }
       </div>

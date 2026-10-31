@@ -54,7 +54,9 @@ end;
 $$;
 
 -- 2. Ce qui empêche la clôture : 'balance', 'deposit', 'incidents' (tableau vide = clôturable).
-create or replace function public.rental_closure_blockers(target_rental_id uuid)
+--    Calcul interne, sans contrôle de droits : utilisé par evaluate_rental_status, qui
+--    peut être déclenché par un client (inspection de retour) ; jamais exposé à l'API.
+create or replace function public.rental_closure_blockers_internal(target_rental_id uuid)
 returns text[]
 language sql
 stable security definer
@@ -71,8 +73,20 @@ as $$
          then 'incidents' end
   ], null)
   from public.rentals r
-  where r.id = target_rental_id
-    and (auth.uid() is null or public.has_permission('rentals', 'view'));
+  where r.id = target_rental_id;
+$$;
+
+revoke all on function public.rental_closure_blockers_internal(uuid) from public, anon, authenticated;
+
+-- Version exposée au personnel (fiche location).
+create or replace function public.rental_closure_blockers(target_rental_id uuid)
+returns text[]
+language sql
+stable security definer
+set search_path = public, pg_temp
+as $$
+  select public.rental_closure_blockers_internal(target_rental_id)
+  where auth.uid() is null or public.has_permission('rentals', 'view');
 $$;
 
 revoke all on function public.rental_closure_blockers(uuid) from public, anon;
@@ -100,7 +114,7 @@ begin
     select 1 from public.vehicle_inspections
     where rental_id = target_rental_id and inspection_type = 'return'
   ) then
-    if coalesce(array_length(public.rental_closure_blockers(target_rental_id), 1), 0) = 0 then
+    if coalesce(array_length(public.rental_closure_blockers_internal(target_rental_id), 1), 0) = 0 then
       perform public.set_automatic_rental_status(target_rental_id, 'completed');
     else
       -- Véhicule rentré, clôture en attente : jamais « en retard ».

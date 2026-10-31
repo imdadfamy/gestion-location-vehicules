@@ -160,6 +160,14 @@ const translations: Array<[RegExp, string]> = [
   ],
   [/payment.*exceed|total.*payment/i, 'Le paiement dépasse le montant restant à encaisser.'],
   [
+    /settled deposit cannot be modified/i,
+    'Cette caution est déjà restituée ou retenue : elle ne peut plus être modifiée.',
+  ],
+  [
+    /received deposit cannot be marked as not received/i,
+    'Une caution reçue ne peut pas repasser à « non reçue ».',
+  ],
+  [
     /deposit.*(negative|inconsistent)|returned_amount|retained_amount/i,
     'Les montants de caution sont incohérents.',
   ],

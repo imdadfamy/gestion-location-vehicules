@@ -55,11 +55,18 @@
             <td>
               <span class="badge text-bg-{{ tone(row) }}">{{ paymentStatus(row) }}</span>
             </td>
-            <td class="amount">{{ money(row.deposit_amount) }}</td>
+            <td class="amount">
+              {{ money(row.deposit_amount) }}<br /><span
+                class="badge text-bg-{{ depositStatus(row).tone }}"
+                >{{ depositStatus(row).label }}</span
+              >
+            </td>
             <td class="actions-col">
               <div class="d-grid gap-1">
                 <button class="btn btn-sm btn-outline-primary" (click)="detail(row)">Détail</button>
-                @if (outstanding(row) > 0) {
+                @if (
+                  outstanding(row) > 0 && received(row) === 0 && auth.can('payments', 'create')
+                ) {
                   <button
                     class="btn btn-sm btn-success"
                     [disabled]="markingId() === row.id"
@@ -180,14 +187,141 @@
           </table>
         </div>
       }
+      @if (payForm && outstanding(selected()) > 0 && auth.can('payments', 'create')) {
+        <section class="settle-card no-print">
+          <h3 class="h6">Enregistrer un encaissement</h3>
+          <p class="small text-muted mb-2">
+            Paiement reçu en main propre (partiel ou total). Le solde se recalcule automatiquement ;
+            un paiement enregistré ne peut plus être modifié.
+          </p>
+          <div class="row g-2">
+            <div class="col-sm-4">
+              <label>Montant <span class="required">*</span></label
+              ><input class="form-control" type="number" min="1" [(ngModel)]="payForm.amount" />
+            </div>
+            <div class="col-sm-4">
+              <label>Date <span class="required">*</span></label
+              ><input class="form-control" type="date" [(ngModel)]="payForm.payment_date" />
+            </div>
+            <div class="col-sm-4">
+              <label>Moyen</label
+              ><select class="form-select" [(ngModel)]="payForm.payment_method">
+                @for (m of methods; track m.value) {
+                  <option [value]="m.value">{{ m.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label>Référence</label
+              ><input
+                class="form-control"
+                [(ngModel)]="payForm.reference"
+                placeholder="N° de reçu, transaction…"
+              />
+            </div>
+            <div class="col-sm-6">
+              <label>Observation</label
+              ><input class="form-control" [(ngModel)]="payForm.observation" />
+            </div>
+          </div>
+          <button class="btn btn-success mt-3" [disabled]="saving()" (click)="recordPayment()">
+            {{ saving() ? 'Enregistrement…' : 'Enregistrer l’encaissement' }}
+          </button>
+        </section>
+      }
       <div class="caution">
-        <div class="d-flex justify-content-between">
-          <strong>Caution</strong><strong>{{ money(selected().deposit_amount) }}</strong>
+        <div class="d-flex justify-content-between align-items-center">
+          <strong>Caution</strong
+          ><span
+            ><span class="badge text-bg-{{ depositStatus(selected()).tone }} me-2">{{
+              depositStatus(selected()).label
+            }}</span
+            ><strong>{{ money(selected().deposit_amount) }}</strong></span
+          >
         </div>
-        <small class="text-muted"
-          >Montant prévu lors de la location. Il est affiché à titre d’information et n’entre pas
-          dans le chiffre d’affaires.</small
+        @if (selected().deposit; as deposit) {
+          <small class="d-block text-muted mt-1">
+            @if (deposit.received_at) {
+              Reçue le {{ deposit.received_at | date: 'short' }}.
+            }
+            @if (deposit.returned_amount > 0) {
+              Restituée : {{ money(deposit.returned_amount)
+              }}{{ deposit.returned_at ? ' le ' + (deposit.returned_at | date: 'short') : '' }}.
+            }
+            @if (deposit.retained_amount > 0) {
+              Retenue : {{ money(deposit.retained_amount) }}.
+            }
+            @if (deposit.observation) {
+              Motif : {{ deposit.observation }}
+            }
+          </small>
+        }
+        <small class="d-block text-muted"
+          >Indépendante du prix de location : elle n’entre pas dans le chiffre d’affaires.</small
         >
+        @if (selected().deposit_amount > 0) {
+          <div class="d-flex flex-wrap gap-2 mt-2 no-print">
+            @if (
+              (!selected().deposit || selected().deposit.status === 'not_received') &&
+              auth.can('deposits', 'create')
+            ) {
+              <button
+                class="btn btn-sm btn-primary"
+                [disabled]="saving()"
+                (click)="receiveDeposit()"
+              >
+                Caution reçue
+              </button>
+            }
+            @if (selected().deposit?.status === 'received' && auth.can('deposits', 'update')) {
+              <button
+                class="btn btn-sm btn-outline-success"
+                [disabled]="saving()"
+                (click)="returnDeposit()"
+              >
+                Restituer intégralement</button
+              ><button class="btn btn-sm btn-outline-warning" (click)="startRetain()">
+                Retenir tout ou partie
+              </button>
+            }
+          </div>
+          @if (retainForm && selected().deposit?.status === 'received') {
+            <div class="row g-2 mt-1 no-print">
+              <div class="col-sm-4">
+                <label>Montant retenu <span class="required">*</span></label
+                ><input
+                  class="form-control"
+                  type="number"
+                  min="1"
+                  [max]="selected().deposit.amount"
+                  [(ngModel)]="retainForm.retained"
+                />
+              </div>
+              <div class="col-sm-8">
+                <label>Motif <span class="required">*</span></label
+                ><input
+                  class="form-control"
+                  [(ngModel)]="retainForm.observation"
+                  placeholder="Dommage constaté, retard, carburant…"
+                />
+              </div>
+              <div class="col-12">
+                <small class="text-muted"
+                  >Restitué au client :
+                  {{ money(selected().deposit.amount - (retainForm.retained || 0)) }}</small
+                ><br /><button
+                  class="btn btn-sm btn-warning mt-2 me-2"
+                  [disabled]="saving()"
+                  (click)="retainDeposit()"
+                >
+                  Confirmer la retenue</button
+                ><button class="btn btn-sm btn-outline-secondary mt-2" (click)="retainForm = null">
+                  Annuler
+                </button>
+              </div>
+            </div>
+          }
+        }
       </div>
       <div class="mt-4 d-flex gap-2 no-print">
         <button class="btn btn-primary" (click)="print()">Imprimer le justificatif</button
