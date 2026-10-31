@@ -93,9 +93,19 @@ const localizedFetch: typeof fetch = async (input, init) => {
   } catch { return response; }
 };
 
+// En développement, l'application ignore config.js (projet en ligne) et refuse
+// toute URL Supabase qui n'est pas la stack locale : aucun test local ne peut
+// écrire dans la base de production.
+function resolveSupabaseConfig(): { supabaseUrl: string; supabaseAnonKey: string } {
+  if (environment.production) return (globalThis as any).__appConfig ?? environment;
+  const host = new URL(environment.supabaseUrl).hostname;
+  if (host !== '127.0.0.1' && host !== 'localhost') throw new Error(`Configuration de développement refusée : ${environment.supabaseUrl} n'est pas une instance Supabase locale.`);
+  return environment;
+}
+
 @Injectable({providedIn:'root'})
 export class AuthService {
-  private config = (globalThis as any).__appConfig ?? environment;
+  private config = resolveSupabaseConfig();
   private client = createClient(this.config.supabaseUrl, this.config.supabaseAnonKey, { global: { fetch: localizedFetch } });
   profile = signal<any>(null); ready = signal(false); unreadNotifications = signal(0);
   async init(){ const {data:{session}}=await this.client.auth.getSession(); if(session) await this.load(); this.ready.set(true); }
