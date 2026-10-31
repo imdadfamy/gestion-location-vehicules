@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { AdministrationService } from '../../core/data/administration.service';
 import { ActorNamesService } from '../../core/actor-names.service';
 
 export interface ActivityLogsComponent {
@@ -49,16 +50,12 @@ export class ActivityLogsComponent implements OnInit {
   constructor(
     private auth: AuthService,
     private actors: ActorNamesService,
+    private admin: AdministrationService,
   ) {}
 
   async ngOnInit() {
     this.loading.set(true);
-    const logs = await this.auth
-      .supabase()
-      .from('activity_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(0, this.pageSize - 1);
+    const logs = await this.admin.activityPage(0, this.pageSize);
     this.loading.set(false);
     const data = logs.data ?? [];
     this.rows.set(data);
@@ -71,12 +68,7 @@ export class ActivityLogsComponent implements OnInit {
   async loadMore() {
     this.loadingMore.set(true);
     const from = this.rows().length;
-    const logs = await this.auth
-      .supabase()
-      .from('activity_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(from, from + this.pageSize - 1);
+    const logs = await this.admin.activityPage(from, this.pageSize);
     this.loadingMore.set(false);
     if (logs.error) {
       this.error.set(this.auth.errorMessage(logs.error));
@@ -100,11 +92,7 @@ export class ActivityLogsComponent implements OnInit {
     const missingClients = [...clientIds].filter((id) => !this.clientsMap()[id]);
     const missingVehicles = [...vehicleIds].filter((id) => !this.vehiclesMap()[id]);
     if (missingClients.length) {
-      const r = await this.auth
-        .supabase()
-        .from('clients')
-        .select('id,first_name,last_name')
-        .in('id', missingClients);
+      const r = await this.admin.clientNames(missingClients);
       if (!r.error) {
         const next = { ...this.clientsMap() };
         for (const row of r.data ?? [])
@@ -113,11 +101,7 @@ export class ActivityLogsComponent implements OnInit {
       }
     }
     if (missingVehicles.length) {
-      const r = await this.auth
-        .supabase()
-        .from('vehicles')
-        .select('id,registration_number,make,model')
-        .in('id', missingVehicles);
+      const r = await this.admin.vehicleLabels(missingVehicles);
       if (!r.error) {
         const next = { ...this.vehiclesMap() };
         for (const row of r.data ?? [])

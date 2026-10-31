@@ -16,6 +16,13 @@ export class AccountsService {
     return { data: result.data, error };
   }
 
+  /** Variante qui lève l'erreur, pour les écrans qui enchaînent dans un try/catch. */
+  async run(body: Record<string, unknown>) {
+    const result = await this.manage(body);
+    if (result.error) throw result.error;
+    return result.data;
+  }
+
   setPartnerAccess(userId: string, isActive: boolean) {
     return this.manage({ action: 'update_partner_access', user_id: userId, is_active: isActive });
   }

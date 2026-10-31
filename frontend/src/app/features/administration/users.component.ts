@@ -1,6 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { AccountsService } from '../../core/data/accounts.service';
+import { AdministrationService } from '../../core/data/administration.service';
 
 @Component({
   standalone: true,
@@ -35,7 +37,11 @@ export class UsersComponent implements OnInit {
     ['activity_logs', 'Journal'],
     ['partners', 'Partenaires'],
   ].map(([key, label]) => ({ key, label }));
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private admin: AdministrationService,
+    private accounts: AccountsService,
+  ) {}
   ngOnInit() {
     this.load();
   }
@@ -48,12 +54,7 @@ export class UsersComponent implements OnInit {
     return this.users().filter((user) => user.role === 'client');
   }
   async load() {
-    const result = await this.auth
-      .supabase()
-      .from('profiles')
-      .select('*')
-      .in('role', ['super_admin', 'responsable', 'client'])
-      .order('created_at');
+    const result = await this.admin.accounts();
     this.users.set(result.data ?? []);
     this.error.set(result.error ? this.auth.errorMessage(result.error) : '');
   }
@@ -119,9 +120,7 @@ export class UsersComponent implements OnInit {
     this.permissions = permissions;
   }
   async call(body: any) {
-    const result = await this.auth.supabase().functions.invoke('manage-users', { body });
-    if (result.error) throw result.error;
-    if (result.data?.error) throw new Error(result.data.error);
+    await this.accounts.run(body);
   }
   async toggleClientAccess(client: any) {
     const enable = !client.is_active;

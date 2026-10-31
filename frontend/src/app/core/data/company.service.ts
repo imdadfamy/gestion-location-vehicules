@@ -21,6 +21,13 @@ export class CompanyService {
       : this.db.from('company_settings').insert(settings).select().single();
   }
 
+  /** Envoie un nouveau logo et renvoie son chemin (à enregistrer avec les paramètres). */
+  async uploadLogo(companyId: string, file: File) {
+    const path = this.storage.uniquePath(`company/${companyId}`, file);
+    const upload = await this.storage.upload('rental-documents', path, file);
+    return { path: upload.error ? null : path, error: upload.error };
+  }
+
   /** Lien temporaire vers le logo privé, ou null s'il n'y en a pas. */
   async logoUrl(path: string | null | undefined, seconds = 300) {
     if (!path) return null;

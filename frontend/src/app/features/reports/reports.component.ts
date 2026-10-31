@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { AdministrationService } from '../../core/data/administration.service';
 @Component({ standalone: true, imports: [FormsModule], templateUrl: './reports.component.html' })
 export class ReportsComponent implements OnInit {
   from = '';
@@ -10,31 +11,31 @@ export class ReportsComponent implements OnInit {
   stats = signal<any[]>([]);
   revenueByVehicle = signal<any[]>([]);
   topVehicles = signal<any[]>([]);
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private admin: AdministrationService,
+  ) {}
   ngOnInit() {
     const now = new Date();
     this.from = `${now.getFullYear()}-01-01`;
-    this.to = now.toISOString().slice(0, 10);
+    this.to = this.localDay(now);
     this.load();
   }
+  /** Jour local AAAA-MM-JJ : les bornes de période s'appliquent au jour entier. */
+  private localDay(value: Date) {
+    const local = new Date(value.getTime() - value.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  }
   private between(date: string | undefined) {
-    return !!date && (!this.from || date >= this.from) && (!this.to || date <= this.to);
+    if (!date) return false;
+    // Une date seule (AAAA-MM-JJ) est déjà un jour ; un horodatage est ramené au jour local.
+    const day = date.length <= 10 ? date : this.localDay(new Date(date));
+    return (!this.from || day >= this.from) && (!this.to || day <= this.to);
   }
   async load() {
     this.loading.set(true);
     this.error.set('');
-    const [p, r, i, m] = await Promise.all([
-      this.auth
-        .supabase()
-        .from('payments')
-        .select('amount,payment_date,rental_id,rentals(vehicles(make,model,registration_number))'),
-      this.auth
-        .supabase()
-        .from('rentals')
-        .select('id,departure_date,client_id,vehicles(make,model,registration_number)'),
-      this.auth.supabase().from('incidents').select('cost,incident_date'),
-      this.auth.supabase().from('vehicle_maintenance').select('cost,maintenance_date'),
-    ]);
+    const [p, r, i, m] = await this.admin.reportSources();
     this.loading.set(false);
     const e = p.error ?? r.error ?? i.error ?? m.error;
     if (e) {

@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { AdministrationService } from '../../core/data/administration.service';
 
 @Component({
   standalone: true,
@@ -13,7 +14,10 @@ export class MyProfileComponent implements OnInit {
   saving = signal(false);
   error = signal('');
   message = signal('');
-  constructor(public auth: AuthService) {}
+  constructor(
+    public auth: AuthService,
+    private admin: AdministrationService,
+  ) {}
   ngOnInit() {
     const profile = this.auth.profile() ?? {};
     const parts = this.fallbackParts(profile);
@@ -48,11 +52,11 @@ export class MyProfileComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    const result = await this.auth
-      .supabase()
-      .from('profiles')
-      .update({ first_name: this.form.first_name.trim(), last_name: this.form.last_name.trim() })
-      .eq('id', this.auth.profile()?.id);
+    const result = await this.admin.updateOwnName(
+      this.auth.profile()?.id,
+      this.form.first_name.trim(),
+      this.form.last_name.trim(),
+    );
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));

@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { CompanyService } from '../../core/data/company.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
 @Component({
   standalone: true,
@@ -12,14 +13,12 @@ export class SettingsComponent implements OnInit {
   error = signal('');
   message = signal('');
   logoUrl = signal('');
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private company: CompanyService,
+  ) {}
   async ngOnInit() {
-    const r = await this.auth
-      .supabase()
-      .from('company_settings')
-      .select('*')
-      .limit(1)
-      .maybeSingle();
+    const r = await this.company.get();
     if (r.error) this.error.set(this.auth.errorMessage(r.error));
     else {
       this.form.set(r.data);
@@ -44,11 +43,8 @@ export class SettingsComponent implements OnInit {
     });
   }
   async loadLogo(path: string) {
-    const r = await this.auth
-      .supabase()
-      .storage.from('rental-documents')
-      .createSignedUrl(path, 300);
-    if (r.data?.signedUrl) this.logoUrl.set(r.data.signedUrl);
+    const url = await this.company.logoUrl(path);
+    if (url) this.logoUrl.set(url);
   }
   async uploadLogo(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0],
@@ -58,14 +54,9 @@ export class SettingsComponent implements OnInit {
       this.error.set('Le logo doit être une image PNG, JPEG ou WebP.');
       return;
     }
-    const id = f.id || crypto.randomUUID(),
-      path = `company/${id}/${crypto.randomUUID()}-${file.name}`;
-    const r = await this.auth
-      .supabase()
-      .storage.from('rental-documents')
-      .upload(path, file, { contentType: file.type, upsert: false });
-    if (r.error) {
-      this.error.set(this.auth.errorMessage(r.error));
+    const { path, error } = await this.company.uploadLogo(f.id || crypto.randomUUID(), file);
+    if (error || !path) {
+      this.error.set(this.auth.errorMessage(error));
       return;
     }
     this.form.set({ ...f, id: f.id, logo_storage_path: path });
@@ -74,15 +65,7 @@ export class SettingsComponent implements OnInit {
   }
   async save() {
     const f = this.form();
-    const r = f.id
-      ? await this.auth
-          .supabase()
-          .from('company_settings')
-          .update(f)
-          .eq('id', f.id)
-          .select()
-          .single()
-      : await this.auth.supabase().from('company_settings').insert(f).select().single();
+    const r = await this.company.save(f);
     if (r.error) this.error.set(this.auth.errorMessage(r.error));
     else if (r.data) {
       this.form.set(r.data);

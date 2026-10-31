@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { AdministrationService } from '../../core/data/administration.service';
 
 @Component({
   standalone: true,
@@ -20,17 +21,16 @@ export class ContractTemplatesComponent implements OnInit {
   saving = signal(false);
   contentJson = '{}';
   variablesJson = '{}';
-  constructor(public auth: AuthService) {}
+  constructor(
+    public auth: AuthService,
+    private admin: AdministrationService,
+  ) {}
   ngOnInit() {
     this.load();
   }
   async load() {
     this.loading.set(true);
-    const r = await this.auth
-      .supabase()
-      .from('contract_templates')
-      .select('*')
-      .order('updated_at', { ascending: false });
+    const r = await this.admin.templates();
     this.loading.set(false);
     this.templates.set(r.data ?? []);
     this.error.set(r.error ? this.auth.errorMessage(r.error) : '');
@@ -38,12 +38,7 @@ export class ContractTemplatesComponent implements OnInit {
   async selectTemplate(t: any) {
     this.selected.set(t);
     this.editingVersion.set(null);
-    const r = await this.auth
-      .supabase()
-      .from('contract_template_versions')
-      .select('*')
-      .eq('template_id', t.id)
-      .order('version_number', { ascending: false });
+    const r = await this.admin.templateVersions(t.id);
     this.versions.set(r.data ?? []);
     if (r.error) this.error.set(this.auth.errorMessage(r.error));
   }
@@ -56,12 +51,7 @@ export class ContractTemplatesComponent implements OnInit {
       this.error.set('Le nom du modèle est requis.');
       return;
     }
-    const r = await this.auth
-      .supabase()
-      .from('contract_templates')
-      .insert({ ...f, name: f.name.trim() })
-      .select()
-      .single();
+    const r = await this.admin.createTemplate({ ...f, name: f.name.trim() });
     if (r.error) {
       this.error.set(this.auth.errorMessage(r.error));
       return;
@@ -73,13 +63,7 @@ export class ContractTemplatesComponent implements OnInit {
   }
   async toggleActive() {
     const t = this.selected(),
-      r = await this.auth
-        .supabase()
-        .from('contract_templates')
-        .update({ is_active: !t.is_active })
-        .eq('id', t.id)
-        .select()
-        .single();
+      r = await this.admin.setTemplateActive(t.id, !t.is_active);
     if (r.error) this.error.set(this.auth.errorMessage(r.error));
     else {
       this.selected.set(r.data);
@@ -109,17 +93,12 @@ export class ContractTemplatesComponent implements OnInit {
       }
       this.saving.set(true);
       const v = this.editingVersion();
-      const r = await this.auth
-        .supabase()
-        .from('contract_template_versions')
-        .insert({
-          template_id: v.template_id,
-          version_number: v.version_number,
-          content,
-          variables,
-        })
-        .select()
-        .single();
+      const r = await this.admin.createTemplateVersion({
+        template_id: v.template_id,
+        version_number: v.version_number,
+        content,
+        variables,
+      });
       if (r.error) throw r.error;
       this.message.set(`Version ${r.data.version_number} créée et figée.`);
       this.editingVersion.set(null);
