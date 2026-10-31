@@ -2,7 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { AuthService } from '../auth.service';
 import type { Database, TablesUpdate } from '../database.types';
 
-export type RentalWizardArgs = Database['public']['Functions']['create_rental_from_wizard']['Args'];
+type Rpc = Database['public']['Functions'];
+export type RentalWizardArgs = Rpc['create_rental_from_wizard']['Args'];
+export type RentalFromReservationArgs = Rpc['create_rental_from_reservation']['Args'];
 
 /** Locations, leur historique de statuts et les RPC du workflow. */
 @Injectable({ providedIn: 'root' })
@@ -54,6 +56,10 @@ export class RentalsService {
 
   createFromWizard(args: RentalWizardArgs) {
     return this.db.rpc('create_rental_from_wizard', args);
+  }
+
+  createFromReservation(args: RentalFromReservationArgs) {
+    return this.db.rpc('create_rental_from_reservation', args);
   }
 
   update(id: string, values: TablesUpdate<'rentals'>) {

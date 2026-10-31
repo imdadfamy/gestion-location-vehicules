@@ -323,7 +323,7 @@ export class RentalsComponent implements OnInit {
   async uploadDocuments(clientId: string) {
     let success = true;
     for (const [type, file] of this.files) {
-      if (!(await this.clients.uploadDocument(clientId, type, file))) success = false;
+      if (await this.clients.uploadDocument(clientId, type, file)) success = false;
     }
     return success;
   }

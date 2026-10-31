@@ -31,6 +31,15 @@ export class VehiclesService {
       .order('registration_number');
   }
 
+  /** Tarifs et statut d'un véhicule, pour reprendre une réservation. */
+  pricing(vehicleId: string) {
+    return this.db
+      .from('vehicles')
+      .select('id,registration_number,make,model,rental_price,deposit_amount,status')
+      .eq('id', vehicleId)
+      .single();
+  }
+
   save(vehicle: any) {
     return vehicle.id
       ? this.db.from('vehicles').update(vehicle).eq('id', vehicle.id).select().single()

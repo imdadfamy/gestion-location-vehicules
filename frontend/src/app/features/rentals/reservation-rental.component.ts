@@ -3,6 +3,9 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { RentalsService } from '../../core/data/rentals.service';
+import { ReservationsService } from '../../core/data/reservations.service';
+import { VehiclesService } from '../../core/data/vehicles.service';
 
 @Component({
   standalone: true,
@@ -22,6 +25,9 @@ export class ReservationRentalComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private auth: AuthService,
+    private rentals: RentalsService,
+    private reservations: ReservationsService,
+    private vehicles: VehiclesService,
   ) {}
   async ngOnInit() {
     this.reservationId = this.route.snapshot.queryParamMap.get('reservation') ?? '';
@@ -30,13 +36,7 @@ export class ReservationRentalComponent implements OnInit {
       this.loading.set(false);
       return;
     }
-    const reservation = await this.auth
-      .supabase()
-      .from('reservations')
-      .select('*')
-      .eq('id', this.reservationId)
-      .in('status', ['pending', 'validated'])
-      .maybeSingle();
+    const reservation = await this.reservations.getOpen(this.reservationId);
     if (reservation.error || !reservation.data) {
       this.error.set(
         reservation.error
@@ -46,12 +46,7 @@ export class ReservationRentalComponent implements OnInit {
       this.loading.set(false);
       return;
     }
-    const vehicle = await this.auth
-      .supabase()
-      .from('vehicles')
-      .select('id,registration_number,make,model,rental_price,deposit_amount,status')
-      .eq('id', reservation.data.vehicle_id)
-      .single();
+    const vehicle = await this.vehicles.pricing(reservation.data.vehicle_id);
     if (vehicle.error) {
       this.error.set(this.auth.errorMessage(vehicle.error));
       this.loading.set(false);
@@ -76,7 +71,7 @@ export class ReservationRentalComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    const result = await this.auth.supabase().rpc('create_rental_from_reservation', {
+    const result = await this.rentals.createFromReservation({
       target_reservation_id: this.reservationId,
       target_client_id: this.clientId,
       target_departure_location: value.departure_location || null,

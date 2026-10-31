@@ -2,6 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { ClientsService } from '../../core/data/clients.service';
+import { ReservationsService } from '../../core/data/reservations.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
 
 @Component({
@@ -22,6 +24,8 @@ export class ReservationClientComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private auth: AuthService,
+    private clients: ClientsService,
+    private reservations: ReservationsService,
   ) {}
   async ngOnInit() {
     this.id = this.route.snapshot.queryParamMap.get('reservation') ?? '';
@@ -29,13 +33,7 @@ export class ReservationClientComponent implements OnInit {
       this.loading.set(false);
       return;
     }
-    const result = await this.auth
-      .supabase()
-      .from('reservations')
-      .select('*')
-      .eq('id', this.id)
-      .in('status', ['pending', 'validated'])
-      .maybeSingle();
+    const result = await this.reservations.getOpen(this.id);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
       this.loading.set(false);
@@ -55,12 +53,7 @@ export class ReservationClientComponent implements OnInit {
         emergency_contact_name: '',
         emergency_contact_phone: '',
       });
-      const matches = await this.auth
-        .supabase()
-        .from('clients')
-        .select('*')
-        .eq('phone', result.data.phone)
-        .order('last_name');
+      const matches = await this.clients.findByPhone(result.data.phone);
       this.matches.set(matches.data ?? []);
     }
     this.loading.set(false);
@@ -76,15 +69,7 @@ export class ReservationClientComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    const result = value.id
-      ? await this.auth
-          .supabase()
-          .from('clients')
-          .update(value)
-          .eq('id', value.id)
-          .select()
-          .single()
-      : await this.auth.supabase().from('clients').insert(value).select().single();
+    const result = await this.clients.save(value);
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));

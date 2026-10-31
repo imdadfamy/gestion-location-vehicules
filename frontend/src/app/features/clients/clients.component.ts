@@ -3,6 +3,8 @@ import { SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { recognize } from 'tesseract.js';
 import { AuthService } from '../../core/auth.service';
+import { ClientsService } from '../../core/data/clients.service';
+import { StorageService } from '../../core/data/storage.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
 
 @Component({
@@ -24,18 +26,17 @@ export class ClientsComponent implements OnInit {
   scanFileName = signal('');
   query = '';
   private identityFile?: File;
-  constructor(public auth: AuthService) {}
+  constructor(
+    public auth: AuthService,
+    private clients: ClientsService,
+    private storage: StorageService,
+  ) {}
   ngOnInit() {
     this.load();
   }
   async load() {
     this.loading.set(true);
-    let q = this.auth.supabase().from('clients').select('*').order('last_name');
-    if (this.query.trim())
-      q = q.or(
-        `first_name.ilike.%${this.query.trim()}%,last_name.ilike.%${this.query.trim()}%,phone.ilike.%${this.query.trim()}%,email.ilike.%${this.query.trim()}%`,
-      );
-    const r = await q;
+    const r = await this.clients.search(this.query);
     this.rows.set(r.data ?? []);
     this.error.set(r.error ? this.auth.errorMessage(r.error) : '');
     this.loading.set(false);
@@ -52,20 +53,7 @@ export class ClientsComponent implements OnInit {
     this.edit.set({ ...c });
     this.identityFile = undefined;
     this.scanFileName.set('');
-    const [d, r] = await Promise.all([
-      this.auth
-        .supabase()
-        .from('client_documents')
-        .select('*')
-        .eq('client_id', c.id)
-        .order('created_at', { ascending: false }),
-      this.auth
-        .supabase()
-        .from('rentals')
-        .select('id,status,departure_date,return_date,vehicles(registration_number)')
-        .eq('client_id', c.id)
-        .order('departure_date', { ascending: false }),
-    ]);
+    const [d, r] = await Promise.all([this.clients.documents(c.id), this.clients.rentals(c.id)]);
     this.documents.set(d.data ?? []);
     this.rentals.set(r.data ?? []);
     this.error.set(
@@ -127,15 +115,7 @@ export class ClientsComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    const r = value.id
-      ? await this.auth
-          .supabase()
-          .from('clients')
-          .update(value)
-          .eq('id', value.id)
-          .select()
-          .single()
-      : await this.auth.supabase().from('clients').insert(value).select().single();
+    const r = await this.clients.save(value);
     this.saving.set(false);
     if (r.error) {
       this.error.set(this.auth.errorMessage(r.error));
@@ -147,26 +127,10 @@ export class ClientsComponent implements OnInit {
     await this.load();
   }
   async archiveIdentity(file: File, clientId: string) {
-    const path = `clients/${clientId}/${crypto.randomUUID()}-${file.name}`;
-    const existing = this.documents().some((d) => d.storage_path?.endsWith(file.name));
+    const existing = this.documents().some((d) => d.document_name === file.name);
     if (existing) return;
-    const s = await this.auth
-      .supabase()
-      .storage.from('rental-documents')
-      .upload(path, file, { contentType: file.type });
-    if (s.error) {
-      this.error.set(this.auth.errorMessage(s.error));
-      return;
-    }
-    const r = await this.auth.supabase().from('client_documents').insert({
-      client_id: clientId,
-      document_type: 'identity_document',
-      document_name: file.name,
-      storage_path: path,
-      mime_type: file.type,
-      file_size: file.size,
-    });
-    if (r.error) this.error.set(this.auth.errorMessage(r.error));
+    const failure = await this.clients.uploadDocument(clientId, 'identity_document', file);
+    if (failure) this.error.set(this.auth.errorMessage(failure));
     else
       this.message.set(
         'L’image originale de la pièce a été conservée dans les documents privés du client.',
@@ -176,32 +140,13 @@ export class ClientsComponent implements OnInit {
     const file = (event.target as HTMLInputElement).files?.[0],
       c = this.edit();
     if (!file || !c?.id) return;
-    const path = `clients/${c.id}/${crypto.randomUUID()}-${file.name}`;
-    const s = await this.auth
-      .supabase()
-      .storage.from('rental-documents')
-      .upload(path, file, { contentType: file.type });
-    if (s.error) {
-      this.error.set(this.auth.errorMessage(s.error));
-      return;
-    }
-    const r = await this.auth.supabase().from('client_documents').insert({
-      client_id: c.id,
-      document_type: 'document',
-      document_name: file.name,
-      storage_path: path,
-      mime_type: file.type,
-      file_size: file.size,
-    });
-    if (r.error) this.error.set(this.auth.errorMessage(r.error));
+    const failure = await this.clients.uploadDocument(c.id, 'document', file);
+    if (failure) this.error.set(this.auth.errorMessage(failure));
     else await this.open(c);
   }
   async download(d: any, event: Event) {
     event.preventDefault();
-    const r = await this.auth
-      .supabase()
-      .storage.from('rental-documents')
-      .createSignedUrl(d.storage_path, 60);
+    const r = await this.storage.signedUrl('rental-documents', d.storage_path);
     if (r.error) this.error.set(this.auth.errorMessage(r.error));
     else window.open(r.data.signedUrl, '_blank', 'noopener');
   }
