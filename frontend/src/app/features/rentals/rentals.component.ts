@@ -10,6 +10,7 @@ import { RentalsService } from '../../core/data/rentals.service';
 import { StorageService } from '../../core/data/storage.service';
 import { VehiclesService } from '../../core/data/vehicles.service';
 import { RentalsCalendarComponent } from './rentals-calendar.component';
+import { toLocalInput } from '../../core/data/form-values';
 
 @Component({
   standalone: true,
@@ -427,7 +428,7 @@ export class RentalsComponent implements OnInit {
     this.wizard.set(true);
   }
   localDate(value: string) {
-    return value ? new Date(value).toISOString().slice(0, 16) : '';
+    return toLocalInput(value);
   }
   async togglePayment(event: Event) {
     const checked = (event.target as HTMLInputElement).checked;

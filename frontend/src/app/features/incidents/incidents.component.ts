@@ -6,6 +6,7 @@ import { AuthService } from '../../core/auth.service';
 import { ClientsService } from '../../core/data/clients.service';
 import { IncidentsService } from '../../core/data/incidents.service';
 import { VehiclesService } from '../../core/data/vehicles.service';
+import { toLocalInput } from '../../core/data/form-values';
 
 @Component({
   standalone: true,
@@ -94,7 +95,7 @@ export class IncidentsComponent implements OnInit {
     await this.openForm();
     this.form.set({
       ...value,
-      incident_date: new Date(value.incident_date).toISOString().slice(0, 16),
+      incident_date: toLocalInput(value.incident_date),
     });
   }
   chooseFiles(event: Event) {

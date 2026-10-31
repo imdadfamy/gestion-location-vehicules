@@ -20,6 +20,7 @@ import { ClientsService } from '../../core/data/clients.service';
 import { ReservationsService } from '../../core/data/reservations.service';
 import { VehiclesService } from '../../core/data/vehicles.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
+import { toLocalInput } from '../../core/data/form-values';
 
 @Component({
   standalone: true,
@@ -189,7 +190,7 @@ export class ReservationsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
   local(value: string) {
-    return value ? new Date(value).toISOString().slice(0, 16) : '';
+    return toLocalInput(value);
   }
   async save() {
     const value = this.form();
