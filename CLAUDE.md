@@ -13,22 +13,25 @@ Lire avant toute modification importante :
 
 ## Stack
 
-- Angular
-- TypeScript
-- Bootstrap 5
-- SCSS
-- Supabase
-- PostgreSQL
-- Chart.js
-- FullCalendar
+Migration en cours de l'interface Angular (`frontend/`) vers Next.js (`web/`),
+décidée par le propriétaire du projet. Les deux applications utilisent la même
+base Supabase ; `frontend/` reste en service jusqu'à la bascule.
+
+- Nouvelle interface (`web/`) : Next.js 16 (App Router), React 19, TypeScript,
+  Tailwind CSS 4, shadcn/ui, composants React Bits
+- Ancienne interface (`frontend/`) : Angular, Bootstrap 5 — corrections
+  uniquement, plus de nouvelles fonctionnalités
+- Supabase, PostgreSQL
+- FullCalendar, graphiques shadcn
+
+Avant d'écrire du code Next.js, lire `web/AGENTS.md` et la documentation
+embarquée (`web/node_modules/next/dist/docs/`) : Next.js 16 a des changements
+incompatibles (proxy.ts, API asynchrones, Cache Components).
 
 ## UI
 
-Ne pas utiliser Angular Material.
-
-Utiliser Bootstrap 5.
-
-Interface professionnelle et responsive.
+Composants shadcn/ui (`web/src/components/ui`) et effets React Bits, avec
+modération : interface professionnelle et responsive, mode clair et sombre.
 
 ## Backend
 
