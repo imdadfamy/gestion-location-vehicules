@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { FileText, ImagePlus, Loader2, Paperclip, ShieldAlert, Trash2, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
+import { Field } from '@/components/staff/form-field';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +19,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -50,30 +50,6 @@ export type VehiclePermissions = {
 const NONE = '__none';
 type Files = { documents: VehicleDocument[]; photos: VehicleDocument[] };
 const NO_FILES: Files = { documents: [], photos: [] };
-
-function Field({
-  label,
-  htmlFor,
-  required,
-  className,
-  children,
-}: {
-  label: string;
-  htmlFor?: string;
-  required?: boolean;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={`grid gap-1.5 ${className ?? ''}`}>
-      <Label htmlFor={htmlFor}>
-        {label}
-        {required && <span className="text-destructive">*</span>}
-      </Label>
-      {children}
-    </div>
-  );
-}
 
 /** Liste de choix facultative : « Non renseigné » vaut une valeur vide. */
 function OptionalSelect({

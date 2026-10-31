@@ -13,12 +13,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatMoney } from '@/lib/data/public-catalog';
 import { EMPTY_VEHICLE, searchVehicles, toForm, VEHICLE_STATUSES, type Vehicle, type VehicleForm } from '@/lib/data/vehicles';
 import { frenchError } from '@/lib/errors';
+import { frDate } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { VehicleSheet, type VehiclePermissions } from './vehicle-sheet';
 
-/** « 2026-11-30 » → « 30/11/2026 ». */
-const frDate = (value: string | null) => (value ? value.split('-').reverse().join('/') : '—');
 
 /** Échéance passée (assurance, contrôle technique) : à signaler. */
 function Deadline({ label, value, today }: { label: string; value: string | null; today: string }) {
