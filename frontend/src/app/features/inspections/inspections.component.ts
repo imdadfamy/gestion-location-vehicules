@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { jsPDF } from 'jspdf';
 import { AuthService } from '../../core/auth.service';
+import { InspectionsService } from '../../core/data/inspections.service';
 
 type PhotoType = 'front' | 'rear' | 'left_side' | 'right_side' | 'interior';
 const photoTypes: { key: PhotoType; label: string }[] = [
@@ -36,6 +37,7 @@ export class InspectionsComponent implements OnInit {
   constructor(
     public auth: AuthService,
     private route: ActivatedRoute,
+    private inspectionsData: InspectionsService,
   ) {}
   async ngOnInit() {
     await this.load();
@@ -59,13 +61,7 @@ export class InspectionsComponent implements OnInit {
   async load() {
     this.loading.set(true);
     this.clear();
-    const r = await this.auth
-      .supabase()
-      .from('vehicle_inspections')
-      .select(
-        '*,rentals(id,departure_date,clients(first_name,last_name),vehicles(registration_number))',
-      )
-      .order('inspection_date', { ascending: false });
+    const r = await this.inspectionsData.list();
     this.loading.set(false);
     if (r.error) return this.fail(r.error);
     this.inspections.set(r.data ?? []);
@@ -75,12 +71,7 @@ export class InspectionsComponent implements OnInit {
     this.closeDetail();
     this.comparison.set(null);
     this.files.clear();
-    await this.auth.supabase().rpc('refresh_overdue_rentals');
-    const r = await this.auth
-      .supabase()
-      .from('rentals')
-      .select('id,status,vehicle_id,clients(first_name,last_name),vehicles(registration_number)')
-      .in('status', ['pending', 'active', 'overdue']);
+    const r = await this.inspectionsData.openRentals();
     if (r.error) return this.fail(r.error);
     this.rentals.set(r.data ?? []);
     this.form.set({
@@ -111,57 +102,39 @@ export class InspectionsComponent implements OnInit {
       return this.fail(new Error('Location, véhicule et kilométrage valide sont requis.'));
     this.saving.set(true);
     try {
-      const i = await this.auth
-        .supabase()
-        .from('vehicle_inspections')
-        .insert({
-          rental_id: f.rental_id,
-          vehicle_id: f.vehicle_id,
-          inspection_type: f.inspection_type,
-          inspection_date: new Date(f.inspection_date).toISOString(),
-          mileage: Number(f.mileage),
-          fuel_level: f.fuel_level || null,
-          observations: f.observations || null,
-          damages: f.damagesText
-            ? f.damagesText
-                .split('\n')
-                .map((x: string) => x.trim())
-                .filter(Boolean)
-            : [],
-        })
-        .select()
-        .single();
+      const i = await this.inspectionsData.create({
+        rental_id: f.rental_id,
+        vehicle_id: f.vehicle_id,
+        inspection_type: f.inspection_type,
+        inspection_date: new Date(f.inspection_date).toISOString(),
+        mileage: Number(f.mileage),
+        fuel_level: f.fuel_level || null,
+        observations: f.observations || null,
+        damages: f.damagesText
+          ? f.damagesText
+              .split('\n')
+              .map((x: string) => x.trim())
+              .filter(Boolean)
+          : [],
+      });
       if (i.error) throw i.error;
       for (const [type, file] of this.files) {
-        const path =
-            'inspections/' +
-            i.data.id +
-            '/' +
-            type +
-            '-' +
-            file.name.replace(/[^a-zA-Z0-9._-]/g, '_'),
-          up = await this.auth
-            .supabase()
-            .storage.from('inspection-photos')
-            .upload(path, file, { upsert: false, contentType: file.type });
-        if (up.error)
+        const failure = await this.inspectionsData.addPhoto(i.data.id, type, file);
+        if (failure?.step === 'upload')
           throw new Error(
             'Inspection créée, mais photo ' +
               this.photoLabel(type) +
               ' non envoyée : ' +
-              this.auth.errorMessage(up.error),
+              this.auth.errorMessage(failure.error),
           );
-        const p = await this.auth
-          .supabase()
-          .from('inspection_photos')
-          .insert({ inspection_id: i.data.id, photo_type: type, storage_path: path });
-        if (p.error) throw p.error;
+        if (failure) throw failure.error;
       }
       this.form.set(null);
       this.files.clear();
-      this.message.set('Inspection et photos enregistrées.');
       await this.load();
       await this.detail(i.data);
+      // load() et detail() effacent les messages : on confirme après le rechargement.
+      this.message.set('Inspection et photos enregistrées.');
     } catch (e) {
       this.fail(e);
     } finally {
@@ -170,26 +143,13 @@ export class InspectionsComponent implements OnInit {
   }
   async detail(item: any) {
     this.clear();
-    const i = await this.auth
-      .supabase()
-      .from('vehicle_inspections')
-      .select('*,rentals(*,clients(*),vehicles(*))')
-      .eq('id', item.id)
-      .single();
+    const i = await this.inspectionsData.get(item.id);
     if (i.error) return this.fail(i.error);
-    const p = await this.auth
-      .supabase()
-      .from('inspection_photos')
-      .select('*')
-      .eq('inspection_id', item.id)
-      .order('created_at');
+    const p = await this.inspectionsData.photos(item.id);
     if (p.error) return this.fail(p.error);
     const photos = await Promise.all(
       (p.data ?? []).map(async (photo) => {
-        const url = await this.auth
-          .supabase()
-          .storage.from('inspection-photos')
-          .createSignedUrl(photo.storage_path, 300);
+        const url = await this.inspectionsData.photoUrl(photo.storage_path, 300);
         return { ...photo, urls: url.data };
       }),
     );
@@ -204,10 +164,7 @@ export class InspectionsComponent implements OnInit {
     );
   }
   async openPhoto(photo: any) {
-    const r = await this.auth
-      .supabase()
-      .storage.from('inspection-photos')
-      .createSignedUrl(photo.storage_path, 60);
+    const r = await this.inspectionsData.photoUrl(photo.storage_path);
     if (r.error) this.fail(r.error);
     else window.open(r.data.signedUrl, '_blank', 'noopener');
   }
@@ -217,11 +174,7 @@ export class InspectionsComponent implements OnInit {
   }
   async compare(rentalId: string) {
     this.clear();
-    const r = await this.auth
-      .supabase()
-      .from('vehicle_inspections')
-      .select('*')
-      .eq('rental_id', rentalId);
+    const r = await this.inspectionsData.forRental(rentalId);
     if (r.error) return this.fail(r.error);
     this.comparison.set({
       departure: r.data?.find((x) => x.inspection_type === 'departure'),
@@ -298,10 +251,7 @@ export class InspectionsComponent implements OnInit {
       text('Dommages : ' + this.damages(inspection));
       text('Observations : ' + (inspection.observations ?? 'Aucune'));
       for (const photo of this.detailPhotos()) {
-        const file = await this.auth
-          .supabase()
-          .storage.from('inspection-photos')
-          .download(photo.storage_path);
+        const file = await this.inspectionsData.photoFile(photo.storage_path);
         if (file.error) continue;
         const image = await this.data(file.data);
         const props = pdf.getImageProperties(image),
