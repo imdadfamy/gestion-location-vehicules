@@ -24,6 +24,10 @@ export class StorageService {
     return this.auth.supabase().storage.from(bucket).createSignedUrl(path, seconds);
   }
 
+  download(bucket: Bucket, path: string) {
+    return this.auth.supabase().storage.from(bucket).download(path);
+  }
+
   remove(bucket: Bucket, paths: string[]) {
     return this.auth.supabase().storage.from(bucket).remove(paths);
   }

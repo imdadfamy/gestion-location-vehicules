@@ -59,6 +59,16 @@ export class ClientsService {
       .order('created_at', { ascending: false });
   }
 
+  /** Pièce d'identité et permis, joints au PDF du contrat. */
+  identityDocuments(clientId: string) {
+    return this.db
+      .from('client_documents')
+      .select('*')
+      .eq('client_id', clientId)
+      .in('document_type', ['identity_document', 'driving_license'])
+      .order('created_at', { ascending: false });
+  }
+
   /** Envoie la pièce dans Storage puis l'enregistre ; renvoie l'erreur éventuelle. */
   async uploadDocument(clientId: string, documentType: string, file: File) {
     const path = this.storage.uniquePath(`clients/${clientId}`, file);

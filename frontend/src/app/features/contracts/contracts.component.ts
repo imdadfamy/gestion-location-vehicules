@@ -12,6 +12,10 @@ import { FormsModule } from '@angular/forms';
 import SignaturePad from 'signature_pad';
 import { jsPDF } from 'jspdf';
 import { AuthService } from '../../core/auth.service';
+import { ClientsService } from '../../core/data/clients.service';
+import { CompanyService } from '../../core/data/company.service';
+import { ContractsService } from '../../core/data/contracts.service';
+import { StorageService } from '../../core/data/storage.service';
 
 @Component({
   standalone: true,
@@ -35,7 +39,13 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
   error = signal('');
   message = signal('');
   rentalId = '';
-  constructor(public auth: AuthService) {}
+  constructor(
+    public auth: AuthService,
+    private contractsData: ContractsService,
+    private clientsData: ClientsService,
+    private companyData: CompanyService,
+    private storage: StorageService,
+  ) {}
   async ngOnInit() {
     await this.load();
   }
@@ -136,11 +146,7 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   async load() {
     this.loading.set(true);
-    const r = await this.auth
-      .supabase()
-      .from('contracts')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const r = await this.contractsData.list();
     this.loading.set(false);
     if (r.error) return this.fail(r.error);
     this.contracts.set(r.data ?? []);
@@ -148,17 +154,9 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
   async openCreation() {
     this.reset();
     this.current.set(null);
-    const [a, b] = await Promise.all([
-      this.auth
-        .supabase()
-        .from('rentals')
-        .select('*,clients(*),vehicles(*)')
-        .eq('status', 'pending'),
-      this.auth.supabase().from('contracts').select('rental_id'),
-    ]);
-    if (a.error || b.error) return this.fail(a.error ?? b.error);
-    const used = new Set((b.data ?? []).map((x: any) => x.rental_id));
-    this.rentals.set((a.data ?? []).filter((x: any) => !used.has(x.id)));
+    const candidates = await this.contractsData.rentalsWithoutContract();
+    if (candidates.error) return this.fail(candidates.error);
+    this.rentals.set(candidates.data ?? []);
     this.creating.set(true);
   }
   async create() {
@@ -167,12 +165,7 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!rental) return this.fail(new Error('Sélectionnez une location valide.'));
     this.saving.set(true);
     try {
-      const already = await this.auth
-        .supabase()
-        .from('contracts')
-        .select('contract_number')
-        .eq('rental_id', rental.id)
-        .maybeSingle();
+      const already = await this.contractsData.existingFor(rental.id);
       if (already.error) throw already.error;
       if (already.data)
         throw new Error(
@@ -180,31 +173,9 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
             (already.data.contract_number ?? 'sans numéro') +
             ').',
         );
-      const template = await this.auth
-        .supabase()
-        .from('contract_templates')
-        .select('id')
-        .eq('template_type', 'rental')
-        .eq('is_active', true)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single();
-      if (template.error) throw template.error;
-      const version = await this.auth
-        .supabase()
-        .from('contract_template_versions')
-        .select('*')
-        .eq('template_id', template.data.id)
-        .order('version_number', { ascending: false })
-        .limit(1)
-        .single();
+      const version = await this.contractsData.latestTemplateVersion();
       if (version.error) throw version.error;
-      const company = await this.auth
-        .supabase()
-        .from('company_settings')
-        .select('*')
-        .limit(1)
-        .maybeSingle();
+      const company = await this.companyData.get();
       if (company.error) throw company.error;
       const content = {
         template: version.data.content,
@@ -213,19 +184,14 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
         vehicle: rental.vehicles,
         rental,
       };
-      const made = await this.auth
-        .supabase()
-        .from('contracts')
-        .insert({
-          rental_id: rental.id,
-          template_id: version.data.template_id,
-          template_version_id: version.data.id,
-          status: 'pending_signature',
-          generated_content: content,
-          generated_html: this.render(content),
-        })
-        .select()
-        .single();
+      const made = await this.contractsData.create({
+        rental_id: rental.id,
+        template_id: version.data.template_id,
+        template_version_id: version.data.id,
+        status: 'pending_signature',
+        generated_content: content,
+        generated_html: this.render(content),
+      });
       if (made.error) throw made.error;
       this.current.set(made.data);
       this.creating.set(false);
@@ -260,29 +226,15 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
       return this.fail(new Error('La signature manuscrite ne peut pas être vide.'));
     this.saving.set(true);
     try {
-      const blob = await (await fetch(p.toDataURL('image/png'))).blob(),
-        path = 'contracts/' + this.current().id + '/signatures/' + t + '.png';
-      const up = await this.auth
-        .supabase()
-        .storage.from('contract-assets')
-        .upload(path, blob, { upsert: false, contentType: 'image/png' });
-      if (up.error) throw up.error;
+      const blob = await (await fetch(p.toDataURL('image/png'))).blob();
       const client = this.client(),
-        profile = this.auth.profile(),
-        insert = await this.auth
-          .supabase()
-          .from('contract_signatures')
-          .insert({
-            contract_id: this.current().id,
-            signer_type: t,
-            signer_name:
-              t === 'client'
-                ? ((client.first_name ?? '') + ' ' + (client.last_name ?? '')).trim() || 'Locataire'
-                : (profile?.full_name ?? 'Responsable'),
-            signature_storage_path: path,
-            signer_user_agent: navigator.userAgent,
-          });
-      if (insert.error) throw insert.error;
+        profile = this.auth.profile();
+      const signerName =
+        t === 'client'
+          ? ((client.first_name ?? '') + ' ' + (client.last_name ?? '')).trim() || 'Locataire'
+          : (profile?.full_name ?? 'Responsable');
+      const failure = await this.contractsData.addSignature(this.current().id, t, signerName, blob);
+      if (failure) throw failure;
       this.message.set('Signature enregistrée.');
       p.clear();
     } catch (e) {
@@ -296,32 +248,16 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
     const contract = this.current();
     this.saving.set(true);
     try {
-      const s = await this.auth
-        .supabase()
-        .from('contract_signatures')
-        .select('*')
-        .eq('contract_id', contract.id);
+      const s = await this.contractsData.signatures(contract.id);
       if (s.error) throw s.error;
       if ((s.data ?? []).length < 2)
         throw new Error('Les signatures du locataire et du responsable sont requises.');
-      const pdf = await this.pdf(contract, s.data ?? []),
-        path = 'contracts/' + contract.id + '/pdf/' + this.pdfFileName(),
-        up = await this.auth
-          .supabase()
-          .storage.from('contract-assets')
-          .upload(path, pdf.output('blob'), { upsert: false, contentType: 'application/pdf' });
-      if (up.error) throw up.error;
-      const saved = await this.auth
-        .supabase()
-        .from('contracts')
-        .update({
-          final_pdf_storage_path: path,
-          status: 'signed',
-          signed_at: new Date().toISOString(),
-        })
-        .eq('id', contract.id)
-        .select()
-        .single();
+      const pdf = await this.pdf(contract, s.data ?? []);
+      const saved = await this.contractsData.archiveSignedPdf(
+        contract.id,
+        this.pdfFileName(),
+        pdf.output('blob'),
+      );
       if (saved.error) throw saved.error;
       this.current.set(saved.data);
       this.message.set('Contrat finalisé et PDF archivé.');
@@ -471,10 +407,7 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
     heading('SIGNATURES');
     for (const s of signatures.sort((a, b) => a.signer_type.localeCompare(b.signer_type))) {
       if (y + 38 > 277) page('SIGNATURES — SUITE');
-      const file = await this.auth
-        .supabase()
-        .storage.from('contract-assets')
-        .download(s.signature_storage_path);
+      const file = await this.contractsData.signatureImage(s.signature_storage_path);
       pdf.setDrawColor(173, 201, 205);
       pdf.roundedRect(15, y - 4, 180, 34, 2, 2, 'S');
       pdf.setTextColor(18, 74, 85);
@@ -561,23 +494,14 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
   private async docs() {
     const id = this.client()?.id;
     if (!id) return [];
-    const r = await this.auth
-      .supabase()
-      .from('client_documents')
-      .select('*')
-      .eq('client_id', id)
-      .in('document_type', ['identity_document', 'driving_license'])
-      .order('created_at', { ascending: false });
+    const r = await this.clientsData.identityDocuments(id);
     return r.error ? [] : (r.data ?? []);
   }
   private async documentImages() {
     const images: { title: string; image: string }[] = [];
     for (const d of await this.docs()) {
       if (!String(d.mime_type ?? '').startsWith('image/')) continue;
-      const f = await this.auth
-        .supabase()
-        .storage.from('rental-documents')
-        .download(d.storage_path);
+      const f = await this.storage.download('rental-documents', d.storage_path);
       if (!f.error)
         images.push({
           title:
@@ -596,22 +520,9 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
   private async logo(): Promise<string | null> {
     try {
       let path = this.company()?.logo_storage_path;
-      if (!path) {
-        const r = await this.auth
-          .supabase()
-          .from('company_settings')
-          .select('logo_storage_path')
-          .limit(1)
-          .maybeSingle();
-        path = r.data?.logo_storage_path;
-      }
-      if (path) {
-        const s = await this.auth
-          .supabase()
-          .storage.from('rental-documents')
-          .createSignedUrl(path, 60);
-        if (!s.error) return this.data(await (await fetch(s.data.signedUrl)).blob());
-      }
+      if (!path) path = (await this.companyData.get('logo_storage_path')).data?.logo_storage_path;
+      const url = await this.companyData.logoUrl(path, 60);
+      if (url) return this.data(await (await fetch(url)).blob());
       return this.data(await (await fetch('/fima-auto-logo.jpg')).blob());
     } catch {
       return null;
@@ -619,10 +530,7 @@ export class ContractsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   async download() {
     this.reset();
-    const r = await this.auth
-      .supabase()
-      .storage.from('contract-assets')
-      .createSignedUrl(this.current().final_pdf_storage_path, 60);
+    const r = await this.contractsData.pdfUrl(this.current().final_pdf_storage_path);
     if (r.error) this.fail(r.error);
     else window.open(r.data.signedUrl, '_blank', 'noopener');
   }
