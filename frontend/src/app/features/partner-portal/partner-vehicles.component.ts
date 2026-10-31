@@ -1,6 +1,8 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { PartnerPortalService } from '../../core/data/partner-portal.service';
+import { VehiclesService } from '../../core/data/vehicles.service';
 
 @Component({
   standalone: true,
@@ -18,7 +20,11 @@ export class PartnerVehiclesComponent implements OnInit {
   error = signal('');
   message = signal('');
   private partnerId = '';
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private portal: PartnerPortalService,
+    private vehiclesData: VehiclesService,
+  ) {}
 
   async ngOnInit() {
     await this.load();
@@ -45,19 +51,9 @@ export class PartnerVehiclesComponent implements OnInit {
   async load() {
     this.loading.set(true);
     this.error.set('');
-    const partner = await this.auth
-      .supabase()
-      .from('partners')
-      .select('id')
-      .eq('profile_id', this.auth.profile()?.id ?? '')
-      .maybeSingle();
+    const partner = await this.portal.myPartner(this.auth.profile()?.id ?? '', 'id');
     this.partnerId = partner.data?.id ?? '';
-    const result = await this.auth
-      .supabase()
-      .from('vehicles')
-      .select('*')
-      .eq('owner_type', 'partner')
-      .order('created_at', { ascending: false });
+    const result = await this.portal.vehicles();
     this.loading.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -115,9 +111,7 @@ export class PartnerVehiclesComponent implements OnInit {
       deposit_amount: Number(value.deposit_amount || 0),
       notes: value.notes || null,
     };
-    const result = value.id
-      ? await this.auth.supabase().from('vehicles').update(payload).eq('id', value.id)
-      : await this.auth.supabase().from('vehicles').insert(payload);
+    const result = await this.portal.saveVehicle(value.id, payload);
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -132,27 +126,12 @@ export class PartnerVehiclesComponent implements OnInit {
     this.error.set('');
     this.photoVehicle.set(vehicle);
     this.photos.set([]);
-    const docs = await this.auth
-      .supabase()
-      .from('vehicle_documents')
-      .select('*')
-      .eq('vehicle_id', vehicle.id)
-      .eq('document_type', 'photo')
-      .order('created_at', { ascending: false });
-    if (docs.error) {
-      this.error.set(this.auth.errorMessage(docs.error));
+    const result = await this.portal.photos(vehicle.id);
+    if (result.error) {
+      this.error.set(this.auth.errorMessage(result.error));
       return;
     }
-    const withUrls = await Promise.all(
-      (docs.data ?? []).map(async (d: any) => {
-        const url = await this.auth
-          .supabase()
-          .storage.from('rental-documents')
-          .createSignedUrl(d.storage_path, 600);
-        return { ...d, url: url.data?.signedUrl ?? '' };
-      }),
-    );
-    this.photos.set(withUrls);
+    this.photos.set(result.data ?? []);
   }
 
   async uploadPhotos(event: Event) {
@@ -161,24 +140,8 @@ export class PartnerVehiclesComponent implements OnInit {
     if (!vehicle || !files.length) return;
     this.error.set('');
     for (const file of files) {
-      const path = `vehicles/${vehicle.id}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const upload = await this.auth
-        .supabase()
-        .storage.from('rental-documents')
-        .upload(path, file, { contentType: file.type });
-      if (upload.error) {
-        this.error.set(this.auth.errorMessage(upload.error));
-        continue;
-      }
-      const saved = await this.auth.supabase().from('vehicle_documents').insert({
-        vehicle_id: vehicle.id,
-        document_type: 'photo',
-        document_name: file.name,
-        storage_path: path,
-        mime_type: file.type,
-        file_size: file.size,
-      });
-      if (saved.error) this.error.set(this.auth.errorMessage(saved.error));
+      const failure = await this.vehiclesData.uploadDocument(vehicle.id, 'photo', file);
+      if (failure) this.error.set(this.auth.errorMessage(failure));
     }
     (event.target as HTMLInputElement).value = '';
     await this.managePhotos(vehicle);

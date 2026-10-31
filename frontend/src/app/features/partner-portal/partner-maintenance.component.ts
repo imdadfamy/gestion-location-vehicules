@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { PartnerPortalService } from '../../core/data/partner-portal.service';
 
 @Component({
   standalone: true,
@@ -16,7 +17,10 @@ export class PartnerMaintenanceComponent implements OnInit {
   saving = signal(false);
   error = signal('');
   message = signal('');
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private portal: PartnerPortalService,
+  ) {}
 
   async ngOnInit() {
     await this.load();
@@ -50,17 +54,8 @@ export class PartnerMaintenanceComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     const [vehicles, rows] = await Promise.all([
-      this.auth
-        .supabase()
-        .from('vehicles')
-        .select('id,registration_number,make,model')
-        .eq('owner_type', 'partner')
-        .order('registration_number'),
-      this.auth
-        .supabase()
-        .from('vehicle_maintenance')
-        .select('*,vehicles(registration_number)')
-        .order('maintenance_date', { ascending: false }),
+      this.portal.vehicleOptions(),
+      this.portal.maintenances(),
     ]);
     this.loading.set(false);
     const failure = vehicles.error ?? rows.error;
@@ -92,16 +87,13 @@ export class PartnerMaintenanceComponent implements OnInit {
     }
     this.saving.set(true);
     this.error.set('');
-    const result = await this.auth
-      .supabase()
-      .from('vehicle_maintenance')
-      .insert({
-        vehicle_id: value.vehicle_id,
-        maintenance_type: value.maintenance_type.trim(),
-        maintenance_date: value.maintenance_date,
-        status: value.status,
-        description: value.description || null,
-      });
+    const result = await this.portal.addMaintenance({
+      vehicle_id: value.vehicle_id,
+      maintenance_type: value.maintenance_type.trim(),
+      maintenance_date: value.maintenance_date,
+      status: value.status,
+      description: value.description || null,
+    });
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -115,11 +107,7 @@ export class PartnerMaintenanceComponent implements OnInit {
   async complete(item: any) {
     this.error.set('');
     this.message.set('');
-    const result = await this.auth
-      .supabase()
-      .from('vehicle_maintenance')
-      .update({ status: 'completed' })
-      .eq('id', item.id);
+    const result = await this.portal.completeMaintenance(item.id);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
       return;

@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { PartnerPortalService } from '../../core/data/partner-portal.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
 
 @Component({
@@ -14,16 +15,14 @@ export class PartnerAccountComponent implements OnInit {
   saving = signal(false);
   error = signal('');
   message = signal('');
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private portal: PartnerPortalService,
+  ) {}
   async ngOnInit() {
     this.loading.set(true);
     this.error.set('');
-    const result = await this.auth
-      .supabase()
-      .from('partners')
-      .select('*')
-      .eq('profile_id', this.auth.profile()?.id ?? '')
-      .maybeSingle();
+    const result = await this.portal.myPartner(this.auth.profile()?.id ?? '');
     this.loading.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -47,12 +46,7 @@ export class PartnerAccountComponent implements OnInit {
     }
     this.saving.set(true);
     this.error.set('');
-    const result = await this.auth.supabase().rpc('ensure_partner_profile', {
-      target_company_name: value.company_name || null,
-      target_contact_name: value.contact_name,
-      target_phone: value.phone,
-      target_email: value.email || null,
-    });
+    const result = await this.portal.saveProfile(value);
     this.saving.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
