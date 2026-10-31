@@ -6,13 +6,7 @@ type Db = SupabaseClient<Database>;
 export type Client = Database['public']['Tables']['clients']['Row'];
 export type ClientDocument = Database['public']['Tables']['client_documents']['Row'];
 
-export const RENTAL_STATUSES: Record<string, { label: string; tone: 'success' | 'info' | 'warning' | 'danger' | 'muted' }> = {
-  pending: { label: 'En attente', tone: 'warning' },
-  active: { label: 'En cours', tone: 'info' },
-  overdue: { label: 'En retard', tone: 'danger' },
-  completed: { label: 'Terminée', tone: 'success' },
-  cancelled: { label: 'Annulée', tone: 'muted' },
-};
+export { RENTAL_STATUSES } from './rentals';
 
 /** Champs de la fiche client (les mêmes que l'écran Angular). */
 export const CLIENT_FIELDS = [
