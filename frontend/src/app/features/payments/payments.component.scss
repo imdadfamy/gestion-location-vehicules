@@ -1,0 +1,119 @@
+.amount {
+  font-weight: 750;
+  white-space: nowrap;
+}
+.invoice {
+  max-width: 860px;
+  margin: 1.5rem auto;
+  background: #fff;
+  border: 1px solid #dce8ea;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.invoice-head {
+  padding: 26px 30px;
+  background: linear-gradient(120deg, #f8fcfc, #e7f4f6);
+  border-bottom: 4px solid #1593a5;
+}
+.invoice-head h2 {
+  margin: 0;
+  color: #12313a;
+}
+.invoice-body {
+  padding: 28px 30px;
+}
+.invoice-total {
+  padding: 14px 16px;
+  background: #f4fafb;
+  border-left: 4px solid #1593a5;
+}
+.caution {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px dashed #91b7bd;
+  border-radius: 10px;
+  background: #fcfefe;
+}
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .invoice,
+  .invoice * {
+    visibility: visible !important;
+  }
+  .invoice {
+    position: absolute;
+    inset: 0;
+    max-width: none;
+    border: 0;
+    border-radius: 0;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+.company-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.company-block img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+  padding: 4px;
+}
+.company-block .company-name {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #0e3038;
+}
+.company-block small {
+  display: block;
+  color: #5c767c;
+  line-height: 1.5;
+}
+.invoice-ref {
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  color: #5c767c;
+  text-transform: uppercase;
+}
+.invoice-doc-title {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #c6dde1;
+}
+.invoice-footer {
+  padding: 14px 30px;
+  border-top: 1px solid #e7eef0;
+  color: #8198a0;
+  font-size: 0.74rem;
+  text-align: center;
+}
+.pay-breakdown {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.pay-breakdown .outstanding {
+  color: #b3261e;
+  font-weight: 750;
+}
+.actions-col {
+  position: sticky;
+  right: 0;
+  background: var(--app-surface, #fff);
+  box-shadow: -8px 0 12px -10px rgba(9, 44, 51, 0.18);
+}
+.app-table thead th.actions-col {
+  background: var(--app-surface-soft, #fcfdfd);
+}
+@media (max-width: 700px) {
+  .table-responsive table {
+    min-width: 640px;
+  }
+}

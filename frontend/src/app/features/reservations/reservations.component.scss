@@ -1,0 +1,50 @@
+.reservation-calendar {
+  min-height: 650px;
+}
+.reservation-calendar .fc-event {
+  white-space: normal;
+  cursor: pointer;
+}
+.dispatch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1080;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(8, 33, 40, 0.62);
+}
+.dispatch-card {
+  width: min(560px, 100%);
+  background: var(--app-surface, #fff);
+  color: var(--app-text);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.25);
+}
+.recipient-list {
+  max-height: 170px;
+  overflow: auto;
+}
+.recipient-item {
+  width: 100%;
+  text-align: left;
+  margin-top: 0.4rem;
+}
+@media (max-width: 760px) {
+  .reservation-calendar {
+    min-height: 520px;
+    font-size: 0.78rem;
+  }
+  .reservation-calendar .fc-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .reservation-calendar .fc-toolbar-title {
+    font-size: 1.05rem;
+  }
+  .dispatch-card {
+    padding: 1.2rem;
+    border-radius: 16px;
+  }
+}

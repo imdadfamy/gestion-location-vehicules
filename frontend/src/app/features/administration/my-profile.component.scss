@@ -1,0 +1,15 @@
+.profile-card {
+  max-width: 760px;
+}
+.profile-mark {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 1rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0b8999, #46c9d1);
+  color: #fff;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+}

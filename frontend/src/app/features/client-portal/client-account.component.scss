@@ -1,0 +1,70 @@
+.form-card {
+  max-width: 980px;
+}
+.form-card label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.form-card .form-control {
+  min-height: 45px;
+  border-radius: 12px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.form-card .form-control:focus {
+  border-color: #0792a4;
+  box-shadow: 0 0 0 4px rgba(7, 146, 164, 0.15);
+}
+.progress {
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-bar {
+  background: #0792a4;
+}
+.document-card {
+  border: 1px solid #dce8ea;
+  border-radius: 14px;
+  padding: 14px;
+  background: #f8fbfb;
+  transition: box-shadow 0.2s ease;
+}
+.document-card:hover {
+  box-shadow: 0 8px 20px rgba(16, 47, 56, 0.08);
+}
+.document-name {
+  overflow-wrap: anywhere;
+  font-size: 0.92rem;
+}
+.document-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+@media (max-width: 575px) {
+  .form-card .card-body {
+    padding: 18px;
+  }
+  .form-card .row {
+    --bs-gutter-y: 0.8rem;
+  }
+  .form-card .btn-primary {
+    width: 100%;
+    min-height: 48px;
+  }
+  .form-card hr {
+    margin: 24px 0;
+  }
+  .form-card .small,
+  .document-name {
+    overflow-wrap: anywhere;
+  }
+  .document-actions .btn {
+    flex: 1 1 auto;
+    min-height: 42px;
+  }
+}

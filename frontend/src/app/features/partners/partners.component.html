@@ -1,0 +1,397 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">PARTENAIRES</p>
+    <h1>Programme partenaire</h1>
+    <p>Évaluez les soumissions, pilotez vos partenaires et suivez la marge générée.</p>
+  </div>
+</div>
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+@if (message()) {
+  <div class="alert alert-success">{{ message() }}</div>
+}
+
+<div class="stat-row">
+  <div class="stat-card">
+    <small>Partenaires actifs</small><strong>{{ activePartnersCount() }}</strong>
+  </div>
+  <div class="stat-card">
+    <small>Véhicules en attente</small><strong>{{ pending().length }}</strong>
+  </div>
+  <div class="stat-card">
+    <small>Véhicules approuvés</small><strong>{{ approvedCount() }}</strong>
+  </div>
+  <div class="stat-card">
+    <small>Marge totale (locations terminées)</small><strong>{{ money(totalCommission()) }}</strong>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn" [class.active]="view() === 'vehicles'" (click)="view.set('vehicles')">
+    Véhicules
+  </button>
+  <button class="tab-btn" [class.active]="view() === 'partners'" (click)="view.set('partners')">
+    Partenaires ({{ partners().length }})
+  </button>
+</div>
+
+@if (view() === 'vehicles') {
+  @if (pending().length) {
+    <section class="mb-5">
+      <h2 class="h5 mb-3">En attente d'évaluation ({{ pending().length }})</h2>
+      @if (loading()) {
+        <div class="empty-state">Chargement…</div>
+      } @else {
+        <div class="vehicle-grid">
+          @for (v of pending(); track v.id) {
+            <article
+              class="vehicle-card"
+              role="button"
+              tabindex="0"
+              (click)="openVehicle(v)"
+              (keydown.enter)="openVehicle(v)"
+            >
+              <div class="d-flex justify-content-between gap-2">
+                <div>
+                  <h3 class="h6 mb-0">{{ v.make }} {{ v.model }}</h3>
+                  <small class="text-muted"
+                    >{{ v.registration_number }} · {{ partnerLabel(v.partners) }}</small
+                  >
+                </div>
+                <span class="status-pill pending">En attente</span>
+              </div>
+              <p class="small mt-2 mb-0">
+                Prix demandé : <strong>{{ money(v.partner_requested_price) }}</strong
+                >/jour
+              </p>
+              <p class="small text-muted mb-0">
+                {{ v.category || 'Catégorie non renseignée' }} · {{ v.transmission || '—' }} ·
+                {{ v.fuel_type || '—' }}
+              </p>
+              <div class="photo-grid">
+                @for (photo of photosFor(v.id); track photo.id) {
+                  <button
+                    type="button"
+                    (click)="$event.stopPropagation(); openLightbox(photo.url)"
+                    aria-label="Agrandir la photo"
+                  >
+                    <img [src]="photo.url" alt="Photo" />
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  <section>
+    <h2 class="h5 mb-3">Tous les véhicules partenaires</h2>
+    <div class="toolbar-row">
+      <input
+        class="form-control"
+        [(ngModel)]="search"
+        placeholder="Rechercher un véhicule ou un partenaire"
+      />
+      <select class="form-select" [(ngModel)]="statusFilter">
+        <option value="">Tous les statuts</option>
+        <option value="pending">En attente</option>
+        <option value="approved">Validés</option>
+        <option value="rejected">Refusés</option>
+      </select>
+    </div>
+    @if (!filteredVehicles().length) {
+      <div class="empty-state">Aucun véhicule ne correspond.</div>
+    } @else {
+      <div class="table-responsive app-table">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Véhicule</th>
+              <th>Partenaire</th>
+              <th>Statut</th>
+              <th>Prix partenaire</th>
+              <th>Prix client</th>
+              <th>Disponibilité</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of filteredVehicles(); track v.id) {
+              <tr (click)="openVehicle(v)">
+                <td>
+                  {{ v.make }} {{ v.model
+                  }}<small class="d-block text-muted">{{ v.registration_number }}</small>
+                </td>
+                <td>{{ partnerLabel(v.partners) }}</td>
+                <td>
+                  <span class="status-pill {{ v.approval_status }}">{{
+                    statusLabel(v.approval_status)
+                  }}</span>
+                </td>
+                <td>{{ money(v.partner_requested_price) }}</td>
+                <td>{{ v.approval_status === 'approved' ? money(v.rental_price) : '—' }}</td>
+                <td>
+                  @if (v.approval_status === 'approved') {
+                    <span
+                      class="status-pill {{ v.status === 'available' ? 'approved' : 'secondary' }}"
+                      >{{ v.status === 'available' ? 'Publié' : 'Suspendu' }}</span
+                    >
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}
+
+@if (view() === 'partners') {
+  <div class="toolbar-row">
+    <input class="form-control" [(ngModel)]="search" placeholder="Rechercher un partenaire" />
+  </div>
+  @if (!filteredPartners().length) {
+    <div class="empty-state">Aucun partenaire ne correspond.</div>
+  } @else {
+    <div class="table-responsive app-table">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Partenaire</th>
+            <th>Contact</th>
+            <th>Véhicules</th>
+            <th>Compte</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of filteredPartners(); track p.id) {
+            <tr (click)="openPartner(p)">
+              <td>
+                <strong>{{ p.company_name || p.contact_name }}</strong>
+                @if (p.company_name) {
+                  <small class="d-block text-muted">{{ p.contact_name }}</small>
+                }
+              </td>
+              <td>
+                {{ p.phone }}<small class="d-block text-muted">{{ p.email || '—' }}</small>
+              </td>
+              <td>{{ vehicleCountFor(p.id) }}</td>
+              <td>
+                <span class="status-pill {{ p.profiles?.is_active ? 'approved' : 'secondary' }}">{{
+                  p.profiles?.is_active ? 'Actif' : 'Désactivé'
+                }}</span>
+              </td>
+              <td>
+                <button
+                  class="btn btn-sm btn-outline-primary"
+                  (click)="$event.stopPropagation(); openPartner(p)"
+                >
+                  Gérer
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}
+
+@if (selectedVehicle()) {
+  <div class="panel-overlay" (click)="selectedVehicle.set(null)">
+    <section class="panel" (click)="$event.stopPropagation()">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow mb-1">FICHE VÉHICULE</p>
+          <h2 class="h4 mb-0">{{ selectedVehicle().make }} {{ selectedVehicle().model }}</h2>
+          <small class="text-muted"
+            >{{ selectedVehicle().registration_number }} ·
+            {{ partnerLabel(selectedVehicle().partners) }}</small
+          >
+        </div>
+        <button class="btn-close" (click)="selectedVehicle.set(null)"></button>
+      </div>
+      <div class="photo-grid">
+        @for (photo of photosFor(selectedVehicle().id); track photo.id) {
+          <button type="button" (click)="openLightbox(photo.url)" aria-label="Agrandir la photo">
+            <img [src]="photo.url" alt="Photo" />
+          </button>
+        }
+      </div>
+
+      @if (selectedVehicle().approval_status === 'pending') {
+        <p class="text-muted">
+          Prix demandé par le partenaire :
+          <strong>{{ money(selectedVehicle().partner_requested_price) }}</strong
+          >/jour
+        </p>
+        @if (selectedVehicle().notes) {
+          <p class="small text-muted">{{ selectedVehicle().notes }}</p>
+        }
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label>Prix client final (FCFA/jour) <span class="required">*</span></label
+            ><input class="form-control" type="number" min="0" [(ngModel)]="finalPrice" />
+          </div>
+          <div class="col-md-6">
+            <label>Caution (FCFA)</label
+            ><input class="form-control" type="number" min="0" [(ngModel)]="finalDeposit" />
+          </div>
+        </div>
+        @if (marginTooLow()) {
+          <p class="margin-warning mt-3">
+            ⚠ Votre marge serait de {{ money(margin()) }}, en dessous du minimum configuré ({{
+              money(minMargin())
+            }}). Vous pouvez valider quand même, ou ajuster le prix.
+          </p>
+        } @else {
+          <p class="text-muted small mt-3">Votre marge : {{ money(margin()) }}</p>
+        }
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button class="btn btn-success" [disabled]="saving()" (click)="decide('approved')">
+            Valider
+          </button>
+          <button class="btn btn-outline-danger" [disabled]="saving()" (click)="openReject()">
+            Refuser
+          </button>
+        </div>
+        @if (rejecting()) {
+          <div class="mt-3">
+            <label>Motif du refus</label
+            ><textarea class="form-control" rows="2" [(ngModel)]="rejectionReason"></textarea
+            ><button class="btn btn-danger mt-2" [disabled]="saving()" (click)="decide('rejected')">
+              Confirmer le refus
+            </button>
+          </div>
+        }
+      }
+
+      @if (selectedVehicle().approval_status === 'approved') {
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label>Prix client (FCFA/jour)</label
+            ><input class="form-control" type="number" min="0" [(ngModel)]="finalPrice" />
+          </div>
+          <div class="col-md-6">
+            <label>Caution (FCFA)</label
+            ><input class="form-control" type="number" min="0" [(ngModel)]="finalDeposit" />
+          </div>
+        </div>
+        <p class="text-muted small mt-2">Marge actuelle : {{ money(margin()) }}</p>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button class="btn btn-primary" [disabled]="saving()" (click)="saveApprovedChanges()">
+            Enregistrer le prix
+          </button>
+          <button
+            class="btn btn-outline-secondary"
+            [disabled]="saving()"
+            (click)="toggleAvailability()"
+          >
+            {{ selectedVehicle().status === 'available' ? 'Suspendre (dépublier)' : 'Republier' }}
+          </button>
+          <button
+            class="btn btn-outline-warning"
+            [disabled]="saving()"
+            (click)="resendToEvaluation()"
+          >
+            Renvoyer en évaluation
+          </button>
+        </div>
+      }
+
+      @if (selectedVehicle().approval_status === 'rejected') {
+        <div class="alert alert-secondary mt-2">
+          Refusé{{
+            selectedVehicle().reviewed_at
+              ? ' le ' + (selectedVehicle().reviewed_at | date: 'short')
+              : ''
+          }}.<br />Motif : {{ selectedVehicle().rejection_reason || 'Non précisé' }}
+        </div>
+        <p class="text-muted small">
+          Le partenaire doit modifier et resoumettre ce véhicule depuis son espace pour qu'il
+          repasse en évaluation.
+        </p>
+      }
+    </section>
+  </div>
+}
+
+@if (selectedPartner()) {
+  <div class="panel-overlay" (click)="selectedPartner.set(null)">
+    <section class="panel" (click)="$event.stopPropagation()">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow mb-1">PARTENAIRE</p>
+          <h2 class="h4 mb-0">
+            {{ selectedPartner().company_name || selectedPartner().contact_name }}
+          </h2>
+          <small class="text-muted">{{ vehicleCountFor(selectedPartner().id) }} véhicule(s)</small>
+        </div>
+        <button class="btn-close" (click)="selectedPartner.set(null)"></button>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label>Nom de l'entreprise</label
+          ><input class="form-control" [(ngModel)]="partnerForm.company_name" />
+        </div>
+        <div class="col-md-6">
+          <label>Nom du contact <span class="required">*</span></label
+          ><input class="form-control" [(ngModel)]="partnerForm.contact_name" />
+        </div>
+        <div class="col-md-6">
+          <label>Téléphone <span class="required">*</span></label
+          ><input
+            class="form-control"
+            type="tel"
+            inputmode="numeric"
+            appDigitsOnly
+            [(ngModel)]="partnerForm.phone"
+          />
+        </div>
+        <div class="col-md-6">
+          <label>E-mail</label
+          ><input class="form-control" type="email" [(ngModel)]="partnerForm.email" />
+        </div>
+        <div class="col-md-12">
+          <label>Infos de paiement</label
+          ><textarea
+            class="form-control"
+            rows="2"
+            [(ngModel)]="partnerForm.payout_details"
+          ></textarea>
+        </div>
+        <div class="col-md-12">
+          <label>Notes internes</label
+          ><textarea class="form-control" rows="2" [(ngModel)]="partnerForm.notes"></textarea>
+        </div>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <button class="btn btn-primary" [disabled]="saving()" (click)="savePartner()">
+          Enregistrer
+        </button>
+        <button
+          class="btn"
+          [class.btn-outline-danger]="selectedPartner().profiles?.is_active"
+          [class.btn-outline-success]="!selectedPartner().profiles?.is_active"
+          [disabled]="saving()"
+          (click)="togglePartnerAccess()"
+        >
+          {{
+            selectedPartner().profiles?.is_active ? 'Désactiver le compte' : 'Réactiver le compte'
+          }}
+        </button>
+      </div>
+    </section>
+  </div>
+}
+
+@if (lightboxUrl()) {
+  <div class="lightbox-overlay" (click)="lightboxUrl.set(null)">
+    <button class="lightbox-close" (click)="lightboxUrl.set(null)" aria-label="Fermer">×</button>
+    <img [src]="lightboxUrl()!" alt="Photo du véhicule" (click)="$event.stopPropagation()" />
+  </div>
+}

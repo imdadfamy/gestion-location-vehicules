@@ -1,0 +1,245 @@
+<div class="page-heading no-print">
+  <div>
+    <p class="eyebrow">DOCUMENTS</p>
+    <h1>Contrats</h1>
+    <p>Contrats de location, signatures manuscrites et archivage sécurisé.</p>
+  </div>
+  @if (auth.can('contracts', 'create')) {
+    <button class="btn btn-primary" (click)="openCreation()">+ Générer depuis une location</button>
+  }
+</div>
+@if (error()) {
+  <div class="alert alert-danger no-print">{{ error() }}</div>
+}
+@if (message()) {
+  <div class="alert alert-success no-print">{{ message() }}</div>
+}
+@if (loading()) {
+  <div class="empty-state no-print">Chargement des contrats…</div>
+}
+@if (!loading() && !contracts().length) {
+  <div class="empty-state no-print">Aucun contrat pour le moment.</div>
+}
+@if (contracts().length) {
+  <div class="table-responsive app-table mb-4 no-print">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Numéro</th>
+          <th>Location</th>
+          <th>Statut</th>
+          <th>Créé le</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (contract of contracts(); track contract.id) {
+          <tr>
+            <td>
+              <strong>{{ contract.contract_number }}</strong>
+            </td>
+            <td>{{ contract.rental_id }}</td>
+            <td>
+              <span class="badge text-bg-{{ tone(contract.status) }}">{{
+                status(contract.status)
+              }}</span>
+            </td>
+            <td>{{ contract.created_at | date: 'short' }}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary" (click)="select(contract)">
+                Voir
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+@if (creating()) {
+  <section class="card form-card mb-4 no-print">
+    <div class="card-body">
+      <h2 class="h5">Nouveau contrat</h2>
+      <label class="form-label">Location à contractualiser <span class="text-danger">*</span></label
+      ><select class="form-select" [(ngModel)]="rentalId">
+        <option value="">Sélectionner une location</option>
+        @for (rental of rentals(); track rental.id) {
+          <option [value]="rental.id">
+            {{ rental.clients?.first_name }} {{ rental.clients?.last_name }} —
+            {{ rental.vehicles?.registration_number }}
+          </option>
+        }
+      </select>
+      @if (!rentals().length) {
+        <p class="text-muted mt-2 mb-0">Aucune location en attente sans contrat disponible.</p>
+      }
+      <div class="mt-3">
+        <button class="btn btn-success" [disabled]="saving() || !rentalId" (click)="create()">
+          {{ saving() ? 'Création…' : 'Créer le contrat' }}</button
+        ><button class="btn btn-link" (click)="creating.set(false)">Annuler</button>
+      </div>
+    </div>
+  </section>
+}
+@if (current()) {
+  <article class="contract">
+    <header class="contract-header">
+      <img [src]="brandLogo()" alt="Logo entreprise" />
+      <div>
+        <small>{{ company().company_name || 'FIMA AUTO' }} · LOCATION DE VÉHICULES</small>
+        <h2>CONTRAT DE LOCATION</h2>
+      </div>
+      <div class="number">
+        <small>NUMÉRO DE CONTRAT</small><br /><strong>{{ current().contract_number }}</strong>
+      </div>
+    </header>
+    <div class="toolbar no-print">
+      <div class="d-flex flex-wrap gap-2 justify-content-between">
+        <span class="badge text-bg-{{ tone(current().status) }}">{{
+          status(current().status)
+        }}</span
+        ><button class="btn btn-sm btn-outline-secondary ms-2" (click)="current.set(null)">
+          Fermer
+        </button>
+        @if (current().final_pdf_storage_path) {
+          <span
+            ><button class="btn btn-outline-primary btn-sm me-2" (click)="download()">
+              Télécharger le PDF</button
+            ><button class="btn btn-primary btn-sm" (click)="download()">
+              Ouvrir le PDF à imprimer
+            </button></span
+          >
+        }
+      </div>
+    </div>
+    <div class="body">
+      <div class="grid">
+        <section class="card">
+          <h3>Entreprise</h3>
+          <p>
+            <strong>{{ company().company_name || 'À configurer' }}</strong
+            ><br />{{ company().address || 'Adresse à configurer' }}<br />
+            @if (company().phone) {
+              Téléphone : {{ company().phone }}<br />
+            }
+            @if (company().email) {
+              E-mail : {{ company().email }}<br />
+            }
+            @if (company().rccm) {
+              RCCM : {{ company().rccm }}<br />
+            }
+            @if (company().ifu) {
+              IFU : {{ company().ifu }}
+            }
+          </p>
+        </section>
+        <section class="card">
+          <h3>Locataire</h3>
+          <p>
+            <strong>{{ client().first_name }} {{ client().last_name }}</strong
+            ><br />Téléphone : {{ client().phone || 'Non renseigné' }}<br />Résidence :
+            {{ client().residence || 'Non renseignée' }}<br />Adresse :
+            {{ client().address || 'Non renseignée' }}<br />Pièce :
+            {{ client().id_document_number || 'Non renseignée' }}<br />Permis :
+            {{ client().driving_license_number || 'Non renseigné' }}<br />Urgence :
+            {{ client().emergency_contact_name || 'Non renseigné' }}
+            {{ client().emergency_contact_phone || '' }}
+          </p>
+        </section>
+      </div>
+      <div class="facts">
+        <div class="fact">
+          <small>Véhicule</small
+          ><strong
+            >{{ vehicle().make }} {{ vehicle().model }}<br />{{
+              vehicle().registration_number
+            }}</strong
+          >
+        </div>
+        <div class="fact">
+          <small>Durée</small><strong>{{ duration() }}</strong
+          ><small
+            >Départ : {{ rental().departure_date | date: 'dd/MM/yyyy à HH:mm' }}<br />Retour :
+            {{ rental().return_date | date: 'dd/MM/yyyy à HH:mm' }}</small
+          >
+        </div>
+        <div class="fact">
+          <small>Zone de conduite</small
+          ><strong>{{ rental().driving_zone || 'Non renseignée' }}</strong>
+        </div>
+        <div class="fact">
+          <small>Lieux</small
+          ><strong
+            >{{ rental().departure_location || '—' }} →
+            {{ rental().return_location || '—' }}</strong
+          >
+        </div>
+        <div class="fact">
+          <small>Prix de location</small><strong>{{ money(rental().rental_price) }}</strong>
+        </div>
+        <div class="fact">
+          <small>Caution</small><strong>{{ money(rental().deposit_amount) }}</strong>
+        </div>
+      </div>
+      <section>
+        <h2 class="h5">Conditions générales</h2>
+        @for (section of sections(); track section.title) {
+          <div class="clause">
+            <h3>{{ section.title }}</h3>
+            @for (clause of section.clauses || []; track clause) {
+              <p>{{ clause }}</p>
+            }
+          </div>
+        }
+      </section>
+      <section class="accept">
+        <h2 class="h6">Acceptation</h2>
+        <p class="mb-0">
+          Le locataire reconnaît avoir lu les présentes conditions générales, les accepter et
+          recevoir un exemplaire du présent contrat de location.
+        </p>
+      </section>
+      @if (licenseAvailable()) {
+        <div class="license">
+          Les photos de pièce d’identité et de permis ajoutées au client seront intégrées au PDF
+          final avant les signatures.
+        </div>
+      }
+      @if (current().status === 'pending_signature') {
+        <section class="mt-4 pt-4 border-top no-print">
+          <h2 class="h5">Signatures manuscrites</h2>
+          <p class="text-muted small">
+            Signez avec la souris, le doigt ou un stylet. Une signature vide est refusée.
+          </p>
+          <div class="grid">
+            <div class="signature">
+              <h3>Locataire</h3>
+              <canvas #clientCanvas class="border rounded w-100" height="180"></canvas>
+              <div class="mt-2">
+                <button class="btn btn-outline-secondary btn-sm" (click)="clear('client')">
+                  Effacer / recommencer</button
+                ><button class="btn btn-primary btn-sm ms-2" (click)="sign('client')">
+                  Valider
+                </button>
+              </div>
+            </div>
+            <div class="signature">
+              <h3>Responsable / Propriétaire</h3>
+              <canvas #responsableCanvas class="border rounded w-100" height="180"></canvas>
+              <div class="mt-2">
+                <button class="btn btn-outline-secondary btn-sm" (click)="clear('responsable')">
+                  Effacer / recommencer</button
+                ><button class="btn btn-primary btn-sm ms-2" (click)="sign('responsable')">
+                  Valider
+                </button>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-success mt-4" [disabled]="saving()" (click)="finalize()">
+            Finaliser, générer et archiver le PDF
+          </button>
+        </section>
+      }
+    </div>
+  </article>
+}

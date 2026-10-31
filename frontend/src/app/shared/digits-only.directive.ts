@@ -3,7 +3,10 @@ import { NgModel } from '@angular/forms';
 
 @Directive({ standalone: true, selector: 'input[appDigitsOnly]' })
 export class DigitsOnlyDirective {
-  constructor(private el: ElementRef<HTMLInputElement>, private model: NgModel) {}
+  constructor(
+    private el: ElementRef<HTMLInputElement>,
+    private model: NgModel,
+  ) {}
 
   @HostListener('keypress', ['$event'])
   onKeyPress(event: KeyboardEvent) {

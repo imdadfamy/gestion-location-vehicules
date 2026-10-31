@@ -1,0 +1,105 @@
+<div class="app-shell" [class.theme-dark]="theme() === 'dark'">
+  @if (menuOpen()) {
+    <button class="mobile-backdrop" aria-label="Fermer le menu" (click)="closeMenu()"></button>
+  }
+  <aside class="app-sidebar" [class.open]="menuOpen()">
+    <div class="brand-panel">
+      <img src="/logo-horizontal-white.png" alt="FIMA AUTO" />
+      <div><strong>Gestion de flotte</strong></div>
+      <button class="close-menu" (click)="closeMenu()" aria-label="Fermer">×</button>
+    </div>
+    <p class="nav-label">MENU PRINCIPAL</p>
+    <nav class="nav-menu" (click)="closeMenu()">
+      <a routerLink="/dashboard" routerLinkActive="active"><i>⌂</i><span>Tableau de bord</span></a>
+      @if (a.can('vehicles')) {
+        <a routerLink="/vehicles" routerLinkActive="active"><i>◇</i><span>Véhicules</span></a>
+      }
+      @if (a.can('clients')) {
+        <a routerLink="/clients" routerLinkActive="active"><i>◍</i><span>Clients</span></a>
+      }
+      @if (a.can('reservations')) {
+        <a routerLink="/reservations" routerLinkActive="active"
+          ><i>◷</i><span>Réservations</span></a
+        >
+      }
+      @if (a.can('rentals')) {
+        <a routerLink="/rentals" routerLinkActive="active"><i>▣</i><span>Locations</span></a>
+      }
+      @if (a.can('contracts')) {
+        <a routerLink="/contracts" routerLinkActive="active"><i>▤</i><span>Contrats</span></a>
+      }
+      @if (a.can('payments')) {
+        <a routerLink="/payments" routerLinkActive="active"><i>◫</i><span>Paiements</span></a>
+      }
+      @if (a.can('inspections')) {
+        <a routerLink="/inspections" routerLinkActive="active"><i>⌕</i><span>Inspections</span></a>
+      }
+      @if (a.can('maintenance')) {
+        <a routerLink="/maintenance" routerLinkActive="active"><i>✦</i><span>Maintenance</span></a>
+      }
+      @if (a.can('incidents')) {
+        <a routerLink="/incidents" routerLinkActive="active"><i>!</i><span>Incidents</span></a>
+      }
+      @if (a.can('partners')) {
+        <a routerLink="/partners" routerLinkActive="active"><i>◈</i><span>Partenaires</span></a>
+      }
+    </nav>
+    <p class="nav-label secondary">PILOTAGE</p>
+    <nav class="nav-menu" (click)="closeMenu()">
+      <a routerLink="/my-profile" routerLinkActive="active"
+        ><i>◉</i><span>Mes informations</span></a
+      >
+      @if (a.can('notifications')) {
+        <a routerLink="/notifications" routerLinkActive="active"
+          ><i>◍</i><span>Notifications</span>
+          @if (a.unreadNotifications()) {
+            <b class="notification-count">{{ a.unreadNotifications() }}</b>
+          }
+        </a>
+      }
+      @if (a.can('reports')) {
+        <a routerLink="/reports" routerLinkActive="active"><i>↗</i><span>Rapports</span></a>
+      }
+      @if (a.profile()?.role === 'super_admin') {
+        <a routerLink="/settings" routerLinkActive="active"><i>⚙</i><span>Paramètres</span></a
+        ><a routerLink="/contract-templates" routerLinkActive="active"
+          ><i>▤</i><span>Modèles</span></a
+        ><a routerLink="/activity-logs" routerLinkActive="active"><i>≡</i><span>Journal</span></a
+        ><a routerLink="/users" routerLinkActive="active"><i>♙</i><span>Utilisateurs</span></a>
+      }
+    </nav>
+    <div class="user-panel">
+      <div class="avatar">{{ initials() }}</div>
+      <div>
+        <strong>{{ displayName() }}</strong
+        ><small>{{ a.profile()?.role === 'super_admin' ? 'Super Admin' : 'Responsable' }}</small>
+      </div>
+      <button (click)="out()" title="Déconnexion">↪</button>
+    </div>
+  </aside>
+  <main class="app-content">
+    <header class="topbar">
+      <button class="menu-toggle" (click)="openMenu()" aria-label="Ouvrir le menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="topbar-title"><span>FIMA AUTO /</span> Espace de gestion</div>
+      <div class="topbar-actions">
+        <button
+          class="theme-toggle"
+          type="button"
+          (click)="toggleTheme()"
+          [attr.aria-label]="
+            theme() === 'dark' ? 'Activer le mode clair' : 'Activer le mode sombre'
+          "
+          [title]="theme() === 'dark' ? 'Passer au mode clair' : 'Passer au mode sombre'"
+        >
+          <b>{{ theme() === 'dark' ? '☀' : '☾' }}</b
+          ><span>{{ theme() === 'dark' ? 'Mode clair' : 'Mode sombre' }}</span>
+        </button>
+        <div class="today">Mobilités premium</div>
+      </div>
+    </header>
+    <section class="page"><router-outlet /></section>
+    <footer class="app-footer">FIMA AUTO · Location de véhicules · © 2026</footer>
+  </main>
+</div>

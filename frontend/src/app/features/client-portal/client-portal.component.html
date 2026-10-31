@@ -1,0 +1,180 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">RÉSERVATION EN LIGNE</p>
+    <h1>Véhicules disponibles</h1>
+    <p>Choisissez vos dates : seules les voitures réellement disponibles sont proposées.</p>
+  </div>
+</div>
+<div class="filters">
+  <div>
+    <label>Départ prévu</label
+    ><input class="form-control" type="datetime-local" [(ngModel)]="departure" (change)="load()" />
+  </div>
+  <div>
+    <label>Retour prévu</label
+    ><input class="form-control" type="datetime-local" [(ngModel)]="returnDate" (change)="load()" />
+  </div>
+  <button class="btn btn-outline-primary align-self-end" (click)="load()">Actualiser</button>
+</div>
+<div class="filters">
+  <div>
+    <label>Catégorie</label
+    ><select class="form-select" [(ngModel)]="category">
+      <option value="">Toutes</option>
+      <option value="SUV">SUV</option>
+      <option value="Berline">Berline</option>
+      <option value="Citadine">Citadine</option>
+    </select>
+  </div>
+  <div>
+    <label>Boîte</label
+    ><select class="form-select" [(ngModel)]="transmission">
+      <option value="">Toutes</option>
+      <option value="automatic">Automatique</option>
+      <option value="manual">Manuelle</option>
+    </select>
+  </div>
+  <div>
+    <label>Carburant</label
+    ><select class="form-select" [(ngModel)]="fuel">
+      <option value="">Tous</option>
+      <option value="essence">Essence</option>
+      <option value="diesel">Diesel</option>
+      <option value="hybrid">Hybride</option>
+    </select>
+  </div>
+  <div>
+    <label>Tri</label
+    ><select class="form-select" [(ngModel)]="sort">
+      <option value="">Pertinence</option>
+      <option value="asc">Prix croissant</option>
+      <option value="desc">Prix décroissant</option>
+    </select>
+  </div>
+</div>
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+@if (message()) {
+  <div class="alert alert-success">{{ message() }}</div>
+}
+@if (loading()) {
+  <div class="empty-state">Recherche des véhicules…</div>
+} @else if (!visibleVehicles().length) {
+  <div class="empty-state">Aucun véhicule disponible pour cette période.</div>
+} @else {
+  <div class="vehicle-grid">
+    @for (v of visibleVehicles(); track v.id) {
+      <article
+        class="vehicle-card"
+        role="button"
+        tabindex="0"
+        (click)="openProduct(v)"
+        (keydown.enter)="openProduct(v)"
+      >
+        <div class="vehicle-media">
+          @if (v.photos?.length) {
+            <img class="vehicle-photo" [src]="v.photos[0]" alt="{{ v.make }} {{ v.model }}" />
+            @if (v.photos.length > 1) {
+              <span class="photo-count">{{ v.photos.length }} photos</span>
+            }
+          } @else {
+            <div class="vehicle-photo placeholder" aria-label="Aucune photo disponible">🚘</div>
+          }
+        </div>
+        <div class="card-body">
+          <h2 class="h5">{{ v.make }} {{ v.model }}</h2>
+          <p class="vehicle-meta mb-0">
+            {{ v.registration_number }} · {{ v.color || 'Couleur non renseignée' }}
+          </p>
+          <div class="vehicle-price">
+            <strong>{{ money(v.rental_price) }} / jour</strong
+            ><button class="details-link" (click)="$event.stopPropagation(); openProduct(v)">
+              Voir la fiche
+            </button>
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+}
+@if (product()) {
+  <div class="drawer-overlay" (click)="closeProduct()">
+    <section
+      class="drawer-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Fiche véhicule"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="drawer-head">
+        <button class="drawer-close" (click)="closeProduct()" aria-label="Fermer">×</button>
+      </div>
+      <div class="drawer-body">
+        <div class="drawer-gallery-main">
+          @if (activePhoto()) {
+            <img [src]="activePhoto()!" alt="{{ product().make }} {{ product().model }}" />
+          } @else {
+            <div class="drawer-gallery-empty">🚘</div>
+          }
+        </div>
+        @if (product().photos?.length > 1) {
+          <div class="drawer-thumbs">
+            @for (photo of product().photos; track photo; let i = $index) {
+              <button
+                class="drawer-thumb"
+                [class.active]="activePhoto() === photo"
+                (click)="activePhoto.set(photo)"
+                [attr.aria-label]="'Voir la photo ' + (i + 1)"
+              >
+                <img [src]="photo" alt="Photo {{ i + 1 }} du véhicule" />
+              </button>
+            }
+          </div>
+        }
+        <div class="drawer-info">
+          <p class="eyebrow drawer-eyebrow">FICHE VÉHICULE</p>
+          <h2>{{ product().make }} {{ product().model }}</h2>
+          <p class="drawer-meta">
+            {{ product().registration_number }} · {{ product().color || 'Couleur non renseignée' }}
+          </p>
+          <div class="pill-row">
+            <span class="pill">{{ product().category || 'Catégorie non renseignée' }}</span>
+            <span class="pill">{{
+              product().transmission === 'automatic'
+                ? 'Automatique'
+                : product().transmission === 'manual'
+                  ? 'Manuelle'
+                  : 'Boîte non renseignée'
+            }}</span>
+            <span class="pill">{{ product().fuel_type || 'Carburant non renseigné' }}</span>
+            <span class="pill">{{ product().year || 'Année non renseignée' }}</span>
+          </div>
+          <div class="price-line">
+            <span class="label">Tarif de location</span
+            ><strong>{{ money(product().rental_price) }} / jour</strong>
+          </div>
+          <p class="deposit-note">Caution : {{ money(product().deposit_amount) }}</p>
+          @if (error()) {
+            <div class="alert alert-danger">{{ error() }}</div>
+          }
+          <label>Observation facultative</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="observation"></textarea>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        @if (departure && returnDate) {
+          <div class="footer-total">
+            <small>{{ bookingDays() }} jour{{ bookingDays() > 1 ? 's' : '' }}</small
+            ><span>{{ money(bookingTotal()) }}</span>
+          </div>
+        } @else {
+          <div class="footer-total"><small>Choisissez vos dates pour voir le total</small></div>
+        }
+        <button class="btn btn-primary" [disabled]="saving()" (click)="submitReservation()">
+          {{ saving() ? 'Envoi…' : 'Réserver ce véhicule' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

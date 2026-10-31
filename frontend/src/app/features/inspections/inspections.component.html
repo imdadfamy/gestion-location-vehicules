@@ -1,0 +1,300 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">ÉTATS DES LIEUX</p>
+    <h1>Inspections</h1>
+    <p>Inspections de départ et de retour, photos et justificatifs.</p>
+  </div>
+  @if (auth.can('inspections', 'create')) {
+    <button class="btn btn-primary" (click)="openForm()">+ Nouvelle inspection</button>
+  }
+</div>
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+@if (message()) {
+  <div class="alert alert-success">{{ message() }}</div>
+}
+@if (loading()) {
+  <div class="empty-state">Chargement des inspections…</div>
+}
+@if (!loading() && !inspections().length) {
+  <div class="empty-state">Aucune inspection enregistrée.</div>
+}
+@if (inspections().length) {
+  <div class="table-responsive app-table">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Client</th>
+          <th>Véhicule</th>
+          <th>Date</th>
+          <th>Kilométrage</th>
+          <th>Carburant</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of inspections(); track item.id) {
+          <tr>
+            <td>
+              <span
+                class="badge text-bg-{{
+                  item.inspection_type === 'departure' ? 'primary' : 'success'
+                }}"
+                >{{ label(item.inspection_type) }}</span
+              >
+            </td>
+            <td>{{ item.rentals?.clients?.first_name }} {{ item.rentals?.clients?.last_name }}</td>
+            <td>{{ item.rentals?.vehicles?.registration_number }}</td>
+            <td>{{ item.inspection_date | date: 'short' }}</td>
+            <td>{{ item.mileage | number }} km</td>
+            <td>{{ item.fuel_level || '—' }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="detail(item)">
+                Voir la fiche</button
+              ><button class="btn btn-sm btn-outline-secondary" (click)="compare(item.rental_id)">
+                Comparer
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+@if (form()) {
+  <section class="card form-card mt-4">
+    <div class="card-body">
+      <h2 class="h5">Inspection {{ label(form()!.inspection_type) }}</h2>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label>Location <span class="required">*</span></label
+          ><select class="form-select" [(ngModel)]="form()!.rental_id" (change)="selectRental()">
+            <option value="">Sélectionner une location</option>
+            @for (rental of rentals(); track rental.id) {
+              <option [value]="rental.id">
+                {{ rental.clients?.first_name }} {{ rental.clients?.last_name }} —
+                {{ rental.vehicles?.registration_number }}
+              </option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label>Type</label
+          ><select class="form-select" [(ngModel)]="form()!.inspection_type">
+            <option value="departure">Départ</option>
+            <option value="return">Retour</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label>Date / heure</label
+          ><input
+            class="form-control"
+            type="datetime-local"
+            [(ngModel)]="form()!.inspection_date"
+          />
+        </div>
+        <div class="col-md-4">
+          <label>Kilométrage <span class="required">*</span></label
+          ><input class="form-control" min="0" type="number" [(ngModel)]="form()!.mileage" />
+        </div>
+        <div class="col-md-4">
+          <label>Niveau de carburant</label
+          ><select class="form-select" [(ngModel)]="form()!.fuel_level">
+            <option value="">Sélectionner</option>
+            <option value="1/4">¼</option>
+            <option value="1/2">½</option>
+            <option value="3/4">¾</option>
+            <option value="Plein">Plein</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label>Dommages constatés</label
+          ><input
+            class="form-control"
+            [(ngModel)]="form()!.damagesText"
+            placeholder="Un dommage par ligne"
+          />
+        </div>
+        <div class="col-12">
+          <label>Observations</label
+          ><textarea class="form-control" rows="3" [(ngModel)]="form()!.observations"></textarea>
+        </div>
+      </div>
+      <h3 class="h6 mt-4">Photos (facultatives)</h3>
+      <div class="row g-3">
+        @for (type of photoTypes; track type.key) {
+          <div class="col-md">
+            <label>{{ type.label }}</label
+            ><input
+              class="form-control"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              (change)="choose(type.key, $event)"
+            />
+          </div>
+        }
+      </div>
+      <button class="btn btn-success mt-4" [disabled]="saving()" (click)="save()">
+        {{ saving() ? 'Enregistrement…' : 'Enregistrer l’inspection' }}</button
+      ><button class="btn btn-link mt-4" (click)="form.set(null)">Annuler</button>
+    </div>
+  </section>
+}
+@if (detailInspection()) {
+  <section class="card inspection-sheet">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="eyebrow mb-1">JUSTIFICATIF</p>
+          <h2 class="h4">
+            Inspection de {{ label(detailInspection().inspection_type).toLowerCase() }}
+          </h2>
+        </div>
+        <button class="btn-close" (click)="detailInspection.set(null)"></button>
+      </div>
+      <div class="row g-3 mt-1">
+        <div class="col-md-6 summary">
+          <strong>Client</strong><br />{{ detailInspection().rentals?.clients?.first_name }}
+          {{ detailInspection().rentals?.clients?.last_name }}<br />{{
+            detailInspection().rentals?.clients?.phone || ''
+          }}
+        </div>
+        <div class="col-md-6 summary">
+          <strong>Véhicule / location</strong><br />{{
+            detailInspection().rentals?.vehicles?.make || ''
+          }}
+          {{ detailInspection().rentals?.vehicles?.model || '' }} —
+          {{ detailInspection().rentals?.vehicles?.registration_number || '—' }}<br />Départ :
+          {{ detailInspection().rentals?.departure_date | date: 'short' }}
+        </div>
+        <div class="col-md-4">
+          <strong>Date inspection</strong><br />{{
+            detailInspection().inspection_date | date: 'medium'
+          }}
+        </div>
+        <div class="col-md-4">
+          <strong>Kilométrage</strong><br />{{ detailInspection().mileage | number }} km
+        </div>
+        <div class="col-md-4">
+          <strong>Carburant</strong><br />{{ detailInspection().fuel_level || 'Non renseigné' }}
+        </div>
+        <div class="col-md-6">
+          <strong>Dommages constatés</strong><br />{{ damages(detailInspection()) }}
+        </div>
+        <div class="col-md-6">
+          <strong>Observations</strong><br />{{
+            detailInspection().observations || 'Aucune observation.'
+          }}
+        </div>
+      </div>
+      <hr />
+      <div class="d-flex justify-content-between align-items-center">
+        <h3 class="h6 mb-0">Photos ajoutées</h3>
+        <div class="d-flex gap-2">
+          <button
+            class="btn btn-outline-primary btn-sm"
+            [disabled]="pdfSaving()"
+            (click)="downloadPdf()"
+          >
+            {{ pdfSaving() ? 'Génération…' : 'Télécharger le justificatif PDF' }}</button
+          ><button class="btn btn-outline-secondary btn-sm" (click)="closeDetail()">Fermer</button>
+        </div>
+      </div>
+      @if (!detailPhotos().length) {
+        <p class="text-muted mt-3">Aucune photo ajoutée à cette inspection.</p>
+      } @else {
+        <div class="row g-3 mt-1">
+          @for (photo of detailPhotos(); track photo.id) {
+            <div class="col-sm-6 col-lg-4">
+              <div class="photo-card border rounded p-2">
+                <img [src]="photo.urls?.signedUrl" [alt]="photoLabel(photo.photo_type)" />
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                  <strong>{{ photoLabel(photo.photo_type) }}</strong
+                  ><button class="btn btn-sm btn-outline-primary" (click)="openPhoto(photo)">
+                    Voir
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+}
+@if (comparison()) {
+  <section class="card mt-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between">
+        <h2 class="h5">Comparaison départ / retour</h2>
+        <button class="btn-close" (click)="comparison.set(null)"></button>
+      </div>
+      @if (!comparison().departure) {
+        <p class="text-muted">Inspection de départ absente.</p>
+      }
+      @if (!comparison().return) {
+        <p class="text-muted">Inspection de retour absente.</p>
+      }
+      @if (comparison().departure && comparison().return) {
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Élément</th>
+                <th>Départ</th>
+                <th>Retour</th>
+                <th>Différence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Kilométrage</td>
+                <td>{{ comparison().departure.mileage | number }}</td>
+                <td>{{ comparison().return.mileage | number }}</td>
+                <td>{{ comparison().return.mileage - comparison().departure.mileage }} km</td>
+              </tr>
+              <tr>
+                <td>Carburant</td>
+                <td>{{ comparison().departure.fuel_level || '—' }}</td>
+                <td>{{ comparison().return.fuel_level || '—' }}</td>
+                <td>
+                  {{
+                    comparison().departure.fuel_level === comparison().return.fuel_level
+                      ? 'Identique'
+                      : 'Modifié'
+                  }}
+                </td>
+              </tr>
+              <tr>
+                <td>Dommages</td>
+                <td>{{ damages(comparison().departure) }}</td>
+                <td>{{ damages(comparison().return) }}</td>
+                <td>
+                  {{
+                    damages(comparison().departure) === damages(comparison().return)
+                      ? 'Identiques'
+                      : 'À vérifier'
+                  }}
+                </td>
+              </tr>
+              <tr>
+                <td>Observations</td>
+                <td>{{ comparison().departure.observations || '—' }}</td>
+                <td>{{ comparison().return.observations || '—' }}</td>
+                <td>
+                  {{
+                    comparison().departure.observations === comparison().return.observations
+                      ? 'Identiques'
+                      : 'À vérifier'
+                  }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </section>
+}

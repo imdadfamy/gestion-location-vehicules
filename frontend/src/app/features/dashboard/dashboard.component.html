@@ -1,0 +1,110 @@
+<div class="dashboard-hero">
+  <div>
+    <p class="eyebrow">PILOTAGE DE L’ACTIVITÉ</p>
+    <h1>{{ greeting() }}</h1>
+    <p>Une lecture claire de votre parc, des locations et des encaissements.</p>
+  </div>
+  <div class="hero-date"><span>MISE À JOUR</span><strong>Aujourd’hui</strong></div>
+</div>
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+@if (loading()) {
+  <div class="empty-state">Chargement des indicateurs…</div>
+} @else {
+  <div class="metrics-grid">
+    @for (c of cards(); track c.label) {
+      <article class="dashboard-metric" [class]="'dashboard-metric ' + c.tone">
+        <div class="metric-icon">{{ c.icon }}</div>
+        <div>
+          <small>{{ c.label }}</small
+          ><strong>{{ c.value }}</strong
+          ><span>{{ c.detail }}</span>
+        </div>
+      </article>
+    }
+  </div>
+  <section class="priority-section">
+    <div class="section-title">
+      <div>
+        <p class="eyebrow">À SUIVRE</p>
+        <h2>Priorités opérationnelles</h2>
+      </div>
+      <a routerLink="/notifications">Voir les alertes →</a>
+    </div>
+    <div class="priority-grid">
+      @for (item of priorities(); track item.label) {
+        <a class="priority-card" [routerLink]="item.path"
+          ><span class="priority-dot" [class]="'priority-dot ' + item.tone"></span>
+          <div>
+            <strong>{{ item.label }}</strong
+            ><small>{{ item.detail }}</small>
+          </div>
+          <b>{{ item.count }}</b
+          ><i>›</i></a
+        >
+      } @empty {
+        <div class="priority-empty">Aucune alerte prioritaire : votre activité est à jour.</div>
+      }
+    </div>
+  </section>
+  <section class="charts-section">
+    <div class="section-title">
+      <div>
+        <p class="eyebrow">TENDANCES</p>
+        <h2>Vue analytique</h2>
+      </div>
+      <span>Basée sur les encaissements enregistrés</span>
+    </div>
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="chart-card">
+          <div class="chart-heading">
+            <div>
+              <h3>Chiffre d’affaires mensuel</h3>
+              <p>Encaissements physiques</p>
+            </div>
+            <span class="chart-badge teal">FCFA</span>
+          </div>
+          <canvas #monthlyCanvas></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="chart-card">
+          <div class="chart-heading">
+            <div>
+              <h3>Locations par mois</h3>
+              <p>Activité de location</p>
+            </div>
+            <span class="chart-badge blue">Volume</span>
+          </div>
+          <canvas #rentalsCanvas></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="chart-card">
+          <div class="chart-heading">
+            <div>
+              <h3>CA par véhicule</h3>
+              <p>Recettes par véhicule</p>
+            </div>
+            <span class="chart-badge gold">FCFA</span>
+          </div>
+          <canvas #revenueCanvas></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="chart-card">
+          <div class="chart-heading">
+            <div>
+              <h3>Véhicules les plus loués</h3>
+              <p>Classement du parc</p>
+            </div>
+            <span class="chart-badge violet">Top</span>
+          </div>
+          <canvas #topCanvas></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+}

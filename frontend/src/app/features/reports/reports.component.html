@@ -1,0 +1,64 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">PILOTAGE</p>
+    <h1>Rapports</h1>
+    <p>Une synthèse fondée sur les encaissements réellement enregistrés.</p>
+  </div>
+  <button class="btn btn-outline-primary" (click)="csv()">Exporter CSV</button>
+</div>
+<div class="toolbar row g-2">
+  <div class="col-sm-4"><input class="form-control" type="date" [(ngModel)]="from" /></div>
+  <div class="col-sm-4"><input class="form-control" type="date" [(ngModel)]="to" /></div>
+  <div class="col-sm-4">
+    <button class="btn btn-primary w-100" (click)="load()">Appliquer la période</button>
+  </div>
+</div>
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+@if (loading()) {
+  <div class="empty-state">Calcul des indicateurs…</div>
+} @else {
+  <div class="row g-3">
+    @for (x of stats(); track x.label) {
+      <div class="col-sm-6 col-xl-3">
+        <div class="metric-card">
+          <small>{{ x.label }}</small
+          ><strong>{{ x.value }}</strong>
+        </div>
+      </div>
+    }
+  </div>
+  <div class="row g-3 mt-1">
+    <div class="col-lg-6">
+      <section class="card h-100">
+        <div class="card-body">
+          <h2 class="h5">CA par véhicule</h2>
+          @for (x of revenueByVehicle(); track x.name) {
+            <div class="d-flex justify-content-between border-bottom py-2">
+              <span>{{ x.name }}</span
+              ><strong>{{ x.amount }}</strong>
+            </div>
+          } @empty {
+            <p class="text-muted mb-0">Aucun encaissement sur cette période.</p>
+          }
+        </div>
+      </section>
+    </div>
+    <div class="col-lg-6">
+      <section class="card h-100">
+        <div class="card-body">
+          <h2 class="h5">Véhicules les plus loués</h2>
+          @for (x of topVehicles(); track x.name) {
+            <div class="d-flex justify-content-between border-bottom py-2">
+              <span>{{ x.name }}</span
+              ><strong>{{ x.count }} location(s)</strong>
+            </div>
+          } @empty {
+            <p class="text-muted mb-0">Aucune location sur cette période.</p>
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+}

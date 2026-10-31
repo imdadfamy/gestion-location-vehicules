@@ -1,0 +1,192 @@
+<main class="public-page">
+  <header class="topbar">
+    <a routerLink="/"><img class="logo" src="/logo-horizontal-white.png" alt="FIMA AUTO" /></a>
+    <nav class="nav">
+      <a routerLink="/">Accueil</a>
+      <a routerLink="/client/login" class="btn btn-pill btn-outline-light btn-sm">Se connecter</a>
+      <a routerLink="/client/register" class="btn btn-pill btn-light btn-sm">Créer un compte</a>
+    </nav>
+  </header>
+  <div class="header-spacer" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="page-heading" appReveal>
+      <p class="eyebrow">CATALOGUE</p>
+      <h1>Nos véhicules disponibles</h1>
+      <p>
+        Choisissez vos dates pour voir les véhicules réellement disponibles. La connexion n'est
+        demandée qu'au moment de réserver.
+      </p>
+    </div>
+
+    <div class="filters" appReveal>
+      <div>
+        <label>Départ</label
+        ><input
+          class="form-control"
+          type="datetime-local"
+          [(ngModel)]="departure"
+          (change)="load()"
+        />
+      </div>
+      <div>
+        <label>Retour</label
+        ><input
+          class="form-control"
+          type="datetime-local"
+          [(ngModel)]="returnDate"
+          (change)="load()"
+        />
+      </div>
+      <div>
+        <label>Boîte</label
+        ><select class="form-select" [(ngModel)]="transmission">
+          <option value="">Toutes</option>
+          <option value="automatic">Automatique</option>
+          <option value="manual">Manuelle</option>
+        </select>
+      </div>
+      <div>
+        <label>Tri</label
+        ><select class="form-select" [(ngModel)]="sort">
+          <option value="">Pertinence</option>
+          <option value="asc">Prix croissant</option>
+          <option value="desc">Prix décroissant</option>
+        </select>
+      </div>
+      <button class="btn btn-refresh" (click)="load()">Actualiser</button>
+    </div>
+
+    <div class="cat-wrap">
+      <div class="cat-group">
+        <button class="cat-pill" [class.active]="category === ''" (click)="category = ''">
+          Toutes
+        </button>
+        <button
+          class="cat-pill"
+          [class.active]="category === 'Citadine'"
+          (click)="category = 'Citadine'"
+        >
+          Citadine
+        </button>
+        <button
+          class="cat-pill"
+          [class.active]="category === 'Berline'"
+          (click)="category = 'Berline'"
+        >
+          Berline
+        </button>
+        <button class="cat-pill" [class.active]="category === 'SUV'" (click)="category = 'SUV'">
+          SUV
+        </button>
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="alert alert-danger">{{ error() }}</div>
+    }
+    @if (loading()) {
+      <div class="empty-state">Recherche des véhicules…</div>
+    } @else if (!visibleVehicles().length) {
+      <div class="empty-state">Aucun véhicule disponible pour cette période.</div>
+    } @else {
+      <div class="grid">
+        @for (v of visibleVehicles(); track v.id; let i = $index) {
+          <article class="cardx" [appReveal]="i * 60">
+            <div class="cardx-media">
+              @if (v.photoUrl) {
+                <img [src]="v.photoUrl" alt="{{ v.make }} {{ v.model }}" />
+              } @else {
+                <div class="placeholder" aria-label="Aucune photo disponible">🚘</div>
+              }
+            </div>
+            <div class="cardx-body">
+              <span class="badge-cat">{{ v.category || 'Véhicule' }}</span>
+              <h2>{{ v.make }} {{ v.model }}</h2>
+              <p class="text-muted small mb-0">
+                {{
+                  v.transmission === 'automatic'
+                    ? 'Boîte automatique'
+                    : v.transmission === 'manual'
+                      ? 'Boîte manuelle'
+                      : 'Boîte non renseignée'
+                }}
+                · {{ v.fuel_type || 'Carburant non renseigné' }}
+              </p>
+              <p class="price">À partir de {{ money(v.rental_price) }} / jour</p>
+              <div class="card-actions">
+                <button class="btn btn-outline-cta" (click)="openProduct(v)">Voir la fiche</button>
+                <button class="btn btn-reserve" (click)="reserve(v)">Réserver</button>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</main>
+@if (product()) {
+  <div class="drawer-overlay" (click)="closeProduct()">
+    <section
+      class="drawer-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Fiche véhicule"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="drawer-head">
+        <button class="drawer-close" (click)="closeProduct()" aria-label="Fermer">×</button>
+      </div>
+      <div class="drawer-body">
+        <div class="drawer-gallery-main">
+          @if (activePhoto()) {
+            <img [src]="activePhoto()!" alt="{{ product().make }} {{ product().model }}" />
+          } @else {
+            <div class="drawer-gallery-empty">🚘</div>
+          }
+        </div>
+        @if (product().photos?.length > 1) {
+          <div class="drawer-thumbs">
+            @for (photo of product().photos; track photo; let i = $index) {
+              <button
+                class="drawer-thumb"
+                [class.active]="activePhoto() === photo"
+                (click)="activePhoto.set(photo)"
+                [attr.aria-label]="'Voir la photo ' + (i + 1)"
+              >
+                <img [src]="photo" alt="Photo {{ i + 1 }} du véhicule" />
+              </button>
+            }
+          </div>
+        }
+        <div class="drawer-info">
+          <p class="eyebrow drawer-eyebrow">FICHE VÉHICULE</p>
+          <h2>{{ product().make }} {{ product().model }}</h2>
+          <p class="drawer-meta">{{ product().color || 'Couleur non renseignée' }}</p>
+          <div class="pill-row">
+            <span class="pill">{{ product().category || 'Catégorie non renseignée' }}</span>
+            <span class="pill">{{
+              product().transmission === 'automatic'
+                ? 'Automatique'
+                : product().transmission === 'manual'
+                  ? 'Manuelle'
+                  : 'Boîte non renseignée'
+            }}</span>
+            <span class="pill">{{ product().fuel_type || 'Carburant non renseigné' }}</span>
+            <span class="pill">{{ product().year || 'Année non renseignée' }}</span>
+          </div>
+          <div class="price-line">
+            <span class="label">Tarif de location</span
+            ><strong>{{ money(product().rental_price) }} / jour</strong>
+          </div>
+          <p class="deposit-note">Caution : {{ money(product().deposit_amount) }}</p>
+          <button
+            class="btn btn-reserve drawer-reserve"
+            (click)="closeProduct(); reserve(product())"
+          >
+            Réserver ce véhicule
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+}

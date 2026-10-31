@@ -1,0 +1,46 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">MON ESPACE</p>
+    <h1>Mes informations</h1>
+    <p>Vos informations internes utilisées dans le journal et les historiques.</p>
+  </div>
+</div>
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+@if (message()) {
+  <div class="alert alert-success">{{ message() }}</div>
+}
+<section class="card form-card profile-card">
+  <div class="card-body">
+    <div class="profile-mark">{{ initials() }}</div>
+    <div>
+      <h2 class="h4 mb-1">
+        {{ auth.profile()?.role === 'super_admin' ? 'Compte Super Admin' : 'Compte Responsable' }}
+      </h2>
+      <p class="text-muted mb-0">
+        Seul votre nom d’affichage est partagé dans les historiques internes.
+      </p>
+    </div>
+    <hr />
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label required-label">Prénom</label
+        ><input class="form-control" [(ngModel)]="form.first_name" autocomplete="given-name" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required-label">Nom</label
+        ><input class="form-control" [(ngModel)]="form.last_name" autocomplete="family-name" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">E-mail</label
+        ><input class="form-control" [value]="form.email" readonly /><small class="text-muted"
+          >L’adresse e-mail est gérée par le compte de connexion.</small
+        >
+      </div>
+    </div>
+    <button class="btn btn-primary mt-4" [disabled]="saving()" (click)="save()">
+      {{ saving() ? 'Enregistrement…' : 'Enregistrer mes informations' }}
+    </button>
+  </div>
+</section>

@@ -1,0 +1,30 @@
+.wizard-progress {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.wizard-step {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  background: #edf2f3;
+  color: #71858b;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.wizard-step.active {
+  background: #0b9cac;
+  color: #fff;
+}
+.document-upload {
+  padding: 14px;
+  border: 1px dashed #78b8c1;
+  border-radius: 12px;
+  background: #f5fbfc;
+}
+.detail-docs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

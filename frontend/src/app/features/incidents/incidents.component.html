@@ -1,0 +1,165 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">SÉCURITÉ</p>
+    <h1>Incidents</h1>
+    <p>Pannes, accidents, dommages et autres événements.</p>
+  </div>
+  @if (auth.can('incidents', 'create')) {
+    <button class="btn btn-primary" (click)="openForm()">+ Nouvel incident</button>
+  }
+</div>
+<div class="toolbar">
+  <input
+    class="form-control"
+    [(ngModel)]="search"
+    (input)="filterRows()"
+    placeholder="Rechercher"
+  /><select class="form-select" [(ngModel)]="statusFilter" (change)="filterRows()">
+    <option value="">Tous statuts</option>
+    @for (status of statuses; track status) {
+      <option [value]="status">{{ statusLabel(status) }}</option>
+    }
+  </select>
+</div>
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+@if (message()) {
+  <div class="alert alert-success">{{ message() }}</div>
+}
+@if (loading()) {
+  <div class="empty-state">Chargement…</div>
+}
+@if (!loading() && !filtered().length) {
+  <div class="empty-state">Aucun incident.</div>
+}
+@if (filtered().length) {
+  <div class="table-responsive app-table">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Véhicule</th>
+          <th>Client</th>
+          <th>Coût</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of filtered(); track item.id) {
+          <tr>
+            <td>{{ item.incident_date | date: 'short' }}</td>
+            <td>{{ label(item.incident_type) }}</td>
+            <td>{{ item.vehicles?.registration_number || '—' }}</td>
+            <td>{{ item.clients?.first_name }} {{ item.clients?.last_name }}</td>
+            <td>{{ item.cost | number: '1.0-2' }}</td>
+            <td>
+              <span class="badge text-bg-{{ statusTone(item.status) }}">{{
+                statusLabel(item.status)
+              }}</span>
+            </td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary" (click)="edit(item)">
+                Voir / modifier
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+@if (form()) {
+  <section class="card form-card mt-4">
+    <div class="card-body">
+      <h2 class="h5">{{ form()!.id ? 'Modifier' : 'Créer' }} un incident</h2>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Type</label
+          ><select class="form-select" [(ngModel)]="form()!.incident_type">
+            <option value="breakdown">Panne</option>
+            <option value="accident">Accident</option>
+            <option value="damage">Dommage</option>
+            <option value="infraction">Infraction</option>
+            <option value="delay">Retard</option>
+            <option value="other">Autre</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Date / heure</label
+          ><input class="form-control" type="datetime-local" [(ngModel)]="form()!.incident_date" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Statut</label
+          ><select class="form-select" [(ngModel)]="form()!.status">
+            <option value="open">Ouvert</option>
+            <option value="in_progress">En cours</option>
+            <option value="resolved">Résolu</option>
+            <option value="closed">Clôturé</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Véhicule</label
+          ><select class="form-select" [(ngModel)]="form()!.vehicle_id">
+            <option value="">Aucun</option>
+            @for (vehicle of vehicles(); track vehicle.id) {
+              <option [value]="vehicle.id">{{ vehicle.registration_number }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Location associée</label
+          ><select class="form-select" [(ngModel)]="form()!.rental_id">
+            <option value="">Aucune</option>
+            @for (rental of rentals(); track rental.id) {
+              <option [value]="rental.id">
+                {{ rental.vehicles?.registration_number }} — {{ rental.clients?.first_name }}
+                {{ rental.clients?.last_name }}
+              </option>
+            }
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Client associé</label
+          ><select class="form-select" [(ngModel)]="form()!.client_id">
+            <option value="">Aucun</option>
+            @for (client of clients(); track client.id) {
+              <option [value]="client.id">{{ client.first_name }} {{ client.last_name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Coût</label
+          ><input
+            class="form-control"
+            type="number"
+            min="0"
+            step="0.01"
+            [(ngModel)]="form()!.cost"
+          />
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">Photos / documents</label
+          ><input
+            class="form-control"
+            type="file"
+            multiple
+            accept="application/pdf,image/png,image/jpeg,image/webp"
+            (change)="chooseFiles($event)"
+          /><small class="text-muted"
+            >Stockage privé si la permission Documents est également attribuée.</small
+          >
+        </div>
+        <div class="col-12">
+          <label class="form-label">Description</label
+          ><textarea class="form-control" rows="3" [(ngModel)]="form()!.description"></textarea>
+        </div>
+      </div>
+      <button class="btn btn-success mt-3" [disabled]="saving()" (click)="save()">
+        {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button
+      ><button class="btn btn-link mt-3" (click)="form.set(null)">Annuler</button>
+    </div>
+  </section>
+}

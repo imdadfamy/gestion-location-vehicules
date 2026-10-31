@@ -1,0 +1,29 @@
+.vehicle-card {
+  border: 1px solid var(--app-border, #e1eaec);
+  border-radius: 16px;
+  padding: 18px;
+  background: var(--app-surface, #fff);
+  box-shadow: var(--app-shadow, 0 12px 28px rgba(9, 44, 51, 0.05));
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.vehicle-card:hover {
+  transform: translateY(-3px);
+}
+.photo-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.photo-grid img {
+  width: 76px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #edf4f5;
+}
+.badge {
+  border-radius: 999px;
+}

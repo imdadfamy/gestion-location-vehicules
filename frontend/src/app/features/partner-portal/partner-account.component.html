@@ -1,0 +1,51 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">MON PROFIL</p>
+    <h1>Mes informations</h1>
+    <p>Ces informations servent à vous contacter et à vous reverser vos gains.</p>
+  </div>
+</div>
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+@if (message()) {
+  <div class="alert alert-success">{{ message() }}</div>
+}
+@if (loading()) {
+  <div class="empty-state">Chargement…</div>
+} @else if (form()) {
+  <section class="card form-card">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label>Nom de l'entreprise</label
+          ><input class="form-control" [(ngModel)]="form()!.company_name" />
+        </div>
+        <div class="col-md-6">
+          <label>Nom du contact <span class="required">*</span></label
+          ><input class="form-control" [(ngModel)]="form()!.contact_name" />
+        </div>
+        <div class="col-md-6">
+          <label>Téléphone <span class="required">*</span></label
+          ><input
+            class="form-control"
+            type="tel"
+            inputmode="numeric"
+            appDigitsOnly
+            [(ngModel)]="form()!.phone"
+          />
+        </div>
+        <div class="col-md-6">
+          <label>E-mail</label><input class="form-control" [(ngModel)]="form()!.email" />
+        </div>
+        <div class="col-12">
+          <label>Coordonnées de versement (banque, mobile money…)</label
+          ><textarea class="form-control" rows="2" [(ngModel)]="form()!.payout_details"></textarea>
+        </div>
+      </div>
+      <button class="btn btn-primary mt-4" [disabled]="saving()" (click)="save()">
+        {{ saving() ? 'Enregistrement…' : 'Enregistrer' }}
+      </button>
+    </div>
+  </section>
+}

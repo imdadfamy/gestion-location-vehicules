@@ -1,0 +1,29 @@
+.section-label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-muted, #6a7f85);
+}
+.section-hint {
+  color: var(--app-muted, #8198a0);
+  font-size: 0.84rem;
+  margin: 0 0 14px;
+}
+.notif-card {
+  border: 1px solid var(--app-border, #e1eaec);
+}
+.notif-card.unread {
+  border-left: 3px solid var(--app-accent, #0792a4);
+}
+.unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--app-accent, #0792a4);
+  margin-right: 8px;
+  flex: 0 0 auto;
+}

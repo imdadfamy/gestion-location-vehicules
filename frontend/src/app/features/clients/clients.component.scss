@@ -1,0 +1,25 @@
+.id-scan-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px dashed #58aebb;
+  border-radius: 14px;
+  background: #f3fbfc;
+}
+.id-scan-panel p {
+  margin: 0.2rem 0 0;
+  color: #657d83;
+  font-size: 0.85rem;
+}
+@media (max-width: 575px) {
+  .id-scan-panel {
+    display: block;
+  }
+  .id-scan-panel .btn {
+    width: 100%;
+    margin-top: 0.8rem;
+  }
+}

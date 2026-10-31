@@ -1,0 +1,40 @@
+<div class="portal">
+  <header class="portal-nav">
+    <a
+      routerLink="/partner/vehicles"
+      class="brand"
+      aria-label="FIMA AUTO"
+      (click)="menuOpen.set(false)"
+      ><img src="/logo-horizontal-white.png" alt="Logo FIMA AUTO"
+    /></a>
+    <button
+      class="btn btn-sm menu-toggle"
+      type="button"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="partner-navigation"
+      (click)="menuOpen.set(!menuOpen())"
+    >
+      <span class="menu-icon" aria-hidden="true"><i></i><i></i><i></i></span><span>Menu</span>
+    </button>
+    <button class="btn btn-sm btn-outline-light logout" (click)="logout()">Déconnexion</button>
+    <nav
+      id="partner-navigation"
+      class="portal-menu"
+      [class.open]="menuOpen()"
+      aria-label="Navigation partenaire"
+    >
+      <a routerLink="/partner/vehicles" routerLinkActive="active" (click)="menuOpen.set(false)"
+        >Mes véhicules</a
+      ><a routerLink="/partner/maintenance" routerLinkActive="active" (click)="menuOpen.set(false)"
+        >Maintenance</a
+      ><a routerLink="/partner/inspections" routerLinkActive="active" (click)="menuOpen.set(false)"
+        >Inspections</a
+      ><a routerLink="/partner/earnings" routerLinkActive="active" (click)="menuOpen.set(false)"
+        >Mes revenus</a
+      ><a routerLink="/partner/account" routerLinkActive="active" (click)="menuOpen.set(false)"
+        >Mon profil</a
+      >
+    </nav>
+  </header>
+  <main class="portal-main"><router-outlet /></main>
+</div>

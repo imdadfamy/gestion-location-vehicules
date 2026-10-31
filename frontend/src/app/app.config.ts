@@ -12,6 +12,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     { provide: LOCALE_ID, useValue: 'fr-FR' },
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes), provideClientHydration(), provideHttpClient()
-  ]
+    provideRouter(routes),
+    provideClientHydration(),
+    provideHttpClient(),
+  ],
 };

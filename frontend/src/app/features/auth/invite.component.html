@@ -1,0 +1,41 @@
+<main class="invite">
+  <section class="invite-card">
+    <img src="/logo-horizontal-color.png" alt="FIMA AUTO" />
+    <div>
+      <span>ESPACE PROFESSIONNEL</span>
+      <h1>Bienvenue chez FIMA AUTO</h1>
+    </div>
+    @if (checking()) {
+      <p>Vérification de votre invitation…</p>
+    } @else if (!ready()) {
+      <div class="alert alert-danger">
+        Ce lien d'invitation est invalide ou a expiré. Demandez à votre Super Admin de vous envoyer
+        une nouvelle invitation.
+      </div>
+    } @else {
+      <p>Définissez votre mot de passe pour activer votre compte Responsable.</p>
+      @if (error) {
+        <p class="alert alert-danger">{{ error }}</p>
+      }
+      <label>Mot de passe <span class="required">*</span></label>
+      <input
+        class="form-control"
+        type="password"
+        [(ngModel)]="password"
+        autocomplete="new-password"
+        minlength="8"
+      />
+      <label>Confirmer le mot de passe <span class="required">*</span></label>
+      <input
+        class="form-control"
+        type="password"
+        [(ngModel)]="confirm"
+        autocomplete="new-password"
+        minlength="8"
+      />
+      <button class="btn btn-primary w-100" [disabled]="saving()" (click)="submit()">
+        {{ saving() ? 'Activation…' : 'Activer mon compte' }}
+      </button>
+    }
+  </section>
+</main>

@@ -1,0 +1,185 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">MON DOSSIER</p>
+    <h1>Mes informations</h1>
+    <p>Ces informations restent modifiables et compléteront votre contrat.</p>
+    <div class="progress mt-3" style="height: 10px">
+      <div
+        class="progress-bar"
+        role="progressbar"
+        [style.width.%]="completionPercent()"
+        [attr.aria-valuenow]="completionPercent()"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      ></div>
+    </div>
+    <p class="small text-muted mt-1">Dossier complet : {{ completionPercent() }} %</p>
+  </div>
+</div>
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+}
+@if (message()) {
+  <div class="alert alert-success">{{ message() }}</div>
+}
+@if (loading()) {
+  <div class="empty-state">Chargement de votre dossier…</div>
+} @else if (form()) {
+  <section class="card form-card">
+    <div class="card-body">
+      <h2 class="h6 mt-2">Identité</h2>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label>Prénom <span class="required">*</span></label
+          ><input class="form-control" [(ngModel)]="form()!.first_name" />
+        </div>
+        <div class="col-md-6">
+          <label>Nom <span class="required">*</span></label
+          ><input class="form-control" [(ngModel)]="form()!.last_name" />
+        </div>
+        <div class="col-md-6">
+          <label>Téléphone <span class="required">*</span></label
+          ><input
+            class="form-control"
+            type="tel"
+            inputmode="numeric"
+            autocomplete="tel"
+            required
+            appDigitsOnly
+            [(ngModel)]="form()!.phone"
+          />
+        </div>
+        <div class="col-md-6">
+          <label>E-mail</label
+          ><input class="form-control" type="email" [(ngModel)]="form()!.email" />
+        </div>
+        <div class="col-md-4">
+          <label>Type de pièce</label
+          ><select class="form-select" [(ngModel)]="form()!.id_document_type">
+            <option value="">Sélectionner</option>
+            <option value="CNI">CNI</option>
+            <option value="Carte d'identité">Carte d'identité</option>
+            <option value="Passeport">Passeport</option>
+            <option value="Carte de séjour">Carte de séjour</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label>Numéro de pièce</label
+          ><input class="form-control" [(ngModel)]="form()!.id_document_number" />
+        </div>
+        <div class="col-md-4">
+          <label>Résidence</label><input class="form-control" [(ngModel)]="form()!.residence" />
+        </div>
+        <div class="col-12">
+          <label>Adresse / maison / quartier</label
+          ><input class="form-control" [(ngModel)]="form()!.address" />
+        </div>
+        <div class="col-12"><h2 class="h6 mt-3">Permis de conduire</h2></div>
+        <div class="col-md-4">
+          <label>Numéro de permis</label
+          ><input class="form-control" [(ngModel)]="form()!.driving_license_number" />
+        </div>
+        <div class="col-md-4">
+          <label>Date de délivrance</label
+          ><input
+            class="form-control"
+            type="date"
+            [(ngModel)]="form()!.driving_license_issue_date"
+          />
+        </div>
+        <div class="col-md-4">
+          <label>Expiration du permis</label
+          ><input
+            class="form-control"
+            type="date"
+            [(ngModel)]="form()!.driving_license_expiry_date"
+          />
+        </div>
+        <div class="col-md-6">
+          <label>Contact d’urgence</label
+          ><input class="form-control" [(ngModel)]="form()!.emergency_contact_name" />
+        </div>
+        <div class="col-md-6">
+          <label>Numéro d’urgence</label
+          ><input
+            class="form-control"
+            type="tel"
+            inputmode="numeric"
+            appDigitsOnly
+            [(ngModel)]="form()!.emergency_contact_phone"
+          />
+        </div>
+      </div>
+
+      <hr />
+      <h2 class="h6">Pièces justificatives</h2>
+      <p class="text-muted small">
+        Vos champs sont enregistrés avant l’ajout d’un fichier. Vous pouvez remplacer ou retirer une
+        pièce à tout moment avant la signature du contrat.
+      </p>
+      <h2 class="h6 mt-2">Identité</h2>
+      <div class="row g-3">
+        @for (kind of documentKinds; track kind.type) {
+          <div class="col-md-6">
+            <label>{{ kind.label }}</label>
+            <p class="small text-muted mb-1">JPG, PNG ou PDF, 5 Mo max</p>
+            <input
+              class="form-control"
+              type="file"
+              accept="image/*,.pdf"
+              (change)="upload($event, kind.type)"
+            />
+            @if (documentsFor(kind.type).length) {
+              <div class="mt-2 d-grid gap-2">
+                @for (document of documentsFor(kind.type); track document.id) {
+                  <div class="document-card">
+                    <div class="document-name">
+                      <strong>{{ document.document_name }}</strong>
+                    </div>
+                    <div class="document-actions">
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        (click)="view(document)"
+                      >
+                        Voir
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        [disabled]="saving()"
+                        (click)="replace(document, kind.type)"
+                      >
+                        Remplacer
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-danger"
+                        [disabled]="saving()"
+                        (click)="remove(document)"
+                      >
+                        Retirer
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="small text-muted mt-2 mb-0">Aucun document ajouté.</p>
+            }
+          </div>
+        }
+      </div>
+      <input
+        #replacementInput
+        class="d-none"
+        type="file"
+        accept="image/*,.pdf"
+        (change)="uploadReplacement($event)"
+      />
+      <button class="btn btn-primary mt-4" [disabled]="saving()" (click)="save()">
+        {{ saving() ? 'Enregistrement…' : 'Enregistrer mon dossier' }}
+      </button>
+    </div>
+  </section>
+}

@@ -1,0 +1,44 @@
+<main class="login">
+  <section class="login-card">
+    <img src="/logo-horizontal-color.png" alt="FIMA AUTO" />
+    <div>
+      <span>ESPACE PROFESSIONNEL</span>
+      <h1>Bienvenue chez FIMA AUTO</h1>
+      <p>Gestion de location de véhicules.</p>
+    </div>
+    <form (ngSubmit)="go()">
+      <label>E-mail</label
+      ><input
+        class="form-control mb-3"
+        name="email"
+        [(ngModel)]="email"
+        type="email"
+        required
+      /><label>Mot de passe</label
+      ><input
+        class="form-control mb-3"
+        name="password"
+        [(ngModel)]="password"
+        type="password"
+        required
+      />
+      @if (error) {
+        <p class="text-danger">{{ error }}</p>
+      }
+      <button class="btn btn-primary w-100">Se connecter</button>
+    </form>
+    <div class="client-access">
+      <strong>Vous êtes client ?</strong><span> Réservez un véhicule ou suivez votre dossier.</span>
+      <div class="client-actions">
+        <a routerLink="/client/login" class="btn btn-outline-primary">Espace client</a
+        ><a routerLink="/client/register" class="btn btn-link">Créer un compte</a>
+      </div>
+    </div>
+    <div class="client-access">
+      <strong>Vous proposez un véhicule ?</strong><span> Accédez à l'espace partenaire.</span>
+      <div class="client-actions">
+        <a routerLink="/partner/login" class="btn btn-outline-primary">Espace partenaire</a>
+      </div>
+    </div>
+  </section>
+</main>

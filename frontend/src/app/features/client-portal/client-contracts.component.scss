@@ -1,0 +1,149 @@
+.contract-preview {
+  background: #fff;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 10px 32px rgba(11, 50, 58, 0.1);
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 4px 0 26px;
+  max-width: 460px;
+}
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.step-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  background: #eaf2f3;
+  color: #7e9398;
+  border: 2px solid #dfeaec;
+  transition: all 0.25s ease;
+}
+.step-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #8198a0;
+  white-space: nowrap;
+  text-align: center;
+}
+.step-item.active .step-dot {
+  background: #0792a4;
+  border-color: #0792a4;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(7, 146, 164, 0.18);
+}
+.step-item.active .step-label {
+  color: #0b2429;
+}
+.step-item.done .step-dot {
+  background: #0b7180;
+  border-color: #0b7180;
+  color: #fff;
+}
+.step-item.done .step-dot::after {
+  content: '✓';
+}
+.step-item.done .step-dot {
+  font-size: 0;
+}
+.step-item.done .step-dot::after {
+  font-size: 0.95rem;
+}
+.step-line {
+  flex: 1 1 32px;
+  height: 2px;
+  background: #dfeaec;
+  margin: 0 6px 20px;
+  transition: background-color 0.25s ease;
+}
+.step-line.done {
+  background: #0b7180;
+}
+@media (max-width: 500px) {
+  .stepper {
+    max-width: 100%;
+  }
+  .step-label {
+    display: none;
+  }
+  .step-line {
+    margin-bottom: 0;
+  }
+}
+.review-grid {
+  row-gap: 1.15rem;
+}
+.review-card {
+  background: #f3f8f8;
+  border-radius: 14px;
+  padding: 18px;
+  min-height: 120px;
+  line-height: 1.55;
+}
+.review-card strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #18323b;
+}
+.review-card--full {
+  min-height: 0;
+}
+.clause {
+  border-top: 1px solid #e2ecee;
+  padding: 12px 0;
+  overflow-wrap: anywhere;
+}
+.signature canvas {
+  width: 100%;
+  height: 175px;
+  touch-action: none;
+  background: #fff;
+}
+.correction {
+  background: #fff8e8;
+  border: 1px solid #f0cf79;
+  border-radius: 14px;
+  padding: 16px;
+}
+.contract-preview .btn + .btn {
+  margin-left: 0.5rem;
+}
+@media (max-width: 600px) {
+  .contract-preview {
+    padding: 18px;
+    border-radius: 14px;
+  }
+  .contract-preview h2 {
+    font-size: 1.3rem;
+  }
+  .contract-preview .btn {
+    width: 100%;
+    min-height: 46px;
+    margin-left: 0 !important;
+  }
+  .contract-preview .btn + .btn {
+    margin-top: 9px !important;
+  }
+  .signature canvas {
+    height: 155px;
+  }
+  .contract-preview .badge {
+    align-self: flex-start;
+  }
+  .review-card {
+    min-height: 0;
+    padding: 16px;
+  }
+}

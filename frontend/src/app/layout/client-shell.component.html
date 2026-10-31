@@ -1,0 +1,49 @@
+<div class="portal">
+  <header class="portal-nav">
+    <a
+      routerLink="/client/vehicles"
+      class="brand"
+      aria-label="FIMA AUTO"
+      (click)="menuOpen.set(false)"
+      ><img [src]="logoUrl()" alt="Logo FIMA AUTO"
+    /></a>
+    <button
+      class="btn btn-sm menu-toggle"
+      type="button"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="client-navigation"
+      (click)="menuOpen.set(!menuOpen())"
+    >
+      <span class="menu-icon" aria-hidden="true"><i></i><i></i><i></i></span><span>Menu</span>
+    </button>
+    <button class="btn btn-sm btn-outline-light logout" (click)="logout()">Déconnexion</button>
+    <nav
+      id="client-navigation"
+      class="portal-menu"
+      [class.open]="menuOpen()"
+      aria-label="Navigation client"
+    >
+      <span class="menu-title">ESPACE CLIENT</span
+      ><a routerLink="/client/vehicles" routerLinkActive="active" (click)="menuOpen.set(false)"
+        >Véhicules disponibles</a
+      ><a routerLink="/client/reservations" routerLinkActive="active" (click)="menuOpen.set(false)"
+        >Mes réservations</a
+      ><a routerLink="/client/contracts" routerLinkActive="active" (click)="menuOpen.set(false)"
+        >Contrats</a
+      ><a routerLink="/client/inspections" routerLinkActive="active" (click)="menuOpen.set(false)"
+        >Mes inspections</a
+      ><a routerLink="/client/account" routerLinkActive="active" (click)="menuOpen.set(false)"
+        >Mon profil</a
+      >
+    </nav>
+  </header>
+  <main class="portal-main"><router-outlet /></main>
+  <footer class="portal-footer">
+    <strong>FIMA AUTO</strong
+    ><span
+      >Location de véhicules · Téléphone :
+      {{ company().phone || company().secondary_phone || 'Non renseigné' }} · WhatsApp :
+      {{ company().whatsapp_phone || company().phone || 'Non renseigné' }}</span
+    ><span>© FIMA AUTO 2026</span>
+  </footer>
+</div>

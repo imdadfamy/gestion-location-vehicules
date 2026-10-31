@@ -11,17 +11,28 @@ export class ScrollRevealDirective implements OnInit, OnDestroy {
     const node = this.el.nativeElement;
     node.classList.add('reveal');
     node.style.transitionDelay = `${Number(this.delay) || 0}ms`;
-    if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (
+      !('IntersectionObserver' in window) ||
+      matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
       node.classList.add('reveal-visible');
       return;
     }
-    this.observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) { node.classList.add('reveal-visible'); this.observer?.unobserve(node); }
-      }
-    }, { threshold: 0.15 });
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            node.classList.add('reveal-visible');
+            this.observer?.unobserve(node);
+          }
+        }
+      },
+      { threshold: 0.15 },
+    );
     this.observer.observe(node);
   }
 
-  ngOnDestroy() { this.observer?.disconnect(); }
+  ngOnDestroy() {
+    this.observer?.disconnect();
+  }
 }

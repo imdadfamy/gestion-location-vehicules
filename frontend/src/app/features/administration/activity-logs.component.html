@@ -1,0 +1,91 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">TRAÇABILITÉ</p>
+    <h1>Journal d’activité</h1>
+    <p>Qui a fait quoi, et quand.</p>
+  </div>
+</div>
+<div class="toolbar row g-2">
+  <div class="col-md-4">
+    <input class="form-control" [(ngModel)]="query" placeholder="Rechercher" />
+  </div>
+  <div class="col-md-2">
+    <select class="form-select" [(ngModel)]="module">
+      <option value="">Tous les modules</option>
+      @for (item of modules; track item.key) {
+        <option [value]="item.key">{{ item.label }}</option>
+      }
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select class="form-select" [(ngModel)]="action">
+      <option value="">Toutes les actions</option>
+      <option value="INSERT">Créations</option>
+      <option value="UPDATE">Modifications</option>
+      <option value="DELETE">Suppressions</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select class="form-select" [(ngModel)]="userFilter">
+      <option value="">Tous les utilisateurs</option>
+      @for (u of userOptions(); track u.id) {
+        <option [value]="u.id">{{ u.label }}</option>
+      }
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-outline-secondary w-100" (click)="reset()">Réinitialiser</button>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label small text-muted mb-1">Du</label
+    ><input class="form-control" type="date" [(ngModel)]="dateFrom" />
+  </div>
+  <div class="col-md-3">
+    <label class="form-label small text-muted mb-1">Au</label
+    ><input class="form-control" type="date" [(ngModel)]="dateTo" />
+  </div>
+</div>
+@if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+} @else if (loading()) {
+  <div class="empty-state">Chargement du journal…</div>
+} @else if (!visible().length) {
+  <div class="empty-state">Aucune activité ne correspond aux filtres.</div>
+} @else {
+  <div class="log-feed">
+    @for (group of groupedVisible(); track group.label) {
+      <span class="log-day-label">{{ group.label }}</span>
+      @for (entry of group.entries; track entry.id) {
+        <article class="log-entry">
+          <span class="log-dot bg-{{ tone(entry.action) }}"></span>
+          <div class="log-entry-body">
+            <p class="log-sentence" [innerHTML]="sentence(entry)"></p>
+            @if (changes(entry).length) {
+              <ul class="log-changes">
+                @for (c of changes(entry); track c) {
+                  <li>{{ c }}</li>
+                }
+              </ul>
+            }
+            <div class="log-meta">
+              <span class="log-time">{{ entry.created_at | date: 'HH:mm' }}</span>
+              <button class="log-details-toggle" (click)="toggle(entry.id)">
+                {{ expanded() === entry.id ? 'Masquer les détails' : 'Plus de détails' }}
+              </button>
+            </div>
+            @if (expanded() === entry.id) {
+              <div class="audit-detail">{{ detail(entry) }}</div>
+            }
+          </div>
+        </article>
+      }
+    }
+  </div>
+  @if (hasMore()) {
+    <div class="text-center mt-3">
+      <button class="btn btn-outline-secondary" [disabled]="loadingMore()" (click)="loadMore()">
+        {{ loadingMore() ? 'Chargement…' : 'Charger plus' }}
+      </button>
+    </div>
+  }
+}

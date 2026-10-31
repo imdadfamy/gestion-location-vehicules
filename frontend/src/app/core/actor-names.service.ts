@@ -9,10 +9,12 @@ export class ActorNamesService {
 
   async load(ids: Array<string | null | undefined>) {
     const unique = [...new Set(ids.filter((id): id is string => !!id))];
-    const missing = unique.filter(id => !this.known()[id]);
+    const missing = unique.filter((id) => !this.known()[id]);
     if (!missing.length) return;
 
-    const result = await this.auth.supabase().rpc('get_staff_display_names', { target_ids: missing });
+    const result = await this.auth
+      .supabase()
+      .rpc('get_staff_display_names', { target_ids: missing });
     if (result.error) return;
 
     const next = { ...this.known() };

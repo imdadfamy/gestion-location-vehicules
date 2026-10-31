@@ -1,0 +1,420 @@
+<main class="landing">
+  <header class="topbar">
+    <a class="brand" routerLink="/"
+      ><img class="logo" src="/logo-horizontal-white.png" alt="FIMA AUTO"
+    /></a>
+    <nav class="nav">
+      <a class="nav-link" href="#vehicles">Véhicules</a>
+      <a class="nav-link" href="#how">Comment ça marche</a>
+      <a class="nav-link" href="#contact">Contact</a>
+      <a class="nav-link" href="#partners">Partenaires</a>
+      <a routerLink="/client/login" class="btn btn-pill btn-ghost-light btn-sm">Se connecter</a>
+      <a routerLink="/client/register" class="btn btn-pill btn-solid-light btn-sm"
+        >Créer un compte</a
+      >
+    </nav>
+  </header>
+  <div class="header-spacer" aria-hidden="true"></div>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <span class="hero-eyebrow">LOCATION DE VÉHICULES</span>
+      <h1>Louez votre véhicule en quelques clics</h1>
+      <p class="lead">Véhicules entretenus, contrat signé en ligne, sans frais cachés.</p>
+      <form class="search-card" (ngSubmit)="search()">
+        <div class="field">
+          <label>Départ</label
+          ><input
+            class="form-control"
+            type="datetime-local"
+            [(ngModel)]="depart"
+            name="depart"
+            required
+          />
+        </div>
+        <div class="field">
+          <label>Retour</label
+          ><input
+            class="form-control"
+            type="datetime-local"
+            [(ngModel)]="retour"
+            name="retour"
+            required
+          />
+        </div>
+        <div class="field">
+          <label>Catégorie</label
+          ><select class="form-select" [(ngModel)]="category" name="category">
+            <option value="">Toutes</option>
+            <option>Citadine</option>
+            <option>Berline</option>
+            <option>SUV</option>
+          </select>
+        </div>
+        <button class="btn btn-primary-cta text-white">Voir les véhicules</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head" appReveal>
+      <span class="kicker">Pourquoi FIMA AUTO</span>
+      <h2>Une location simple et sans surprise</h2>
+    </div>
+    <div class="grid">
+      <article class="cardx" appReveal="0">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 20h16M7 16l9-9 3 3-9 9H7v-3Z" />
+          </svg>
+        </div>
+        <h3>Contrat en ligne</h3>
+        <p>Signature simple et sécurisée.</p>
+      </article>
+      <article class="cardx" appReveal="80">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+        </div>
+        <h3>Véhicules contrôlés</h3>
+        <p>Inspectés avant chaque location.</p>
+      </article>
+      <article class="cardx" appReveal="160">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M20.59 13.41 13.41 20.59a2 2 0 0 1-2.82 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"
+            />
+            <circle cx="7" cy="7" r="1.6" fill="currentColor" stroke="none" />
+          </svg>
+        </div>
+        <h3>Prix clairs</h3>
+        <p>Tarif, caution et total affichés avant de réserver.</p>
+      </article>
+      <article class="cardx" appReveal="240">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 11.5a8.5 8.5 0 1 1-3.8-7.1M21 4l-5 5" />
+            <path d="M4 20l1.6-4A8.5 8.5 0 0 1 4 11.5" />
+          </svg>
+        </div>
+        <h3>Assistance WhatsApp</h3>
+        <p>Une équipe disponible.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="vehicles">
+    <div class="section-head" appReveal>
+      <span class="kicker">Catalogue</span>
+      <h2>Nos véhicules</h2>
+      <p>Des modèles entretenus, prêts à partir.</p>
+    </div>
+    <div class="cat-wrap">
+      <div class="cat-group">
+        <button
+          class="cat-pill"
+          [class.active]="categoryFilter === ''"
+          (click)="categoryFilter = ''"
+        >
+          Toutes
+        </button>
+        <button
+          class="cat-pill"
+          [class.active]="categoryFilter === 'Citadine'"
+          (click)="categoryFilter = 'Citadine'"
+        >
+          Citadine
+        </button>
+        <button
+          class="cat-pill"
+          [class.active]="categoryFilter === 'Berline'"
+          (click)="categoryFilter = 'Berline'"
+        >
+          Berline
+        </button>
+        <button
+          class="cat-pill"
+          [class.active]="categoryFilter === 'SUV'"
+          (click)="categoryFilter = 'SUV'"
+        >
+          SUV
+        </button>
+      </div>
+    </div>
+    <div class="vehicles">
+      <article
+        class="vehicle-card"
+        *ngFor="let v of visibleVehicles(); let i = index"
+        [appReveal]="i * 70"
+      >
+        <div class="vehicle-media">
+          @if (v.photoUrl) {
+            <img [src]="v.photoUrl" alt="{{ v.make }} {{ v.model }}" />
+          } @else {
+            <div class="placeholder" aria-label="Aucune photo disponible">🚘</div>
+          }
+        </div>
+        <div class="vehicle-card-body">
+          <span class="badge-cat">{{ v.category || 'Véhicule' }}</span>
+          <h3>{{ v.make }} {{ v.model }}</h3>
+          <p class="meta">
+            {{
+              v.transmission === 'automatic'
+                ? 'Boîte automatique'
+                : v.transmission === 'manual'
+                  ? 'Boîte manuelle'
+                  : 'Boîte non renseignée'
+            }}
+          </p>
+          <p class="price">À partir de {{ money(v.rental_price) }} / jour</p>
+          <a routerLink="/vehicules" class="btn btn-outline-cta">Voir</a>
+        </div>
+      </article>
+      <p *ngIf="!vehicles().length" class="empty-note">
+        Les véhicules disponibles s'affichent ici dès qu'ils sont publiés.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="section-head" appReveal>
+      <span class="kicker">Simplicité</span>
+      <h2>Comment ça marche</h2>
+    </div>
+    <div class="steps">
+      <article class="step" appReveal="0">
+        <span class="num">01</span>
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M3 9h18M8 3v4M16 3v4" />
+          </svg>
+        </div>
+        <h3>Réservez</h3>
+        <p>Choisissez vos dates.</p>
+      </article>
+      <article class="step" appReveal="100">
+        <span class="num">02</span>
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 20h16M7 16l9-9 3 3-9 9H7v-3Z" />
+          </svg>
+        </div>
+        <h3>Signez</h3>
+        <p>Signez votre contrat en ligne.</p>
+      </article>
+      <article class="step" appReveal="200">
+        <span class="num">03</span>
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="8" cy="18" r="2" />
+            <circle cx="17" cy="18" r="2" />
+            <path d="M4 18h2l2-8h8l3 4v4h-1M8 10l2-4h4" />
+          </svg>
+        </div>
+        <h3>Récupérez</h3>
+        <p>Partez sereinement.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="faq">
+    <div class="section-head" appReveal>
+      <span class="kicker">Besoin d'aide</span>
+      <h2>Questions fréquentes</h2>
+    </div>
+    <div class="faq" appReveal>
+      <details>
+        <summary>Quels documents fournir ?</summary>
+        <p>Une pièce d'identité et un permis valides.</p>
+      </details>
+      <details>
+        <summary>Comment fonctionne la caution ?</summary>
+        <p>Elle est affichée avant réservation.</p>
+      </details>
+      <details>
+        <summary>Puis-je annuler ?</summary>
+        <p>Contactez l'agence.</p>
+      </details>
+      <details>
+        <summary>Le carburant est-il inclus ?</summary>
+        <p>Le niveau est indiqué au contrat.</p>
+      </details>
+      <details>
+        <summary>Y a-t-il un âge minimum ?</summary>
+        <p>Les conditions sont précisées à la réservation.</p>
+      </details>
+      <details>
+        <summary>Livrez-vous le véhicule ?</summary>
+        <p>
+          Contactez l'agence pour connaître les options de livraison disponibles selon votre zone.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <section class="section" id="partners">
+    <div class="partner-hero" appReveal>
+      <div class="partner-hero-text">
+        <span class="kicker">Devenez partenaire</span>
+        <h2>Rentabilisez votre véhicule inutilisé</h2>
+        <p>
+          Proposez votre véhicule avec vos photos et le prix que vous souhaitez toucher. Nous
+          l'évaluons, le publions et vous reversons votre part à chaque location.
+        </p>
+        <a routerLink="/partner/register" class="btn btn-primary-cta text-white"
+          >Devenir partenaire</a
+        >
+      </div>
+      <div class="partner-hero-media">
+        <img
+          src="/partner-hero.jpg"
+          alt="Remise de clés entre un partenaire et un client FIMA AUTO"
+        />
+      </div>
+    </div>
+
+    <div class="partner-steps-wrap">
+      <div class="section-head" appReveal>
+        <span class="kicker">Comment ça marche</span>
+        <h2>De votre véhicule à vos revenus</h2>
+      </div>
+      <div class="steps">
+        <article class="step" appReveal="0">
+          <span class="num">01</span>
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 10 12 2 4 10v10h6v-6h4v6h6V10Z" />
+            </svg>
+          </div>
+          <h3>Proposez</h3>
+          <p>Photos, conditions et prix souhaité.</p>
+        </article>
+        <article class="step" appReveal="100">
+          <span class="num">02</span>
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z" />
+              <path d="M9 12l2 2 4-4" />
+            </svg>
+          </div>
+          <h3>On évalue</h3>
+          <p>Prix et état du véhicule vérifiés.</p>
+        </article>
+        <article class="step" appReveal="200">
+          <span class="num">03</span>
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v10M9.5 10h3.8a1.7 1.7 0 1 1 0 3.4H9.5" />
+            </svg>
+          </div>
+          <h3>Vous touchez vos revenus</h3>
+          <p>À chaque location, automatiquement suivi.</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="grid partner-grid">
+      <article class="cardx" appReveal="0">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+        </div>
+        <h3>Revenu sans effort</h3>
+        <p>Vous fixez votre prix, on gère le reste.</p>
+      </article>
+      <article class="cardx" appReveal="80">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 20h16M7 16l9-9 3 3-9 9H7v-3Z" />
+          </svg>
+        </div>
+        <h3>Contrats pris en charge</h3>
+        <p>Signatures et formalités gérées par nous.</p>
+      </article>
+      <article class="cardx" appReveal="160">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Z" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+        </div>
+        <h3>Vous gardez le contrôle</h3>
+        <p>Déclarez une maintenance à tout moment.</p>
+      </article>
+      <article class="cardx" appReveal="240">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M3 9h18M8 3v4M16 3v4" />
+          </svg>
+        </div>
+        <h3>Suivi en temps réel</h3>
+        <p>Vos locations et revenus dans votre espace.</p>
+      </article>
+    </div>
+
+    <div class="section-head" appReveal>
+      <span class="kicker">Questions fréquentes</span>
+      <h2>Pour les partenaires</h2>
+    </div>
+    <div class="faq" appReveal>
+      <details>
+        <summary>Comment est fixé le prix final ?</summary>
+        <p>
+          Vous indiquez le prix que vous souhaitez toucher ; nous ajoutons notre marge pour fixer le
+          prix affiché au client.
+        </p>
+      </details>
+      <details>
+        <summary>Comment et quand suis-je payé ?</summary>
+        <p>Vous suivez vos locations et vos revenus directement depuis votre espace partenaire.</p>
+      </details>
+      <details>
+        <summary>Quels documents dois-je fournir ?</summary>
+        <p>Les photos du véhicule et ses informations ; le reste est géré lors de l'évaluation.</p>
+      </details>
+      <details>
+        <summary>Puis-je retirer mon véhicule à tout moment ?</summary>
+        <p>Oui, contactez l'agence pour toute demande de retrait.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="cta" id="contact" appReveal>
+    <h2 class="h3">Prêt à partir ?</h2>
+    <div class="cta-actions">
+      <a routerLink="/client/register" class="btn btn-pill btn-solid-light">Créer mon compte</a>
+      <a [href]="whatsappLink()" target="_blank" class="btn btn-pill btn-ghost-light"
+        >Nous contacter sur WhatsApp</a
+      >
+    </div>
+  </section>
+
+  <footer class="footer-wrap">
+    <div class="footer">
+      <div>
+        <img class="logo" src="/logo-horizontal-white.png" alt="FIMA AUTO" />
+        <p>Location de véhicules, mobilités premium.</p>
+      </div>
+      <div>
+        <h4>Liens</h4>
+        <a href="#vehicles">Véhicules</a><a href="#faq">FAQ</a><a href="#contact">Contact</a
+        ><a routerLink="/partner/login">Espace partenaire</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <p>Téléphone : {{ company().phone || 'Non renseigné' }}</p>
+        <p>WhatsApp : {{ company().whatsapp_phone || 'Non renseigné' }}</p>
+        <p>{{ company().address || 'Adresse à configurer' }}</p>
+        <p>Horaires : {{ company().business_hours || 'À préciser' }}</p>
+      </div>
+    </div>
+    <div class="footer-bottom">© {{ year }} FIMA AUTO — Tous droits réservés</div>
+  </footer>
+</main>

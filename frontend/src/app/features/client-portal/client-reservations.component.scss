@@ -1,0 +1,61 @@
+.reservation-table .badge {
+  border-radius: 999px;
+  padding: 0.4em 0.8em;
+  font-weight: 700;
+}
+.reservation-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+.reservation-table tbody tr:hover {
+  background: var(--app-accent-soft, rgba(7, 146, 164, 0.08));
+}
+.reservation-table .btn-outline-danger {
+  border-radius: 999px;
+}
+@media (max-width: 600px) {
+  .reservation-table table,
+  .reservation-table tbody,
+  .reservation-table tr,
+  .reservation-table td {
+    display: block;
+    width: 100%;
+  }
+  .reservation-table thead {
+    display: none;
+  }
+  .reservation-table tr {
+    margin-bottom: 14px;
+    padding: 14px;
+    border: 1px solid #dce9eb;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 7px 18px rgba(16, 47, 56, 0.06);
+  }
+  .reservation-table tbody tr:hover {
+    background: #fff;
+  }
+  .reservation-table td {
+    border: 0;
+    padding: 5px 0;
+  }
+  .reservation-table td::before {
+    display: block;
+    color: #73878c;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .reservation-table td:nth-child(1)::before {
+    content: 'Véhicule';
+  }
+  .reservation-table td:nth-child(2)::before {
+    content: 'Période';
+  }
+  .reservation-table td:nth-child(3)::before {
+    content: 'Statut';
+  }
+  .reservation-table td:nth-child(4)::before {
+    content: 'Observation';
+  }
+}
