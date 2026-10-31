@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { PartnerPortalService } from '../../core/data/partner-portal.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
 
 @Component({
@@ -24,6 +25,7 @@ export class PartnerAuthComponent {
   constructor(
     private auth: AuthService,
     private router: Router,
+    private portal: PartnerPortalService,
   ) {
     this.register.set(location.pathname.endsWith('/register'));
   }
@@ -41,15 +43,9 @@ export class PartnerAuthComponent {
         return;
       }
       this.loading.set(true);
-      const r = await this.auth.supabase().auth.signUp({
-        email: this.email.trim(),
-        password: this.password,
-        options: {
-          data: {
-            full_name: this.companyName.trim() || this.contactName.trim(),
-            requested_role: 'partner',
-          },
-        },
+      const r = await this.auth.signUp(this.email.trim(), this.password, {
+        full_name: this.companyName.trim() || this.contactName.trim(),
+        requested_role: 'partner',
       });
       this.loading.set(false);
       if (r.error) {
@@ -58,11 +54,11 @@ export class PartnerAuthComponent {
       }
       if (r.data.session) {
         await this.auth.load();
-        const p = await this.auth.supabase().rpc('ensure_partner_profile', {
-          target_company_name: this.companyName || '',
-          target_contact_name: this.contactName,
-          target_phone: this.phone,
-          target_email: this.email,
+        const p = await this.portal.saveProfile({
+          company_name: this.companyName,
+          contact_name: this.contactName,
+          phone: this.phone,
+          email: this.email,
         });
         if (p.error) {
           this.error.set(this.auth.errorMessage(p.error));

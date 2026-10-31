@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { PublicCatalogService } from '../../core/data/public-catalog.service';
 import { ScrollRevealDirective } from '../../shared/scroll-reveal.directive';
 
 @Component({
@@ -27,6 +28,7 @@ export class PublicVehiclesComponent implements OnInit {
     private auth: AuthService,
     private router: Router,
     private route: ActivatedRoute,
+    private catalog: PublicCatalogService,
   ) {}
 
   ngOnInit() {
@@ -62,10 +64,10 @@ export class PublicVehiclesComponent implements OnInit {
   async load() {
     this.loading.set(true);
     this.error.set('');
-    const result = await this.auth.supabase().rpc('public_available_vehicles', {
-      target_departure: this.departure ? new Date(this.departure).toISOString() : undefined,
-      target_return: this.returnDate ? new Date(this.returnDate).toISOString() : undefined,
-    });
+    const result = await this.catalog.availableVehicles(
+      this.departure ? new Date(this.departure).toISOString() : undefined,
+      this.returnDate ? new Date(this.returnDate).toISOString() : undefined,
+    );
     this.loading.set(false);
     if (result.error) {
       this.error.set(this.auth.errorMessage(result.error));
@@ -76,11 +78,7 @@ export class PublicVehiclesComponent implements OnInit {
         const paths: string[] = vehicle.photo_storage_paths ?? [];
         const urls = await Promise.all(
           paths.map(async (path: string) => {
-            const signed = await this.auth
-              .supabase()
-              .storage.from('rental-documents')
-              .createSignedUrl(path, 600);
-            return signed.data?.signedUrl ?? null;
+            return this.catalog.photoUrl(path);
           }),
         );
         const photos = urls.filter(Boolean) as string[];

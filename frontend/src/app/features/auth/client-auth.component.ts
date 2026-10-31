@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { ClientPortalService } from '../../core/data/client-portal.service';
 import { DigitsOnlyDirective } from '../../shared/digits-only.directive';
 
 @Component({
@@ -28,6 +29,7 @@ export class ClientAuthComponent {
     private auth: AuthService,
     private router: Router,
     private route: ActivatedRoute,
+    private portal: ClientPortalService,
   ) {
     this.register.set(location.pathname.endsWith('/register'));
     const q = this.route.snapshot.queryParamMap;
@@ -63,17 +65,11 @@ export class ClientAuthComponent {
         return;
       }
       this.loading.set(true);
-      const r = await this.auth.supabase().auth.signUp({
-        email: this.email.trim(),
-        password: this.password,
-        options: {
-          data: {
-            full_name: (this.firstName + ' ' + this.lastName).trim(),
-            first_name: this.firstName.trim(),
-            last_name: this.lastName.trim(),
-            phone: this.phone.trim(),
-          },
-        },
+      const r = await this.auth.signUp(this.email.trim(), this.password, {
+        full_name: (this.firstName + ' ' + this.lastName).trim(),
+        first_name: this.firstName.trim(),
+        last_name: this.lastName.trim(),
+        phone: this.phone.trim(),
       });
       this.loading.set(false);
       if (r.error) {
@@ -82,12 +78,12 @@ export class ClientAuthComponent {
       }
       if (r.data.session) {
         await this.auth.load();
-        const p = await this.auth.supabase().rpc('ensure_client_profile', {
-          target_first_name: this.firstName,
-          target_last_name: this.lastName,
-          target_phone: this.phone,
-          target_email: this.email,
-        });
+        const p = await this.portal.ensureRecord(
+          this.firstName,
+          this.lastName,
+          this.phone,
+          this.email,
+        );
         if (p.error) {
           this.error.set(this.authError(p.error));
           return;

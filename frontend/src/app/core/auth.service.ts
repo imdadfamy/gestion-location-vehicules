@@ -338,6 +338,18 @@ export class AuthService {
     await this.client.auth.signOut();
     this.profile.set(null);
   }
+  /** Inscription (client ou partenaire) ; `data` alimente le trigger handle_new_user. */
+  signUp(email: string, password: string, data: Record<string, string>) {
+    return this.client.auth.signUp({ email, password, options: { data } });
+  }
+  async hasSession() {
+    const { data } = await this.client.auth.getSession();
+    return !!data.session;
+  }
+  /** Choix du mot de passe après une invitation. */
+  setPassword(password: string) {
+    return this.client.auth.updateUser({ password });
+  }
   can(module: string, action = 'view') {
     const p = this.profile();
     return p?.role === 'super_admin' || p?.permissions?.[module]?.[action] === true;

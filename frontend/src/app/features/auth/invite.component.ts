@@ -23,8 +23,7 @@ export class InviteComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    const { data } = await this.auth.supabase().auth.getSession();
-    this.ready.set(!!data.session);
+    this.ready.set(await this.auth.hasSession());
     this.checking.set(false);
   }
 
@@ -39,7 +38,7 @@ export class InviteComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    const result = await this.auth.supabase().auth.updateUser({ password: this.password });
+    const result = await this.auth.setPassword(this.password);
     this.saving.set(false);
     if (result.error) {
       this.error = this.auth.errorMessage(result.error);

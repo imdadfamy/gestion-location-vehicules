@@ -26,6 +26,16 @@ export class ClientPortalService {
     return this.db.from('clients').select('*').eq('profile_id', profileId).maybeSingle();
   }
 
+  /** Crée (ou complète) la fiche client liée au compte connecté. */
+  ensureRecord(firstName: string, lastName: string, phone: string, email?: string) {
+    return this.db.rpc('ensure_client_profile', {
+      target_first_name: firstName,
+      target_last_name: lastName,
+      target_phone: phone,
+      target_email: email || undefined,
+    });
+  }
+
   /** Met à jour la fiche existante, ou la crée au premier enregistrement. */
   saveRecord(profileId: string, form: any) {
     if (form.id)

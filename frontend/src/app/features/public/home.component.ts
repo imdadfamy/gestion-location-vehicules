@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { PublicCatalogService } from '../../core/data/public-catalog.service';
 import { ScrollRevealDirective } from '../../shared/scroll-reveal.directive';
 
 @Component({
@@ -23,22 +24,19 @@ export class HomeComponent implements OnInit {
   constructor(
     private auth: AuthService,
     private router: Router,
+    private catalog: PublicCatalogService,
   ) {}
 
   async ngOnInit() {
-    const c = await this.auth.supabase().rpc('public_company_contact');
-    if (!c.error && c.data?.[0]) this.company.set(c.data[0]);
-    const v = await this.auth.supabase().rpc('public_available_vehicles', {});
+    const c = await this.catalog.companyContact();
+    if (!c.error && c.data) this.company.set(c.data);
+    const v = await this.catalog.availableVehicles();
     if (!v.error) {
       const rows = await Promise.all(
         (v.data ?? []).slice(0, 6).map(async (vehicle: any) => {
           const path = vehicle.photo_storage_paths?.[0];
           if (!path) return { ...vehicle, photoUrl: null };
-          const signed = await this.auth
-            .supabase()
-            .storage.from('rental-documents')
-            .createSignedUrl(path, 600);
-          return { ...vehicle, photoUrl: signed.data?.signedUrl ?? null };
+          return { ...vehicle, photoUrl: await this.catalog.photoUrl(path) };
         }),
       );
       this.vehicles.set(rows);
