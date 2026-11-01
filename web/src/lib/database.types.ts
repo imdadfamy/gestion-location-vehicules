@@ -1543,6 +1543,7 @@ export type Database = {
       };
       vehicles: {
         Row: {
+          air_conditioning: boolean | null;
           approval_status: string;
           category: string | null;
           color: string | null;
@@ -1550,6 +1551,8 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           deposit_amount: number;
+          doors: number | null;
+          features: string[];
           fuel_type: string | null;
           id: string;
           insurance_expiry_date: string | null;
@@ -1565,6 +1568,7 @@ export type Database = {
           rental_price: number;
           reviewed_at: string | null;
           reviewed_by: string | null;
+          seats: number | null;
           status: string;
           submitted_at: string | null;
           technical_inspection_expiry_date: string | null;
@@ -1574,6 +1578,7 @@ export type Database = {
           year: number | null;
         };
         Insert: {
+          air_conditioning?: boolean | null;
           approval_status?: string;
           category?: string | null;
           color?: string | null;
@@ -1581,6 +1586,8 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           deposit_amount?: number;
+          doors?: number | null;
+          features?: string[];
           fuel_type?: string | null;
           id?: string;
           insurance_expiry_date?: string | null;
@@ -1596,6 +1603,7 @@ export type Database = {
           rental_price?: number;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
+          seats?: number | null;
           status?: string;
           submitted_at?: string | null;
           technical_inspection_expiry_date?: string | null;
@@ -1605,6 +1613,7 @@ export type Database = {
           year?: number | null;
         };
         Update: {
+          air_conditioning?: boolean | null;
           approval_status?: string;
           category?: string | null;
           color?: string | null;
@@ -1612,6 +1621,8 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           deposit_amount?: number;
+          doors?: number | null;
+          features?: string[];
           fuel_type?: string | null;
           id?: string;
           insurance_expiry_date?: string | null;
@@ -1627,6 +1638,7 @@ export type Database = {
           rental_price?: number;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
+          seats?: number | null;
           status?: string;
           submitted_at?: string | null;
           technical_inspection_expiry_date?: string | null;
@@ -1972,6 +1984,28 @@ export type Database = {
           model: string;
           photo_storage_paths: string[];
           rental_price: number;
+          transmission: string;
+          year: number;
+        }[];
+      };
+      public_catalog_vehicles: {
+        Args: { target_departure?: string; target_return?: string };
+        Returns: {
+          air_conditioning: boolean | null;
+          category: string;
+          color: string;
+          deposit_amount: number;
+          doors: number | null;
+          features: string[];
+          fuel_type: string;
+          id: string;
+          is_available: boolean;
+          make: string;
+          mileage: number;
+          model: string;
+          photo_storage_paths: string[];
+          rental_price: number;
+          seats: number | null;
           transmission: string;
           year: number;
         }[];

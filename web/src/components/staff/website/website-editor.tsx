@@ -46,6 +46,7 @@ import {
   BLOCK_TYPES,
   footerContent,
   homeContent,
+  catalogPageContent,
   DEFAULT_SETTINGS,
   isValidSlug,
   menuContent,
@@ -60,6 +61,7 @@ import {
   type FooterContent,
   type HomeContent,
   type Link,
+  type CatalogPageContent,
   type MenuContent,
   type PageContent,
   type SettingsContent,
@@ -77,6 +79,7 @@ const parseHome = (raw: unknown) => homeContent(raw);
 const parseFooter = (raw: unknown) => footerContent(raw);
 const parseMenu = (raw: unknown) => menuContent(raw);
 const parsePage = (raw: unknown) => pageContent(raw);
+const parseCatalog = (raw: unknown) => catalogPageContent(raw);
 const parseSettings = (raw: unknown) => settingsContent(raw);
 
 const nonEmpty = (text: string) => text.trim().length > 0;
@@ -118,6 +121,7 @@ function cleanBlock(block: Block): Block {
 }
 const cleanHome = (home: HomeContent): HomeContent => ({ blocks: home.blocks.map(cleanBlock) });
 const cleanPage = (page: PageContent): PageContent => ({ ...page, title: page.title.trim(), description: page.description.trim(), blocks: page.blocks.map(cleanBlock) });
+const cleanCatalog = (page: CatalogPageContent): CatalogPageContent => ({ ...page, blocks: page.blocks.map(cleanBlock) });
 const cleanSettings = (settings: SettingsContent): SettingsContent => ({
   title: settings.title.trim() || DEFAULT_SETTINGS.title,
   description: settings.description.trim(),
@@ -888,6 +892,7 @@ export function WebsiteEditor({ canEdit, canDelete }: { canEdit: boolean; canDel
       <Tabs defaultValue="home">
         <TabsList>
           <TabsTrigger value="home">Page d’accueil</TabsTrigger>
+          <TabsTrigger value="catalog">Véhicules</TabsTrigger>
           <TabsTrigger value="pages">Pages</TabsTrigger>
           <TabsTrigger value="menu">Menu</TabsTrigger>
           <TabsTrigger value="footer">Pied de page</TabsTrigger>
@@ -896,6 +901,28 @@ export function WebsiteEditor({ canEdit, canDelete }: { canEdit: boolean; canDel
         </TabsList>
         <TabsContent value="home" className="mt-4">
           <SectionsTab canEdit={canEdit} docKey="home" parse={parseHome} clean={cleanHome} />
+        </TabsContent>
+        <TabsContent value="catalog" className="mt-4">
+          <SectionsTab
+            canEdit={canEdit}
+            docKey="catalog"
+            parse={parseCatalog}
+            clean={cleanCatalog}
+            previewQuery="view=catalog"
+            header={(page, set) => (
+              <Card>
+                <CardContent className="grid gap-4">
+                  <h2 className="text-base font-medium">En-tête de la page Véhicules</h2>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <TextRow id="catalog-eyebrow" label="Sur-titre" value={page.eyebrow} onChange={(eyebrow) => set({ ...page, eyebrow })} disabled={!canEdit} />
+                    <TextRow id="catalog-title" label="Titre" value={page.title} onChange={(title) => set({ ...page, title })} disabled={!canEdit} />
+                  </div>
+                  <TextRow id="catalog-text" label="Texte d’introduction" value={page.text} onChange={(text) => set({ ...page, text })} disabled={!canEdit} />
+                  <p className="text-xs text-muted-foreground">Le catalogue (filtres, cartes, fiche) vient de l’écran Véhicules. Les sections ci-dessous s’affichent sous le catalogue : conditions de location, FAQ, avis…</p>
+                </CardContent>
+              </Card>
+            )}
+          />
         </TabsContent>
         <TabsContent value="pages" className="mt-4">
           <PagesTab canEdit={canEdit} canDelete={canDelete} />

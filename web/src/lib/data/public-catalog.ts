@@ -5,7 +5,7 @@ type Db = SupabaseClient<Database>;
 type Rpc = Database['public']['Functions'];
 
 export type CompanyContact = Rpc['public_company_contact']['Returns'][number];
-export type CatalogVehicle = Rpc['public_available_vehicles']['Returns'][number] & {
+export type CatalogVehicle = Rpc['public_catalog_vehicles']['Returns'][number] & {
   photos: string[];
 };
 
@@ -16,14 +16,12 @@ export async function companyContact(db: Db) {
 }
 
 /**
- * Véhicules disponibles (sur la période si elle est fournie), avec des liens de
- * 10 minutes vers leurs photos (seules les photos sont publiques, cf. RLS).
+ * Véhicules publiables, chacun avec son indicateur de disponibilité sur la période demandée
+ * (`is_available`) et des liens de 10 minutes vers ses photos (seules les photos sont
+ * publiques, cf. RLS).
  */
-export async function availableVehicles(
-  db: Db,
-  options: { departure?: string; returnDate?: string } = {},
-) {
-  const result = await db.rpc('public_available_vehicles', {
+export async function catalogVehicles(db: Db, options: { departure?: string; returnDate?: string } = {}) {
+  const result = await db.rpc('public_catalog_vehicles', {
     target_departure: options.departure,
     target_return: options.returnDate,
   });
@@ -40,6 +38,19 @@ export async function availableVehicles(
     }),
   );
   return { data, error: null };
+}
+
+/** Véhicules disponibles sur la période (tous s'il n'y en a pas). */
+export async function availableVehicles(db: Db, options: { departure?: string; returnDate?: string } = {}) {
+  const result = await catalogVehicles(db, options);
+  return { ...result, data: result.data.filter((vehicle) => vehicle.is_available) };
+}
+
+/** Nombre de jours facturables d'une période (jour entamé = jour dû), 0 si la période est incomplète ou inversée. */
+export function rentalDays(departure?: string, returnDate?: string) {
+  if (!departure || !returnDate) return 0;
+  const hours = (new Date(returnDate).getTime() - new Date(departure).getTime()) / 3600000;
+  return hours > 0 ? Math.ceil(hours / 24) : 0;
 }
 
 /** Lien WhatsApp (chiffres et + uniquement), ou null sans numéro. */
@@ -63,3 +74,7 @@ export const fuelLabel: Record<string, string> = {
   hybrid: 'Hybride',
   electric: 'Électrique',
 };
+
+/** Ce dont une carte de véhicule a besoin (le portail client n'a pas les caractéristiques détaillées). */
+export type CardVehicle = Omit<CatalogVehicle, 'is_available' | 'seats' | 'doors' | 'air_conditioning' | 'features' | 'mileage'> &
+  Partial<Pick<CatalogVehicle, 'is_available' | 'seats' | 'doors' | 'air_conditioning' | 'features' | 'mileage'>>;

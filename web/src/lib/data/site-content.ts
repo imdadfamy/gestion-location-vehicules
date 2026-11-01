@@ -349,3 +349,15 @@ export function youtubeEmbed(url: string) {
   const match = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
   return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : null;
 }
+
+/** Page Véhicules : textes d'introduction et sections affichées sous le catalogue. */
+export type CatalogPageContent = { eyebrow: string; title: string; text: string; blocks: Block[] };
+export const DEFAULT_CATALOG_PAGE = {
+  eyebrow: 'Catalogue',
+  title: 'Nos véhicules disponibles',
+  text: 'Choisissez vos dates pour voir les véhicules réellement disponibles. La connexion n’est demandée qu’au moment de réserver.',
+};
+export const catalogPageContent = (stored: unknown): CatalogPageContent => ({
+  ...mergeContent(DEFAULT_CATALOG_PAGE, stored),
+  blocks: normalizeBlocks(stored, []),
+});

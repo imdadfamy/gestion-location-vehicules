@@ -29,6 +29,12 @@ export type VehicleForm = {
   fuel_type: string;
   transmission: string;
   category: string;
+  seats: string;
+  doors: string;
+  /** '' (non renseignée), 'yes' ou 'no'. */
+  air_conditioning: string;
+  /** Équipements séparés par des virgules. */
+  features: string;
   rental_price: string;
   deposit_amount: string;
   insurance_expiry_date: string;
@@ -46,6 +52,10 @@ export const EMPTY_VEHICLE: VehicleForm = {
   fuel_type: '',
   transmission: '',
   category: '',
+  seats: '',
+  doors: '',
+  air_conditioning: '',
+  features: '',
   rental_price: '0',
   deposit_amount: '0',
   insurance_expiry_date: '',
@@ -66,6 +76,10 @@ export function toForm(vehicle: Vehicle): VehicleForm {
     fuel_type: text(vehicle.fuel_type),
     transmission: text(vehicle.transmission),
     category: text(vehicle.category),
+    seats: text(vehicle.seats),
+    doors: text(vehicle.doors),
+    air_conditioning: vehicle.air_conditioning === null ? '' : vehicle.air_conditioning ? 'yes' : 'no',
+    features: (vehicle.features ?? []).join(', '),
     rental_price: text(vehicle.rental_price),
     deposit_amount: text(vehicle.deposit_amount),
     insurance_expiry_date: text(vehicle.insurance_expiry_date),
@@ -91,6 +105,10 @@ function toRow(form: VehicleForm) {
     fuel_type: blank(form.fuel_type),
     transmission: blank(form.transmission),
     category: blank(form.category),
+    seats: number(form.seats),
+    doors: number(form.doors),
+    air_conditioning: form.air_conditioning === '' ? null : form.air_conditioning === 'yes',
+    features: form.features.split(',').map((item) => item.trim()).filter(Boolean),
     rental_price: number(form.rental_price) ?? undefined,
     deposit_amount: number(form.deposit_amount) ?? undefined,
     insurance_expiry_date: blank(form.insurance_expiry_date),

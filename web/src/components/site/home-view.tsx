@@ -460,14 +460,15 @@ function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
 }
 
 /** Page d'accueil complète (publique ou aperçu d'un brouillon) à partir de ses sections. */
-export function HomeView({ blocks, footer, menu, announcement }: { blocks: Block[]; footer?: FooterContent; menu?: MenuLink[]; announcement?: Announcement }) {
+export function HomeView({ blocks, footer, menu, announcement, lead }: { blocks: Block[]; footer?: FooterContent; menu?: MenuLink[]; announcement?: Announcement; lead?: React.ReactNode }) {
   const visible = blocks.filter((block) => block.show);
   const seen = new Set<string>();
-  const overHero = visible[0]?.type === 'hero';
+  const overHero = !lead && visible[0]?.type === 'hero';
   return (
     <>
       <SiteHeader overHero={overHero} links={menu} announcement={announcement} />
       <main className={cn('flex-1', !overHero && 'pt-16')}>
+        {lead}
         {visible.map((block) => {
           const anchor = !seen.has(block.type);
           seen.add(block.type);

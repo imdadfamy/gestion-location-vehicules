@@ -252,6 +252,18 @@ export function VehicleSheet({
             <Field label="Transmission" className="sm:col-span-3">
               <OptionalSelect label="Transmission" value={form.transmission} onChange={set('transmission')} options={TRANSMISSIONS} />
             </Field>
+            <Field label="Places" className="sm:col-span-3" htmlFor="vehicle-seats">
+              <Input type="number" min={1} max={99} inputMode="numeric" {...input('seats')} />
+            </Field>
+            <Field label="Portes" className="sm:col-span-3" htmlFor="vehicle-doors">
+              <Input type="number" min={1} max={9} inputMode="numeric" {...input('doors')} />
+            </Field>
+            <Field label="Climatisation" className="sm:col-span-3">
+              <OptionalSelect label="Climatisation" value={form.air_conditioning} onChange={set('air_conditioning')} options={{ yes: 'Oui', no: 'Non' }} />
+            </Field>
+            <Field label="Équipements (séparés par des virgules)" className="sm:col-span-3" htmlFor="vehicle-features">
+              <Input placeholder="Bluetooth, GPS, caméra de recul" {...input('features')} />
+            </Field>
             <Field label="Prix / jour (FCFA)" className="sm:col-span-3" htmlFor="vehicle-rental_price">
               <Input type="number" min={0} inputMode="numeric" {...input('rental_price')} />
             </Field>
