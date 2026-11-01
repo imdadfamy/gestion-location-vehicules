@@ -8,7 +8,7 @@ import AnimatedContent from '@/components/AnimatedContent';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -410,18 +410,19 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
       )}
 
       {isMobile ? (
-        <Drawer open={!!selected} onOpenChange={(open) => !open && setSelectedId(null)}>
-          <DrawerContent className="max-h-[92svh]">
-            <DrawerHeader className="text-left">
-              <DrawerTitle>{title}</DrawerTitle>
-              <DrawerDescription>{t('Fiche véhicule')}</DrawerDescription>
-            </DrawerHeader>
-            <div className="overflow-y-auto px-4 pb-6">{detail}</div>
-          </DrawerContent>
-        </Drawer>
+        // Feuille fixe (sans glisser-déposer) : la fiche ne bouge pas sous le doigt, seul son contenu défile.
+        <Sheet open={!!selected} onOpenChange={(open) => !open && setSelectedId(null)}>
+          <SheetContent side="bottom" className="max-h-[92svh] gap-0 overflow-hidden rounded-t-2xl p-0">
+            <SheetHeader className="text-left">
+              <SheetTitle>{title}</SheetTitle>
+              <SheetDescription>{t('Fiche véhicule')}</SheetDescription>
+            </SheetHeader>
+            <div className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain px-4 pb-6 [touch-action:pan-y]">{detail}</div>
+          </SheetContent>
+        </Sheet>
       ) : (
         <Dialog open={!!selected} onOpenChange={(open) => !open && setSelectedId(null)}>
-          <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+          <DialogContent className="max-h-[92vh] overflow-x-hidden overflow-y-auto overscroll-contain sm:max-w-[calc(100%-2rem)] lg:max-w-3xl">
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription>{t('Fiche véhicule')}</DialogDescription>

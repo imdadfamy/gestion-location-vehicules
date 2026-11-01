@@ -107,7 +107,7 @@ export function VehicleGallery({ photos, alt }: { photos: string[]; alt: string 
         </span>
       </div>
       {photos.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label={t('Miniatures')}>
+        <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1" role="tablist" aria-label={t('Miniatures')}>
           {photos.map((photo, i) => (
             <button
               key={photo}

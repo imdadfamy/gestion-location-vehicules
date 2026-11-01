@@ -146,7 +146,8 @@ function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
       <div
         className={cn(
           "flex",
-          orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
+          // Le balayage horizontal appartient au diaporama : la page ne glisse pas avec le doigt.
+          orientation === "horizontal" ? "-ml-4 [touch-action:pan-y_pinch-zoom]" : "-mt-4 flex-col [touch-action:pan-x_pinch-zoom]",
           className
         )}
         {...props}
