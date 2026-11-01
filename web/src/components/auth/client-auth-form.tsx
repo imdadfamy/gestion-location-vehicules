@@ -28,8 +28,10 @@ export function ClientAuthForm({ mode }: { mode: 'login' | 'register' }) {
   const router = useRouter();
   const params = useSearchParams();
   const query = reservationQuery(new URLSearchParams(params.toString()));
-  const destination = `/client/vehicles${query}`;
+  // Avec une réservation en cours de choix, on reprend le catalogue ; sinon l'accueil « Où en suis-je ? ».
+  const destination = query ? `/client/vehicles${query}` : '/client';
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', email: '', password: '' });
+  // (la destination dépend de la réservation en cours de choix, cf. plus haut)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');

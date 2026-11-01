@@ -29,6 +29,7 @@ import { contentOf, contractDuration, contractMoney, type Contract } from '@/lib
 import { frenchError } from '@/lib/errors';
 import { frDateTime } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
+import { missingItems } from '@/lib/data/client-progress';
 import { cn } from '@/lib/utils';
 
 type HistoryContract = Contract & { client_signed?: boolean };
@@ -45,21 +46,7 @@ const STEPS = ['Mes informations', 'Vérification', 'Signature'];
 
 /** Informations obligatoires encore manquantes avant la signature. */
 function missing(client: Partial<ClientRecord>, documentTypes: Set<string | null>) {
-  const out: string[] = [];
-  if (!client.first_name?.trim()) out.push('prénom');
-  if (!client.last_name?.trim()) out.push('nom');
-  if (!client.phone?.trim()) out.push('téléphone');
-  if (!client.id_document_type?.trim()) out.push('type de pièce');
-  if (!client.id_document_number?.trim()) out.push('numéro de pièce');
-  if (!client.address?.trim()) out.push('adresse');
-  if (!client.residence?.trim()) out.push('résidence');
-  if (!client.driving_license_number?.trim()) out.push('numéro de permis');
-  if (!client.driving_license_expiry_date) out.push('expiration du permis');
-  if (!client.emergency_contact_name?.trim()) out.push('contact d’urgence');
-  if (!client.emergency_contact_phone?.trim()) out.push('numéro d’urgence');
-  if (!documentTypes.has('identity_document')) out.push('photo de la pièce d’identité');
-  if (!documentTypes.has('driving_license')) out.push('photo du permis');
-  return out;
+  return missingItems(client, documentTypes).map((item) => item.label);
 }
 
 function Review({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {

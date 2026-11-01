@@ -159,6 +159,13 @@ export function pendingDossier(db: Db) {
   return db.rpc('client_pending_contract_dossier');
 }
 
+/** Nombre de dossiers ou contrats qui attendent la signature du client (pastille « Contrats »). */
+export async function contractAlerts(db: Db) {
+  const [dossier, contracts] = await Promise.all([pendingDossier(db), contractHistory(db)]);
+  const list = (contracts.data as { client_signed: boolean; status: string }[] | null) ?? [];
+  return (dossier.data ? 1 : 0) + list.filter((contract) => !contract.client_signed && contract.status !== 'signed' && contract.status !== 'cancelled').length;
+}
+
 export function hasSigned(db: Db, contractId: string) {
   return db.from('contract_signatures').select('id').eq('contract_id', contractId).eq('signer_type', 'client').maybeSingle();
 }

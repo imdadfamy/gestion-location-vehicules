@@ -20,23 +20,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cancelReservation, reservationHistory } from '@/lib/data/client-portal';
+import { ReservationTimeline } from '@/components/portal/reservation-timeline';
+import type { TrackedReservation } from '@/lib/data/client-progress';
 import { RESERVATION_STATUSES } from '@/lib/data/reservations';
 import { frenchError } from '@/lib/errors';
 import { frDate } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 
-type Row = {
-  id: string;
-  status: string;
-  rental_id: string | null;
-  client_contract_sent_at: string | null;
-  planned_departure_date: string;
-  planned_return_date: string;
-  observation: string | null;
-  vehicles: { make: string; model: string; registration_number: string } | null;
-};
+type Row = TrackedReservation;
 
 /** Libellé côté client : un dossier envoyé par l'agence attend sa signature. */
 function label(row: Row) {
@@ -89,37 +81,24 @@ export function ClientReservations() {
           </Button>
         </Card>
       ) : (
-        <Card className="py-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-4">Véhicule</TableHead>
-                <TableHead>Période</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="hidden md:table-cell">Observation</TableHead>
-                <TableHead className="pr-4 text-right" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="pl-4 whitespace-normal">
-                    <div className="font-medium">
+        <ul className="grid gap-4">
+          {rows.map((row) => (
+            <li key={row.id}>
+              <Card className="gap-4 p-4 sm:p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="font-semibold">
                       {row.vehicles?.make} {row.vehicles?.model}
-                    </div>
-                    <span className="font-mono text-xs text-muted-foreground">{row.vehicles?.registration_number}</span>
-                  </TableCell>
-                  <TableCell className="text-xs tabular-nums">
-                    {frDate(row.planned_departure_date)}
-                    <span className="block text-muted-foreground">au {frDate(row.planned_return_date)}</span>
-                  </TableCell>
-                  <TableCell className="whitespace-normal">
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-mono">{row.vehicles?.registration_number}</span> · du {frDate(row.planned_departure_date)} au {frDate(row.planned_return_date)}
+                    </p>
+                    {row.observation && <p className="mt-1 text-xs text-muted-foreground">Observation : {row.observation}</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
                     <StatusBadge tone={RESERVATION_STATUSES[row.status]?.tone ?? 'muted'} className="h-auto rounded-md text-left whitespace-normal">
                       {label(row)}
                     </StatusBadge>
-                  </TableCell>
-                  <TableCell className="hidden whitespace-normal md:table-cell">{row.observation || '—'}</TableCell>
-                  <TableCell className="pr-4 text-right">
                     {row.status === 'pending' && (
                       <Button variant="outline" size="sm" className="text-destructive" onClick={() => setCancelling(row)}>
                         Annuler
@@ -130,12 +109,13 @@ export function ClientReservations() {
                         <Link href="/client/contracts">Signer</Link>
                       </Button>
                     )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+                  </div>
+                </div>
+                <ReservationTimeline row={row} />
+              </Card>
+            </li>
+          ))}
+        </ul>
       )}
 
       <AlertDialog open={!!cancelling} onOpenChange={(value) => !value && setCancelling(null)}>

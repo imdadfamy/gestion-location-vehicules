@@ -24,6 +24,7 @@ import {
 } from '@/lib/data/client-portal';
 import { PHOTO_TYPES, photoLabel, inspectionLabel, type PhotoType } from '@/lib/data/inspections';
 import { frenchError } from '@/lib/errors';
+import { prepareImage } from '@/lib/image-compress';
 import { frDateTime } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 
@@ -121,7 +122,8 @@ export function ClientInspections() {
   async function sendPhotos(inspectionId: string) {
     const db = createClient();
     for (const [type, file] of Object.entries(photos) as [PhotoType, File][]) {
-      const failure = await uploadInspectionPhoto(db, inspectionId, type, file);
+      // Photo de téléphone réduite avant l'envoi (la limite du serveur est de 5 Mo).
+      const failure = await uploadInspectionPhoto(db, inspectionId, type, await prepareImage(file));
       if (failure) throw failure;
     }
   }

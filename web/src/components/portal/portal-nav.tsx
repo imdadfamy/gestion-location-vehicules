@@ -7,6 +7,8 @@ import { Bell, CalendarCheck, CalendarDays, CarFront, ClipboardCheck, FileSignat
 import { ThemeToggle } from '@/components/site/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ContactAgency, type AgencyContact } from '@/components/portal/contact-agency';
+import { contractAlerts } from '@/lib/data/client-portal';
 import { unreadCount } from '@/lib/data/partner-portal';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
@@ -15,6 +17,7 @@ export type Space = 'client' | 'partner';
 
 const LINKS = {
   client: [
+    { href: '/client', label: 'Accueil', icon: LayoutDashboard },
     { href: '/client/vehicles', label: 'Véhicules disponibles', icon: CarFront },
     { href: '/client/reservations', label: 'Mes réservations', icon: CalendarCheck },
     { href: '/client/contracts', label: 'Contrats', icon: FileSignature },
@@ -37,11 +40,12 @@ const LINKS = {
 const ICON_ONLY = ['/partner/maintenance', '/partner/inspections', '/partner/notifications', '/partner/account'];
 
 /** Barre de navigation des espaces client et partenaire (menu latéral sur téléphone ; pastille de notifications pour le partenaire). */
-export function PortalNav({ space, userId }: { space: Space; userId?: string }) {
+export function PortalNav({ space, userId, contact }: { space: Space; userId?: string; contact?: AgencyContact }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [toSign, setToSign] = useState(0);
   const links = LINKS[space];
   const title = space === 'client' ? 'Espace client' : 'Espace partenaire';
 
@@ -51,6 +55,12 @@ export function PortalNav({ space, userId }: { space: Space; userId?: string }) 
     unreadCount(createClient(), userId).then(setUnread);
   }, [space, userId, pathname]);
 
+  // Pastille « Contrats » (espace client) : dossiers ou contrats qui attendent la signature.
+  useEffect(() => {
+    if (space !== 'client') return;
+    contractAlerts(createClient()).then(setToSign);
+  }, [space, pathname]);
+
   async function logout() {
     await createClient().auth.signOut();
     router.replace(space === 'client' ? '/client/login' : '/partner/login');
@@ -59,11 +69,11 @@ export function PortalNav({ space, userId }: { space: Space; userId?: string }) 
 
   const items = (onNavigate?: () => void, inSheet = false) =>
     links.map((link) => {
-      const active = link.href === '/partner' ? pathname === link.href : pathname === link.href || pathname.startsWith(`${link.href}/`);
-      const badge = link.href === '/partner/notifications' && unread > 0 ? unread : 0;
+      const active = link.href === '/partner' || link.href === '/client' ? pathname === link.href : pathname === link.href || pathname.startsWith(`${link.href}/`);
+      const badge = link.href === '/partner/notifications' ? unread : link.href === '/client/contracts' ? toSign : 0;
       return (
         <Button key={link.href} asChild variant={active ? 'secondary' : 'ghost'} size="sm" className={cn('justify-start', active && 'font-semibold')}>
-          <Link href={link.href} onClick={onNavigate} aria-current={active ? 'page' : undefined} title={link.label} aria-label={badge ? `${link.label} (${badge} non lues)` : link.label}>
+          <Link href={link.href} onClick={onNavigate} aria-current={active ? 'page' : undefined} title={link.label} aria-label={badge ? `${link.label} (${badge} à traiter)` : link.label}>
             <link.icon /> <span className={space === 'partner' && !inSheet ? (ICON_ONLY.includes(link.href) ? 'sr-only' : 'sr-only lg:not-sr-only') : undefined}>{link.label}</span>
             {badge > 0 && <span className="ml-0.5 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">{badge}</span>}
           </Link>
@@ -85,6 +95,7 @@ export function PortalNav({ space, userId }: { space: Space; userId?: string }) 
           {items()}
         </nav>
         <div className="ml-auto flex items-center gap-1">
+          {space === 'client' && contact && <ContactAgency contact={contact} />}
           <ThemeToggle />
           <Button variant="ghost" size="sm" onClick={logout} className="hidden md:inline-flex">
             <LogOut /> Déconnexion

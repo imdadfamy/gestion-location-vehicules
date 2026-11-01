@@ -14,9 +14,9 @@ export async function currentProfile(db: Db) {
   return data;
 }
 
-/** Page d'accueil de chaque type de compte. */
+/** Page d'accueil de chaque type de compte (client : « Où en suis-je ? », partenaire : tableau de bord). */
 export function homeFor(role: string | null | undefined) {
-  if (role === 'client') return '/client/vehicles';
+  if (role === 'client') return '/client';
   if (role === 'partner') return '/partner';
   return '/app';
 }
