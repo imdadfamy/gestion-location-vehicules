@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Clock, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { CurrentYear } from './current-year';
 import { getFooterContent } from '@/lib/data/site-content-server';
-import { safeHref } from '@/lib/data/site-content';
+import { safeHref, type FooterContent } from '@/lib/data/site-content';
 import { whatsappLink, type CompanyContact } from '@/lib/data/public-catalog';
 
 const SPACES = [
@@ -25,8 +25,8 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
 }
 
 /** Pied de page : liens, réseaux et mention modifiables depuis « Site web », coordonnées depuis « Paramètres ». */
-export async function SiteFooter({ company }: { company: CompanyContact | null }) {
-  const content = await getFooterContent();
+export async function SiteFooter({ company, draft }: { company: CompanyContact | null; draft?: FooterContent }) {
+  const content = draft ?? (await getFooterContent());
   const whatsapp = whatsappLink(company?.whatsapp_phone);
   const phone = company?.phone?.replace(/[^\d+]/g, '');
   return (

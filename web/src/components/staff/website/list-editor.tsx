@@ -118,13 +118,17 @@ export function ImageField({
   return (
     <Field label={label}>
       <div className="flex flex-wrap items-center gap-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={value || fallback} alt="" className="h-20 w-32 rounded-md border object-cover" />
+        {value || fallback ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={value || fallback} alt="" className="h-20 w-32 rounded-md border object-cover" />
+        ) : (
+          <div className="flex h-20 w-32 items-center justify-center rounded-md border border-dashed bg-muted text-xs text-muted-foreground">Aucune image</div>
+        )}
         <div className="flex flex-wrap gap-2">
           <Button type="button" size="sm" variant="outline" disabled={disabled || busy} onClick={() => input.current?.click()}>
-            {busy ? <Loader2 className="animate-spin" /> : <ImageUp />} Changer l’image
+            {busy ? <Loader2 className="animate-spin" /> : <ImageUp />} {value ? 'Changer l’image' : 'Choisir une image'}
           </Button>
-          {value !== fallback && (
+          {fallback && value !== fallback && (
             <Button type="button" size="sm" variant="ghost" disabled={disabled || busy} onClick={() => onChange(fallback)}>
               <RotateCcw /> Image d’origine
             </Button>

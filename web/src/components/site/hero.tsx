@@ -6,7 +6,7 @@ import { Search } from 'lucide-react';
 import BlurText from '@/components/BlurText';
 import RotatingText from '@/components/RotatingText';
 import { Button } from '@/components/ui/button';
-import type { HomeContent } from '@/lib/data/site-content';
+import type { BlockData } from '@/lib/data/site-content';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -27,7 +27,7 @@ function useMounted() {
 }
 
 /** Bannière d'accueil : fond animé, titre et recherche de disponibilité. */
-export function Hero({ content }: { content: HomeContent['hero'] }) {
+export function Hero({ content }: { content: BlockData['hero'] }) {
   const words = content.words;
   const router = useRouter();
   const [departure, setDeparture] = useState('');

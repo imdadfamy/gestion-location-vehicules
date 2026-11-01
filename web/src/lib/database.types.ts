@@ -1521,6 +1521,26 @@ export type Database = {
           },
         ];
       };
+      site_content_drafts: {
+        Row: { content: Json; key: string; updated_at: string; updated_by: string | null };
+        Insert: { content: Json; key: string; updated_at?: string; updated_by?: string | null };
+        Update: { content?: Json; key?: string; updated_at?: string; updated_by?: string | null };
+        Relationships: [];
+      };
+      site_content_versions: {
+        Row: { content: Json; created_at: string; created_by: string | null; id: string; key: string };
+        Insert: { content: Json; created_at?: string; created_by?: string | null; id?: string; key: string };
+        Update: { content?: Json; created_at?: string; created_by?: string | null; id?: string; key?: string };
+        Relationships: [
+          {
+            foreignKeyName: 'site_content_versions_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       vehicles: {
         Row: {
           approval_status: string;

@@ -1,311 +1,529 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ExternalLink, Loader2 } from 'lucide-react';
-import { refreshSiteContent } from '@/app/app/website/actions';
+import { useEffect, useRef, useState } from 'react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  Copy,
+  ExternalLink,
+  Eye,
+  History,
+  Loader2,
+  Monitor,
+  Plus,
+  Smartphone,
+  Trash2,
+  Undo2,
+} from 'lucide-react';
 import { FormMessage } from '@/components/auth/form-message';
-import { Field } from '@/components/staff/form-field';
+import { StatusBadge } from '@/components/staff/status-badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
+import { listVersions, type SiteVersion } from '@/lib/data/site-content-admin';
 import {
-  DEFAULT_FOOTER,
-  DEFAULT_HOME,
+  BLOCK_META,
+  BLOCK_TYPES,
   footerContent,
   homeContent,
+  newBlock,
   safeHref,
-  type Faq,
+  type Block,
+  type BlockType,
   type FooterContent,
   type HomeContent,
-  type Item,
   type Link,
-  type SiteKey,
-  type Step,
 } from '@/lib/data/site-content';
 import { frenchError } from '@/lib/errors';
+import { frDateTime } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
-import { IconSelect, ImageField, ListEditor, TextRow } from './list-editor';
+import { cn } from '@/lib/utils';
+import { BlockForm, LinksList } from './block-forms';
+import { TextRow } from './list-editor';
+import { useSiteDoc, type DocStatus } from './use-site-doc';
 
-const blankItem = (): Item => ({ icon: 'star', title: '', text: '' });
-const blankStep = (): Step => ({ title: '', text: '' });
-const blankFaq = (): Faq => ({ q: '', a: '' });
-const blankLink = (): Link => ({ label: '', href: '/' });
+const parseHome = (raw: unknown) => homeContent(raw);
+const parseFooter = (raw: unknown) => footerContent(raw);
 
-function Block({ title, children, toggle }: { title: string; children: React.ReactNode; toggle?: React.ReactNode }) {
+const nonEmpty = (text: string) => text.trim().length > 0;
+const cleanLinks = (list: Link[]) => list.filter((link) => nonEmpty(link.label)).map((link) => ({ label: link.label.trim(), href: safeHref(link.href) }));
+
+/** Retire les lignes vides et sécurise les adresses avant enregistrement. */
+function cleanBlock(block: Block): Block {
+  switch (block.type) {
+    case 'hero':
+      return { ...block, data: { ...block.data, words: block.data.words.map((word) => word.trim()).filter(Boolean) } };
+    case 'strengths':
+    case 'steps':
+      return { ...block, data: { ...block.data, items: block.data.items.filter((item) => nonEmpty(item.title) || nonEmpty(item.text)) } };
+    case 'faq':
+      return { ...block, data: { ...block.data, items: block.data.items.filter((item) => nonEmpty(item.q) && nonEmpty(item.a)) } };
+    case 'partner':
+      return {
+        ...block,
+        data: {
+          ...block.data,
+          steps: block.data.steps.filter((step) => nonEmpty(step.title)),
+          benefits: block.data.benefits.filter((item) => nonEmpty(item.title) || nonEmpty(item.text)),
+          faq: block.data.faq.filter((item) => nonEmpty(item.q) && nonEmpty(item.a)),
+        },
+      };
+    case 'gallery':
+      return { ...block, data: { ...block.data, images: block.data.images.filter((image) => nonEmpty(image.url)) } };
+    case 'testimonials':
+      return { ...block, data: { ...block.data, items: block.data.items.filter((item) => nonEmpty(item.quote)) } };
+    case 'stats':
+      return { ...block, data: { ...block.data, items: block.data.items.filter((item) => nonEmpty(item.value)) } };
+    case 'text_image':
+      return { ...block, data: { ...block.data, buttonHref: safeHref(block.data.buttonHref) } };
+    case 'announcement':
+      return { ...block, data: { ...block.data, linkHref: safeHref(block.data.linkHref) } };
+    default:
+      return block;
+  }
+}
+const cleanHome = (home: HomeContent): HomeContent => ({ blocks: home.blocks.map(cleanBlock) });
+const cleanFooter = (footer: FooterContent): FooterContent => ({ ...footer, links: cleanLinks(footer.links), socials: cleanLinks(footer.socials) });
+
+const STATUS: Record<DocStatus, { label: string; tone: 'success' | 'info' | 'warning' }> = {
+  published: { label: 'Publié', tone: 'success' },
+  draft: { label: 'Brouillon enregistré, non publié', tone: 'info' },
+  unsaved: { label: 'Modifications non enregistrées', tone: 'warning' },
+};
+
+/** Titre lisible d'une section pour la liste (son titre, à défaut son type). */
+function summary(block: Block) {
+  const data = block.data as Record<string, unknown>;
+  const title = typeof data.title === 'string' && data.title ? data.title : typeof data.text === 'string' ? data.text : '';
+  return title.length > 70 ? `${title.slice(0, 70)}…` : title;
+}
+
+function SectionCard({
+  block,
+  index,
+  total,
+  open,
+  disabled,
+  onToggleOpen,
+  onChange,
+  onMove,
+  onDuplicate,
+  onDelete,
+}: {
+  block: Block;
+  index: number;
+  total: number;
+  open: boolean;
+  disabled: boolean;
+  onToggleOpen: () => void;
+  onChange: (block: Block) => void;
+  onMove: (to: number) => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  const meta = BLOCK_META[block.type];
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between gap-3">
-        <CardTitle className="text-base">{title}</CardTitle>
-        {toggle}
-      </CardHeader>
-      <CardContent className="grid gap-4">{children}</CardContent>
+    <Card id={`section-${block.id}`} className={cn('gap-0 py-0', !block.show && 'opacity-70')}>
+      <div className="flex flex-wrap items-center gap-2 p-3">
+        <button type="button" onClick={onToggleOpen} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+          <ChevronDown className={cn('size-4 shrink-0 text-muted-foreground transition-transform', !open && '-rotate-90')} />
+          <span className="min-w-0">
+            <span className="block text-sm font-medium">
+              {meta.label}
+              {!block.show && <span className="ml-2 text-xs font-normal text-muted-foreground">(masquée)</span>}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">{summary(block) || meta.description}</span>
+          </span>
+        </button>
+        <div className="flex items-center gap-1">
+          <label className="mr-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Switch checked={block.show} onCheckedChange={(show) => onChange({ ...block, show })} disabled={disabled} aria-label={`Afficher « ${meta.label} »`} />
+            <span className="hidden sm:inline">Afficher</span>
+          </label>
+          <Button type="button" size="icon" variant="ghost" className="size-8" disabled={disabled || index === 0} onClick={() => onMove(index - 1)} aria-label="Monter la section">
+            <ArrowUp />
+          </Button>
+          <Button type="button" size="icon" variant="ghost" className="size-8" disabled={disabled || index === total - 1} onClick={() => onMove(index + 1)} aria-label="Descendre la section">
+            <ArrowDown />
+          </Button>
+          {!meta.unique && (
+            <Button type="button" size="icon" variant="ghost" className="size-8" disabled={disabled} onClick={onDuplicate} aria-label="Dupliquer la section">
+              <Copy />
+            </Button>
+          )}
+          <Button type="button" size="icon" variant="ghost" className="size-8 text-destructive" disabled={disabled} onClick={onDelete} aria-label="Supprimer la section">
+            <Trash2 />
+          </Button>
+        </div>
+      </div>
+      {open && (
+        <CardContent className="border-t py-4">
+          <BlockForm block={block} onChange={onChange} disabled={disabled} />
+        </CardContent>
+      )}
     </Card>
   );
 }
 
-function Visible({ on, onChange, disabled }: { on: boolean; onChange: (on: boolean) => void; disabled?: boolean }) {
+function AddSectionDialog({ open, onOpenChange, present, onAdd }: { open: boolean; onOpenChange: (open: boolean) => void; present: Set<BlockType>; onAdd: (type: BlockType) => void }) {
   return (
-    <label className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Switch checked={on} onCheckedChange={onChange} disabled={disabled} /> Afficher
-    </label>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85svh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Ajouter une section</DialogTitle>
+          <DialogDescription>Choisissez le type de section. Vous pourrez ensuite la remplir, la déplacer ou la masquer.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {BLOCK_TYPES.map((type) => {
+            const meta = BLOCK_META[type];
+            const unavailable = !!meta.unique && present.has(type);
+            return (
+              <button
+                key={type}
+                type="button"
+                disabled={unavailable}
+                onClick={() => onAdd(type)}
+                className="rounded-lg border p-3 text-left transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+              >
+                <span className="block text-sm font-medium">{meta.label}</span>
+                <span className="block text-xs text-muted-foreground">{unavailable ? 'Déjà présente sur la page.' : meta.description}</span>
+              </button>
+            );
+          })}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function ItemsList({ items, onChange, disabled, addLabel }: { items: Item[]; onChange: (items: Item[]) => void; disabled?: boolean; addLabel: string }) {
+function HistoryDialog({ docKey, open, onOpenChange, onRestore, disabled }: { docKey: string; open: boolean; onOpenChange: (open: boolean) => void; onRestore: (raw: unknown) => void; disabled: boolean }) {
+  const [versions, setVersions] = useState<SiteVersion[] | null>(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    listVersions(createClient(), docKey).then(({ versions: rows, error: failure }) => {
+      if (failure) return setError(frenchError(failure));
+      setError('');
+      setVersions(rows);
+    });
+  }, [open, docKey]);
+
   return (
-    <ListEditor
-      items={items}
-      onChange={onChange}
-      blank={blankItem}
-      addLabel={addLabel}
-      disabled={disabled}
-      render={(item, patch, index) => (
-        <>
-          <div className="grid gap-3 sm:grid-cols-[11rem_1fr]">
-            <IconSelect value={item.icon} onChange={(icon) => patch({ icon })} disabled={disabled} />
-            <TextRow id={`item-title-${addLabel}-${index}`} label="Titre" value={item.title} onChange={(title) => patch({ title })} disabled={disabled} />
-          </div>
-          <TextRow id={`item-text-${addLabel}-${index}`} label="Texte" value={item.text} onChange={(text) => patch({ text })} disabled={disabled} />
-        </>
-      )}
-    />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85svh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Historique des publications</DialogTitle>
+          <DialogDescription>Chaque publication est conservée. Restaurer recharge la version dans l’éditeur, sans rien publier.</DialogDescription>
+        </DialogHeader>
+        <FormMessage error={error} />
+        {!versions ? (
+          !error && <Skeleton className="h-24 rounded-lg" />
+        ) : !versions.length ? (
+          <p className="text-sm text-muted-foreground">Aucune publication pour le moment.</p>
+        ) : (
+          <ul className="grid gap-2">
+            {versions.map((version, index) => (
+              <li key={version.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                <div className="text-sm">
+                  <div className="font-medium tabular-nums">{frDateTime(version.created_at, true)}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {version.author}
+                    {index === 0 && ' · dernière publication'}
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled}
+                  onClick={() => {
+                    onRestore(version.content);
+                    onOpenChange(false);
+                  }}
+                >
+                  <Undo2 /> Restaurer
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function FaqList({ items, onChange, disabled, scope }: { items: Faq[]; onChange: (items: Faq[]) => void; disabled?: boolean; scope: string }) {
+function PreviewDialog({ open, onOpenChange, version }: { open: boolean; onOpenChange: (open: boolean) => void; version: number }) {
+  const [mobile, setMobile] = useState(false);
   return (
-    <ListEditor
-      items={items}
-      onChange={onChange}
-      blank={blankFaq}
-      addLabel="Ajouter une question"
-      disabled={disabled}
-      render={(item, patch, index) => (
-        <>
-          <TextRow id={`${scope}-q-${index}`} label="Question" value={item.q} onChange={(q) => patch({ q })} disabled={disabled} />
-          <Field label="Réponse" htmlFor={`${scope}-a-${index}`}>
-            <Textarea id={`${scope}-a-${index}`} rows={2} value={item.a} disabled={disabled} onChange={(event) => patch({ a: event.target.value })} />
-          </Field>
-        </>
-      )}
-    />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex h-[92svh] max-w-[96vw] flex-col gap-3 sm:max-w-6xl">
+        <DialogHeader>
+          <DialogTitle>Aperçu du brouillon</DialogTitle>
+          <DialogDescription>Ce que verront les visiteurs après publication.</DialogDescription>
+        </DialogHeader>
+        <div className="flex gap-2">
+          <Button type="button" size="sm" variant={mobile ? 'outline' : 'default'} onClick={() => setMobile(false)}>
+            <Monitor /> Ordinateur
+          </Button>
+          <Button type="button" size="sm" variant={mobile ? 'default' : 'outline'} onClick={() => setMobile(true)}>
+            <Smartphone /> Mobile
+          </Button>
+        </div>
+        <div className="flex min-h-0 flex-1 justify-center overflow-auto rounded-lg border bg-muted">
+          {open && <iframe key={version} src={`/apercu?v=${version}`} title="Aperçu du site" className={cn('h-full border-0 bg-background', mobile ? 'w-[390px] max-w-full' : 'w-full')} />}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function LinksList({ items, onChange, disabled, scope, addLabel }: { items: Link[]; onChange: (items: Link[]) => void; disabled?: boolean; scope: string; addLabel: string }) {
+function Toolbar({
+  status,
+  busy,
+  canEdit,
+  onSave,
+  onPublish,
+  onDiscard,
+  onPreview,
+  onHistory,
+}: {
+  status: DocStatus;
+  busy: boolean;
+  canEdit: boolean;
+  onSave: () => void;
+  onPublish: () => void;
+  onDiscard: () => void;
+  onPreview: () => void;
+  onHistory: () => void;
+}) {
+  const state = STATUS[status];
   return (
-    <ListEditor
-      items={items}
-      onChange={onChange}
-      blank={blankLink}
-      addLabel={addLabel}
-      disabled={disabled}
-      render={(item, patch, index) => (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <TextRow id={`${scope}-label-${index}`} label="Libellé" value={item.label} onChange={(label) => patch({ label })} disabled={disabled} />
-          <TextRow id={`${scope}-href-${index}`} label="Adresse (/page, https://…)" value={item.href} onChange={(href) => patch({ href })} disabled={disabled} />
-        </div>
-      )}
-    />
-  );
-}
-
-function HomeForm({ value, onChange, disabled }: { value: HomeContent; onChange: (value: HomeContent) => void; disabled?: boolean }) {
-  const set = <K extends keyof HomeContent>(key: K, change: Partial<HomeContent[K]>) => onChange({ ...value, [key]: { ...value[key], ...change } });
-  const { hero, strengths, catalog, steps, faq, partner, cta } = value;
-  return (
-    <div className="grid gap-4">
-      <Block title="Bannière d’accueil">
-        <TextRow id="hero-title" label="Titre" value={hero.title} onChange={(title) => set('hero', { title })} disabled={disabled} />
-        <TextRow id="hero-subtitle" label="Sous-titre" value={hero.subtitle} onChange={(subtitle) => set('hero', { subtitle })} disabled={disabled} />
-        <TextRow
-          id="hero-words"
-          label="Mots qui défilent (séparés par une virgule)"
-          value={hero.words.join(', ')}
-          onChange={(text) => set('hero', { words: text.split(',').map((word) => word.trimStart()) })}
-          disabled={disabled}
-        />
-        <ImageField label="Image de fond" value={hero.image} fallback={DEFAULT_HOME.hero.image} folder="home" onChange={(image) => set('hero', { image })} disabled={disabled} />
-      </Block>
-
-      <Block title="Atouts">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextRow id="strengths-eyebrow" label="Sur-titre" value={strengths.eyebrow} onChange={(eyebrow) => set('strengths', { eyebrow })} disabled={disabled} />
-          <TextRow id="strengths-title" label="Titre" value={strengths.title} onChange={(title) => set('strengths', { title })} disabled={disabled} />
-        </div>
-        <ItemsList items={strengths.items} onChange={(items) => set('strengths', { items })} disabled={disabled} addLabel="Ajouter un atout" />
-      </Block>
-
-      <Block title="Catalogue de véhicules" toggle={<Visible on={catalog.show} onChange={(show) => set('catalog', { show })} disabled={disabled} />}>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <TextRow id="catalog-eyebrow" label="Sur-titre" value={catalog.eyebrow} onChange={(eyebrow) => set('catalog', { eyebrow })} disabled={disabled} />
-          <TextRow id="catalog-title" label="Titre" value={catalog.title} onChange={(title) => set('catalog', { title })} disabled={disabled} />
-          <TextRow id="catalog-text" label="Texte" value={catalog.text} onChange={(text) => set('catalog', { text })} disabled={disabled} />
-        </div>
-        <p className="text-xs text-muted-foreground">Les véhicules affichés viennent de l’écran Véhicules (statut « disponible »).</p>
-      </Block>
-
-      <Block title="Comment ça marche" toggle={<Visible on={steps.show} onChange={(show) => set('steps', { show })} disabled={disabled} />}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextRow id="steps-eyebrow" label="Sur-titre" value={steps.eyebrow} onChange={(eyebrow) => set('steps', { eyebrow })} disabled={disabled} />
-          <TextRow id="steps-title" label="Titre" value={steps.title} onChange={(title) => set('steps', { title })} disabled={disabled} />
-        </div>
-        <ItemsList items={steps.items} onChange={(items) => set('steps', { items })} disabled={disabled} addLabel="Ajouter une étape" />
-      </Block>
-
-      <Block title="Questions fréquentes" toggle={<Visible on={faq.show} onChange={(show) => set('faq', { show })} disabled={disabled} />}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextRow id="faq-eyebrow" label="Sur-titre" value={faq.eyebrow} onChange={(eyebrow) => set('faq', { eyebrow })} disabled={disabled} />
-          <TextRow id="faq-title" label="Titre" value={faq.title} onChange={(title) => set('faq', { title })} disabled={disabled} />
-        </div>
-        <FaqList scope="faq" items={faq.items} onChange={(items) => set('faq', { items })} disabled={disabled} />
-      </Block>
-
-      <Block title="Bloc partenaires" toggle={<Visible on={partner.show} onChange={(show) => set('partner', { show })} disabled={disabled} />}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextRow id="partner-eyebrow" label="Sur-titre" value={partner.eyebrow} onChange={(eyebrow) => set('partner', { eyebrow })} disabled={disabled} />
-          <TextRow id="partner-title" label="Titre" value={partner.title} onChange={(title) => set('partner', { title })} disabled={disabled} />
-        </div>
-        <Field label="Présentation" htmlFor="partner-text">
-          <Textarea id="partner-text" rows={3} value={partner.text} disabled={disabled} onChange={(event) => set('partner', { text: event.target.value })} />
-        </Field>
-        <TextRow id="partner-button" label="Texte du bouton" value={partner.button} onChange={(button) => set('partner', { button })} disabled={disabled} />
-        <ImageField label="Image" value={partner.image} fallback={DEFAULT_HOME.partner.image} folder="partners" onChange={(image) => set('partner', { image })} disabled={disabled} />
-        <h3 className="text-sm font-medium">Étapes</h3>
-        <ListEditor
-          items={partner.steps}
-          onChange={(items) => set('partner', { steps: items })}
-          blank={blankStep}
-          addLabel="Ajouter une étape"
-          disabled={disabled}
-          render={(item, patch, index) => (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <TextRow id={`pstep-title-${index}`} label="Titre" value={item.title} onChange={(title) => patch({ title })} disabled={disabled} />
-              <TextRow id={`pstep-text-${index}`} label="Texte" value={item.text} onChange={(text) => patch({ text })} disabled={disabled} />
-            </div>
-          )}
-        />
-        <h3 className="text-sm font-medium">Avantages</h3>
-        <ItemsList items={partner.benefits} onChange={(benefits) => set('partner', { benefits })} disabled={disabled} addLabel="Ajouter un avantage" />
-        <h3 className="text-sm font-medium">Questions des partenaires</h3>
-        <FaqList scope="pfaq" items={partner.faq} onChange={(items) => set('partner', { faq: items })} disabled={disabled} />
-      </Block>
-
-      <Block title="Appel à l’action (bas de page)">
-        <TextRow id="cta-title" label="Titre" value={cta.title} onChange={(title) => set('cta', { title })} disabled={disabled} />
-        <TextRow id="cta-text" label="Texte" value={cta.text} onChange={(text) => set('cta', { text })} disabled={disabled} />
-      </Block>
+    <div className="sticky top-14 z-20 -mx-1 flex flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-2 shadow-sm backdrop-blur">
+      <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
+      <div className="ml-auto flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant="ghost" onClick={onHistory}>
+          <History /> Historique
+        </Button>
+        <Button type="button" size="sm" variant="outline" disabled={busy} onClick={onPreview}>
+          <Eye /> Aperçu
+        </Button>
+        {canEdit && (
+          <>
+            <Button type="button" size="sm" variant="ghost" disabled={busy || status === 'published'} onClick={onDiscard}>
+              <Undo2 /> Abandonner
+            </Button>
+            <Button type="button" size="sm" variant="outline" disabled={busy || status !== 'unsaved'} onClick={onSave}>
+              Enregistrer le brouillon
+            </Button>
+            <Button type="button" size="sm" disabled={busy || status === 'published'} onClick={onPublish}>
+              {busy && <Loader2 className="animate-spin" />} Publier
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-function FooterForm({ value, onChange, disabled }: { value: FooterContent; onChange: (value: FooterContent) => void; disabled?: boolean }) {
+function HomeTab({ canEdit }: { canEdit: boolean }) {
+  const doc = useSiteDoc('home', parseHome, cleanHome);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [deleting, setDeleting] = useState<Block | null>(null);
+  const [history, setHistory] = useState(false);
+  const [preview, setPreview] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const scrollTo = useRef<string | null>(null);
+
+  const blocks = doc.value?.blocks ?? [];
+  const setBlocks = (next: Block[]) => doc.setValue({ blocks: next });
+
+  useEffect(() => {
+    if (!scrollTo.current) return;
+    document.getElementById(`section-${scrollTo.current}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    scrollTo.current = null;
+  }, [blocks.length]);
+
+  async function openPreview() {
+    if (canEdit && doc.status === 'unsaved') {
+      if (!(await doc.save(true))) return;
+    }
+    setPreview((n) => n + 1);
+    setPreviewOpen(true);
+  }
+
+  function add(type: BlockType) {
+    const block = newBlock(type);
+    setBlocks([...blocks, block]);
+    setOpenId(block.id);
+    scrollTo.current = block.id;
+    setAdding(false);
+  }
+
+  function move(from: number, to: number) {
+    const next = [...blocks];
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    setBlocks(next);
+  }
+
+  function duplicate(index: number) {
+    const copy = { ...structuredClone(blocks[index]), id: crypto.randomUUID() } as Block;
+    const next = [...blocks];
+    next.splice(index + 1, 0, copy);
+    setBlocks(next);
+    setOpenId(copy.id);
+  }
+
+  if (!doc.ready)
+    return doc.error ? <FormMessage error={doc.error} /> : <Skeleton className="h-96 rounded-xl" />;
+
+  const present = new Set(blocks.map((block) => block.type));
   return (
     <div className="grid gap-4">
-      <Block title="Présentation">
-        <TextRow id="footer-tagline" label="Phrase d’accroche" value={value.tagline} onChange={(tagline) => onChange({ ...value, tagline })} disabled={disabled} />
-        <TextRow id="footer-note" label="Mention complémentaire (facultative)" value={value.note} onChange={(note) => onChange({ ...value, note })} disabled={disabled} />
-        <p className="text-xs text-muted-foreground">Téléphone, WhatsApp, adresse et horaires se modifient dans Paramètres.</p>
-      </Block>
-      <Block title="Liens du pied de page">
-        <LinksList scope="footer-link" items={value.links} onChange={(links) => onChange({ ...value, links })} disabled={disabled} addLabel="Ajouter un lien" />
-      </Block>
-      <Block title="Réseaux sociaux">
-        <LinksList scope="footer-social" items={value.socials} onChange={(socials) => onChange({ ...value, socials })} disabled={disabled} addLabel="Ajouter un réseau" />
-        <p className="text-xs text-muted-foreground">Exemple : libellé « Facebook », adresse https://facebook.com/votre-page.</p>
-      </Block>
+      <Toolbar
+        status={doc.status}
+        busy={doc.busy}
+        canEdit={canEdit}
+        onSave={() => void doc.save()}
+        onPublish={() => void doc.publish()}
+        onDiscard={() => void doc.discard()}
+        onPreview={() => void openPreview()}
+        onHistory={() => setHistory(true)}
+      />
+      <FormMessage error={doc.error} message={doc.error ? '' : doc.message} />
+      <p className="text-sm text-muted-foreground">
+        Les sections s’affichent sur la page d’accueil dans cet ordre. Rien n’est visible du public avant « Publier ».
+      </p>
+      {blocks.map((block, index) => (
+        <SectionCard
+          key={block.id}
+          block={block}
+          index={index}
+          total={blocks.length}
+          open={openId === block.id}
+          disabled={!canEdit}
+          onToggleOpen={() => setOpenId(openId === block.id ? null : block.id)}
+          onChange={(next) => setBlocks(blocks.map((row) => (row.id === block.id ? next : row)))}
+          onMove={(to) => move(index, to)}
+          onDuplicate={() => duplicate(index)}
+          onDelete={() => setDeleting(block)}
+        />
+      ))}
+      {!blocks.length && <p className="rounded-xl border border-dashed py-10 text-center text-sm text-muted-foreground">La page est vide. Ajoutez une première section.</p>}
+      {canEdit && (
+        <Button type="button" variant="outline" className="justify-self-start" onClick={() => setAdding(true)}>
+          <Plus /> Ajouter une section
+        </Button>
+      )}
+
+      <AddSectionDialog open={adding} onOpenChange={setAdding} present={present} onAdd={add} />
+      <HistoryDialog docKey="home" open={history} onOpenChange={setHistory} onRestore={doc.restore} disabled={!canEdit} />
+      <PreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} version={preview} />
+      <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette section ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              « {deleting ? BLOCK_META[deleting.type].label : ''} » sera retirée du brouillon. Le site public ne change qu’à la publication, et l’historique permet de revenir en arrière.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleting) setBlocks(blocks.filter((row) => row.id !== deleting.id));
+                setDeleting(null);
+              }}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-/** Nettoie les textes avant enregistrement : lignes vides retirées, adresses de liens sûres. */
-function cleanHome(home: HomeContent): HomeContent {
-  const items = (list: Item[]) => list.filter((item) => item.title.trim() || item.text.trim());
-  const faqs = (list: Faq[]) => list.filter((entry) => entry.q.trim() && entry.a.trim());
-  return {
-    ...home,
-    hero: { ...home.hero, words: home.hero.words.map((word) => word.trim()).filter(Boolean) },
-    strengths: { ...home.strengths, items: items(home.strengths.items) },
-    steps: { ...home.steps, items: items(home.steps.items) },
-    faq: { ...home.faq, items: faqs(home.faq.items) },
-    partner: {
-      ...home.partner,
-      steps: home.partner.steps.filter((step) => step.title.trim()),
-      benefits: items(home.partner.benefits),
-      faq: faqs(home.partner.faq),
-    },
-  };
-}
+function FooterTab({ canEdit }: { canEdit: boolean }) {
+  const doc = useSiteDoc('footer', parseFooter, cleanFooter);
+  const [history, setHistory] = useState(false);
+  const [preview, setPreview] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
-function cleanFooter(footer: FooterContent): FooterContent {
-  const links = (list: Link[]) => list.filter((link) => link.label.trim()).map((link) => ({ label: link.label.trim(), href: safeHref(link.href) }));
-  return { ...footer, links: links(footer.links), socials: links(footer.socials) };
+  if (!doc.ready) return doc.error ? <FormMessage error={doc.error} /> : <Skeleton className="h-72 rounded-xl" />;
+  const value = doc.value!;
+  const set = (patch: Partial<FooterContent>) => doc.setValue({ ...value, ...patch });
+
+  async function openPreview() {
+    if (canEdit && doc.status === 'unsaved') {
+      if (!(await doc.save(true))) return;
+    }
+    setPreview((n) => n + 1);
+    setPreviewOpen(true);
+  }
+
+  return (
+    <div className="grid gap-4">
+      <Toolbar
+        status={doc.status}
+        busy={doc.busy}
+        canEdit={canEdit}
+        onSave={() => void doc.save()}
+        onPublish={() => void doc.publish()}
+        onDiscard={() => void doc.discard()}
+        onPreview={() => void openPreview()}
+        onHistory={() => setHistory(true)}
+      />
+      <FormMessage error={doc.error} message={doc.error ? '' : doc.message} />
+      <Card>
+        <CardContent className="grid gap-4">
+          <h2 className="text-base font-medium">Présentation</h2>
+          <TextRow id="footer-tagline" label="Phrase d’accroche" value={value.tagline} onChange={(tagline) => set({ tagline })} disabled={!canEdit} />
+          <TextRow id="footer-note" label="Mention complémentaire (facultative)" value={value.note} onChange={(note) => set({ note })} disabled={!canEdit} />
+          <p className="text-xs text-muted-foreground">Téléphone, WhatsApp, adresse et horaires se modifient dans Paramètres.</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="grid gap-4">
+          <h2 className="text-base font-medium">Liens du pied de page</h2>
+          <LinksList scope="footer-link" items={value.links} onChange={(links) => set({ links })} disabled={!canEdit} addLabel="Ajouter un lien" />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="grid gap-4">
+          <h2 className="text-base font-medium">Réseaux sociaux</h2>
+          <LinksList scope="footer-social" items={value.socials} onChange={(socials) => set({ socials })} disabled={!canEdit} addLabel="Ajouter un réseau" />
+          <p className="text-xs text-muted-foreground">Exemple : libellé « Facebook », adresse https://facebook.com/votre-page.</p>
+        </CardContent>
+      </Card>
+      <HistoryDialog docKey="footer" open={history} onOpenChange={setHistory} onRestore={doc.restore} disabled={!canEdit} />
+      <PreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} version={preview} />
+    </div>
+  );
 }
 
 export function WebsiteEditor({ canEdit }: { canEdit: boolean }) {
-  const [home, setHome] = useState<HomeContent | null>(null);
-  const [footer, setFooter] = useState<FooterContent | null>(null);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-  const [saving, setSaving] = useState<SiteKey | null>(null);
-
-  useEffect(() => {
-    createClient()
-      .from('site_content')
-      .select('key,content')
-      .then(({ data, error: failure }) => {
-        if (failure) return setError(frenchError(failure));
-        const byKey = Object.fromEntries((data ?? []).map((row) => [row.key, row.content]));
-        setHome(homeContent(byKey.home));
-        setFooter(footerContent(byKey.footer));
-      });
-  }, []);
-
-  async function save(key: SiteKey) {
-    setError('');
-    setMessage('');
-    setSaving(key);
-    const content = key === 'home' ? cleanHome(home!) : cleanFooter(footer!);
-    const { error: failure } = await createClient()
-      .from('site_content')
-      .upsert({ key, content: JSON.parse(JSON.stringify(content)) }, { onConflict: 'key' });
-    if (failure) {
-      setSaving(null);
-      return setError(frenchError(failure));
-    }
-    await refreshSiteContent();
-    setSaving(null);
-    if (key === 'home') setHome(content as HomeContent);
-    else setFooter(content as FooterContent);
-    setMessage('Modifications publiées : elles sont visibles sur le site.');
-  }
-
-  function reset(key: SiteKey) {
-    if (key === 'home') setHome(DEFAULT_HOME);
-    else setFooter(DEFAULT_FOOTER);
-    setMessage('Contenu d’origine rétabli ici : cliquez sur « Publier » pour l’appliquer au site.');
-  }
-
-  const actions = (key: SiteKey) => (
-    <div className="flex flex-wrap gap-2">
-      <Button type="button" disabled={!canEdit || saving !== null} onClick={() => save(key)}>
-        {saving === key && <Loader2 className="animate-spin" />} Publier les modifications
-      </Button>
-      <Button type="button" variant="outline" disabled={!canEdit || saving !== null} onClick={() => reset(key)}>
-        Rétablir le contenu d’origine
-      </Button>
-    </div>
-  );
-
   return (
     <div className="mx-auto grid max-w-4xl gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Site web</h1>
-          <p className="text-sm text-muted-foreground">Modifiez les textes, images, listes et sections du site public. Rien n’est visible avant d’avoir cliqué sur « Publier ».</p>
+          <p className="text-sm text-muted-foreground">Composez la page d’accueil : ajoutez, déplacez et masquez des sections, prévisualisez, puis publiez.</p>
         </div>
         <Button asChild variant="outline" size="sm">
           <a href="/" target="_blank" rel="noopener noreferrer">
@@ -314,26 +532,18 @@ export function WebsiteEditor({ canEdit }: { canEdit: boolean }) {
         </Button>
       </div>
       {!canEdit && <FormMessage error="Vous pouvez consulter cet écran, mais vous n’avez pas le droit de modifier le site." />}
-      <FormMessage error={error} message={error ? '' : message} />
-      {!home || !footer ? (
-        !error && <Skeleton className="h-96 rounded-xl" />
-      ) : (
-        <Tabs defaultValue="home">
-          <TabsList>
-            <TabsTrigger value="home">Page d’accueil</TabsTrigger>
-            <TabsTrigger value="footer">Pied de page</TabsTrigger>
-          </TabsList>
-          <TabsContent value="home" className="mt-4 grid gap-4">
-            {actions('home')}
-            <HomeForm value={home} onChange={setHome} disabled={!canEdit} />
-            {actions('home')}
-          </TabsContent>
-          <TabsContent value="footer" className="mt-4 grid gap-4">
-            {actions('footer')}
-            <FooterForm value={footer} onChange={setFooter} disabled={!canEdit} />
-          </TabsContent>
-        </Tabs>
-      )}
+      <Tabs defaultValue="home">
+        <TabsList>
+          <TabsTrigger value="home">Page d’accueil</TabsTrigger>
+          <TabsTrigger value="footer">Pied de page</TabsTrigger>
+        </TabsList>
+        <TabsContent value="home" className="mt-4">
+          <HomeTab canEdit={canEdit} />
+        </TabsContent>
+        <TabsContent value="footer" className="mt-4">
+          <FooterTab canEdit={canEdit} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

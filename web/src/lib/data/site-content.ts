@@ -1,7 +1,8 @@
 /**
- * Contenu modifiable du site public (accueil et pied de page). Les valeurs par défaut
- * sont celles du site d'origine : tant que rien n'est enregistré en base, le site
- * s'affiche exactement comme avant.
+ * Contenu modifiable du site public. La page d'accueil est une suite de « sections »
+ * (blocs) que l'on peut ajouter, masquer et réordonner depuis le back-office. Les
+ * valeurs par défaut sont celles du site d'origine : tant que rien n'est enregistré
+ * en base, le site s'affiche exactement comme avant.
  */
 
 export const ICON_NAMES = [
@@ -45,15 +46,17 @@ export type Item = { icon: IconName; title: string; text: string };
 export type Step = { title: string; text: string };
 export type Faq = { q: string; a: string };
 export type Link = { label: string; href: string };
+export type Testimonial = { name: string; role: string; quote: string };
+export type Stat = { value: string; label: string };
+export type GalleryImage = { url: string; caption: string };
 
-export type HomeContent = {
+export type BlockData = {
   hero: { title: string; subtitle: string; words: string[]; image: string };
   strengths: { eyebrow: string; title: string; items: Item[] };
-  catalog: { show: boolean; eyebrow: string; title: string; text: string };
-  steps: { show: boolean; eyebrow: string; title: string; items: Item[] };
-  faq: { show: boolean; eyebrow: string; title: string; items: Faq[] };
+  catalog: { eyebrow: string; title: string; text: string; count: number };
+  steps: { eyebrow: string; title: string; items: Item[] };
+  faq: { eyebrow: string; title: string; items: Faq[] };
   partner: {
-    show: boolean;
     eyebrow: string;
     title: string;
     text: string;
@@ -64,19 +67,62 @@ export type HomeContent = {
     faq: Faq[];
   };
   cta: { title: string; text: string };
+  text_image: {
+    eyebrow: string;
+    title: string;
+    text: string;
+    image: string;
+    imageSide: 'left' | 'right';
+    buttonLabel: string;
+    buttonHref: string;
+  };
+  gallery: { eyebrow: string; title: string; images: GalleryImage[] };
+  announcement: { text: string; linkLabel: string; linkHref: string; tone: 'info' | 'promo' };
+  testimonials: { eyebrow: string; title: string; items: Testimonial[] };
+  stats: { eyebrow: string; title: string; items: Stat[] };
+  video: { eyebrow: string; title: string; url: string; caption: string };
+  text: { title: string; text: string };
 };
 
-export type FooterContent = {
-  tagline: string;
-  links: Link[];
-  socials: Link[];
-  note: string;
+export type BlockType = keyof BlockData;
+export type Block<T extends BlockType = BlockType> = { [K in T]: { id: string; type: K; show: boolean; data: BlockData[K] } }[T];
+
+export const BLOCK_TYPES = [
+  'hero',
+  'strengths',
+  'catalog',
+  'steps',
+  'faq',
+  'partner',
+  'cta',
+  'text_image',
+  'gallery',
+  'announcement',
+  'testimonials',
+  'stats',
+  'video',
+  'text',
+] as const satisfies readonly BlockType[];
+
+/** Libellé, description et unicité de chaque type de section. */
+export const BLOCK_META: Record<BlockType, { label: string; description: string; unique?: boolean }> = {
+  hero: { label: 'Bannière d’accueil', description: 'Grand titre, image de fond et recherche de véhicule.', unique: true },
+  strengths: { label: 'Atouts', description: 'Quatre arguments sur fond sombre, avec pictogrammes.' },
+  catalog: { label: 'Catalogue de véhicules', description: 'Aperçu des véhicules disponibles.', unique: true },
+  steps: { label: 'Étapes', description: 'Une procédure en étapes numérotées.' },
+  faq: { label: 'Questions fréquentes', description: 'Liste de questions et réponses dépliables.' },
+  partner: { label: 'Bloc partenaires', description: 'Présentation du programme partenaire.', unique: true },
+  cta: { label: 'Appel à l’action', description: 'Bandeau final : créer un compte, se connecter, WhatsApp.' },
+  text_image: { label: 'Texte + image', description: 'Un texte à côté d’une image, avec un bouton facultatif.' },
+  gallery: { label: 'Galerie photos', description: 'Une grille de photos avec légendes.' },
+  announcement: { label: 'Bandeau d’annonce', description: 'Un message court (promotion, information).' },
+  testimonials: { label: 'Témoignages', description: 'Avis de clients.' },
+  stats: { label: 'Chiffres clés', description: 'Quelques chiffres mis en avant.' },
+  video: { label: 'Vidéo', description: 'Une vidéo YouTube ou un fichier vidéo.' },
+  text: { label: 'Texte libre', description: 'Un titre et des paragraphes.' },
 };
 
-export const SITE_KEYS = ['home', 'footer'] as const;
-export type SiteKey = (typeof SITE_KEYS)[number];
-
-export const DEFAULT_HOME: HomeContent = {
+export const DEFAULT_DATA: BlockData = {
   hero: {
     title: 'Louez votre véhicule en quelques clics',
     subtitle: 'Contrat signé à l’écran, sans frais cachés.',
@@ -93,9 +139,8 @@ export const DEFAULT_HOME: HomeContent = {
       { icon: 'message-circle', title: 'Assistance WhatsApp', text: 'Une équipe disponible pour vous accompagner.' },
     ],
   },
-  catalog: { show: true, eyebrow: 'Catalogue', title: 'Nos véhicules', text: 'Des modèles entretenus, prêts à partir.' },
+  catalog: { eyebrow: 'Catalogue', title: 'Nos véhicules', text: 'Des modèles entretenus, prêts à partir.', count: 6 },
   steps: {
-    show: true,
     eyebrow: 'Simplicité',
     title: 'Comment ça marche',
     items: [
@@ -105,7 +150,6 @@ export const DEFAULT_HOME: HomeContent = {
     ],
   },
   faq: {
-    show: true,
     eyebrow: 'Besoin d’aide',
     title: 'Questions fréquentes',
     items: [
@@ -118,7 +162,6 @@ export const DEFAULT_HOME: HomeContent = {
     ],
   },
   partner: {
-    show: true,
     eyebrow: 'Devenez partenaire',
     title: 'Rentabilisez votre véhicule inutilisé',
     text: 'Proposez votre véhicule avec vos photos et le prix que vous souhaitez toucher. Nous l’évaluons, le publions et vous reversons votre part à chaque location.',
@@ -143,6 +186,53 @@ export const DEFAULT_HOME: HomeContent = {
     ],
   },
   cta: { title: 'Prêt à partir ?', text: 'Créez votre compte en deux minutes et réservez votre véhicule.' },
+  text_image: {
+    eyebrow: 'À propos',
+    title: 'Un titre accrocheur',
+    text: 'Présentez ici votre entreprise, un service ou une offre en quelques lignes.',
+    image: '/hero-banner.jpg',
+    imageSide: 'right',
+    buttonLabel: '',
+    buttonHref: '/vehicules',
+  },
+  gallery: { eyebrow: 'Galerie', title: 'En images', images: [] },
+  announcement: { text: 'Information importante pour nos clients.', linkLabel: '', linkHref: '/vehicules', tone: 'info' },
+  testimonials: {
+    eyebrow: 'Avis clients',
+    title: 'Ils nous font confiance',
+    items: [{ name: 'Nom du client', role: 'Client', quote: 'Un service rapide et des véhicules en parfait état.' }],
+  },
+  stats: {
+    eyebrow: 'En chiffres',
+    title: 'FIMA AUTO',
+    items: [
+      { value: '100%', label: 'Contrats signés en ligne' },
+      { value: '24/7', label: 'Réservation en ligne' },
+    ],
+  },
+  video: { eyebrow: 'Vidéo', title: 'Découvrez-nous', url: '', caption: '' },
+  text: { title: 'Titre de la section', text: 'Votre texte ici.\n\nSéparez les paragraphes par une ligne vide.' },
+};
+
+export const defaultData = <T extends BlockType>(type: T): BlockData[T] => structuredClone(DEFAULT_DATA[type]);
+
+/** Nouvelle section avec un identifiant unique (à n'appeler que dans le navigateur). */
+export function newBlock<T extends BlockType>(type: T): Block<T> {
+  return { id: crypto.randomUUID(), type, show: true, data: defaultData(type) } as Block<T>;
+}
+
+/** Sections de l'accueil d'origine, avec des identifiants fixes. */
+export const DEFAULT_HOME_BLOCKS: Block[] = (['hero', 'strengths', 'catalog', 'steps', 'faq', 'partner', 'cta'] as const).map(
+  (type) => ({ id: type, type, show: true, data: defaultData(type) }) as Block,
+);
+
+export type HomeContent = { blocks: Block[] };
+
+export type FooterContent = {
+  tagline: string;
+  links: Link[];
+  socials: Link[];
+  note: string;
 };
 
 export const DEFAULT_FOOTER: FooterContent = {
@@ -172,11 +262,34 @@ export function mergeContent<T>(defaults: T, stored: unknown): T {
   return (typeof stored === typeof defaults ? stored : defaults) as T;
 }
 
-export const homeContent = (stored: unknown) => mergeContent(DEFAULT_HOME, stored);
+/** Sections enregistrées, nettoyées ; `fallback` si rien d'exploitable n'est enregistré. */
+export function normalizeBlocks(stored: unknown, fallback: Block[] = []): Block[] {
+  const list = stored && typeof stored === 'object' ? (stored as { blocks?: unknown }).blocks : undefined;
+  if (!Array.isArray(list)) return fallback;
+  return list
+    .filter((raw): raw is Record<string, unknown> => !!raw && typeof raw === 'object' && (BLOCK_TYPES as readonly string[]).includes(String((raw as { type?: unknown }).type)))
+    .map((raw, index) => {
+      const type = raw.type as BlockType;
+      return {
+        id: typeof raw.id === 'string' && raw.id ? raw.id : `${type}-${index}`,
+        type,
+        show: raw.show !== false,
+        data: mergeContent(defaultData(type), raw.data),
+      } as Block;
+    });
+}
+
+export const homeContent = (stored: unknown): HomeContent => ({ blocks: normalizeBlocks(stored, DEFAULT_HOME_BLOCKS) });
 export const footerContent = (stored: unknown) => mergeContent(DEFAULT_FOOTER, stored);
 
 /** Adresses acceptées pour un lien : interne, https, mailto ou tel (jamais javascript:). */
 export function safeHref(value: string) {
   const href = value.trim();
   return /^(\/|#|https?:\/\/|mailto:|tel:)/i.test(href) ? href : '/';
+}
+
+/** Adresse d'intégration YouTube (« watch », « youtu.be » ou « embed »), ou null. */
+export function youtubeEmbed(url: string) {
+  const match = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : null;
 }
