@@ -108,7 +108,7 @@ export const BLOCK_TYPES = [
 export const BLOCK_META: Record<BlockType, { label: string; description: string; unique?: boolean }> = {
   hero: { label: 'Bannière d’accueil', description: 'Grand titre, image de fond et recherche de véhicule.', unique: true },
   strengths: { label: 'Atouts', description: 'Quatre arguments sur fond sombre, avec pictogrammes.' },
-  catalog: { label: 'Catalogue de véhicules', description: 'Aperçu des véhicules disponibles.', unique: true },
+  catalog: { label: 'Catalogue de véhicules', description: 'Le catalogue complet : dates, filtres, fiche du véhicule.', unique: true },
   steps: { label: 'Étapes', description: 'Une procédure en étapes numérotées.' },
   faq: { label: 'Questions fréquentes', description: 'Liste de questions et réponses dépliables.' },
   partner: { label: 'Bloc partenaires', description: 'Présentation du programme partenaire.', unique: true },
@@ -139,7 +139,7 @@ export const DEFAULT_DATA: BlockData = {
       { icon: 'message-circle', title: 'Assistance WhatsApp', text: 'Une équipe disponible pour vous accompagner.' },
     ],
   },
-  catalog: { eyebrow: 'Catalogue', title: 'Nos véhicules', text: 'Des modèles entretenus, prêts à partir.', count: 6 },
+  catalog: { eyebrow: 'Catalogue', title: 'Nos véhicules', text: 'Choisissez vos dates pour voir les véhicules réellement disponibles. La connexion n’est demandée qu’au moment de réserver.', count: 6 },
   steps: {
     eyebrow: 'Simplicité',
     title: 'Comment ça marche',
@@ -238,7 +238,7 @@ export type FooterContent = {
 export const DEFAULT_FOOTER: FooterContent = {
   tagline: 'Location de véhicules, mobilités premium.',
   links: [
-    { label: 'Véhicules', href: '/vehicules' },
+    { label: 'Véhicules', href: '/#vehicules' },
     { label: 'Comment ça marche', href: '/#etapes' },
     { label: 'FAQ', href: '/#faq' },
     { label: 'Devenir partenaire', href: '/#partenaires' },
@@ -251,7 +251,7 @@ export type MenuContent = { links: Link[] };
 
 export const DEFAULT_MENU: MenuContent = {
   links: [
-    { label: 'Véhicules', href: '/vehicules' },
+    { label: 'Véhicules', href: '/#vehicules' },
     { label: 'Comment ça marche', href: '/#etapes' },
     { label: 'Partenaires', href: '/#partenaires' },
     { label: 'Contact', href: '/#contact' },
@@ -349,15 +349,3 @@ export function youtubeEmbed(url: string) {
   const match = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
   return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : null;
 }
-
-/** Page Véhicules : textes d'introduction et sections affichées sous le catalogue. */
-export type CatalogPageContent = { eyebrow: string; title: string; text: string; blocks: Block[] };
-export const DEFAULT_CATALOG_PAGE = {
-  eyebrow: 'Catalogue',
-  title: 'Nos véhicules disponibles',
-  text: 'Choisissez vos dates pour voir les véhicules réellement disponibles. La connexion n’est demandée qu’au moment de réserver.',
-};
-export const catalogPageContent = (stored: unknown): CatalogPageContent => ({
-  ...mergeContent(DEFAULT_CATALOG_PAGE, stored),
-  blocks: normalizeBlocks(stored, []),
-});

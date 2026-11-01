@@ -140,7 +140,7 @@ export function BlockForm({ block, onChange, disabled }: Props & { block: Block;
             <TextRow id={`${id}-title`} label="Titre" value={d.title} onChange={(title) => set({ title })} disabled={disabled} />
             <TextRow id={`${id}-text`} label="Texte" value={d.text} onChange={(text) => set({ text })} disabled={disabled} />
           </div>
-          <Field label="Nombre de véhicules affichés" htmlFor={`${id}-count`} className="sm:w-56">
+          <Field label="Véhicules affichés avant « Voir plus »" htmlFor={`${id}-count`} className="sm:w-56">
             <Select value={String(d.count)} onValueChange={(count) => set({ count: Number(count) })} disabled={disabled}>
               <SelectTrigger id={`${id}-count`}>
                 <SelectValue />
@@ -154,7 +154,7 @@ export function BlockForm({ block, onChange, disabled }: Props & { block: Block;
               </SelectContent>
             </Select>
           </Field>
-          <p className="text-xs text-muted-foreground">Les véhicules viennent de l’écran Véhicules (statut « disponible »).</p>
+          <p className="text-xs text-muted-foreground">Cette section affiche le catalogue complet (dates, filtres, fiche du véhicule). Les véhicules viennent de l’écran Véhicules (statut « disponible »).</p>
         </div>
       );
     }

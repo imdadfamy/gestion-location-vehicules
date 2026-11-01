@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, SearchX, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -34,9 +34,22 @@ function toIso(local: string) {
 
 const PRICE_STEP = 1000;
 
-export function CatalogView({ whatsappPhone }: { whatsappPhone?: string | null }) {
+/** Ce que l'adresse retient du catalogue (lien partageable, retour arrière, recherche de l'accueil). */
+function serialize(state: { departure: string; returnDate: string; category: string; selectedId: string | null }) {
+  const next = new URLSearchParams();
+  if (state.departure) next.set('depart', state.departure);
+  if (state.returnDate) next.set('retour', state.returnDate);
+  if (state.category !== 'all') next.set('categorie', state.category);
+  if (state.selectedId) next.set('vehicule', state.selectedId);
+  return next.toString();
+}
+
+/** Catalogue filtrable : dates, disponibilité, filtres, fiche en fenêtre. `pageSize` : véhicules affichés avant « Voir plus ». */
+export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: string | null; pageSize?: number }) {
   const router = useRouter();
+  const pathname = usePathname();
   const params = useSearchParams();
+  const paramsText = params.toString();
   const isMobile = useIsMobile();
   const [departure, setDeparture] = useState(params.get('depart') ?? '');
   const [returnDate, setReturnDate] = useState(params.get('retour') ?? '');
@@ -73,15 +86,26 @@ export function CatalogView({ whatsappPhone }: { whatsappPhone?: string | null }
   const vehicles = useMemo(() => result?.data ?? [], [result]);
   const error = result?.error ?? '';
 
-  // Garde les choix dans l'adresse (lien partageable, retour arrière).
+  // Les choix passent dans l'adresse (lien partageable, retour arrière)…
   useEffect(() => {
-    const next = new URLSearchParams();
-    if (departure) next.set('depart', departure);
-    if (returnDate) next.set('retour', returnDate);
-    if (category !== 'all') next.set('categorie', category);
-    if (selectedId) next.set('vehicule', selectedId);
-    router.replace(`/vehicules${next.size ? `?${next}` : ''}`, { scroll: false });
-  }, [departure, returnDate, category, selectedId, router]);
+    const next = serialize({ departure, returnDate, category, selectedId });
+    if (next !== new URLSearchParams(window.location.search).toString()) router.replace(`${pathname}${next ? `?${next}` : ''}`, { scroll: false });
+    // Seuls les choix de l'utilisateur déclenchent une écriture dans l'adresse.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departure, returnDate, category, selectedId]);
+
+  // …et une adresse modifiée de l'extérieur (barre de recherche de l'accueil, lien partagé) met à jour les choix.
+  const [seenParams, setSeenParams] = useState(paramsText);
+  if (seenParams !== paramsText) {
+    setSeenParams(paramsText);
+    if (paramsText !== serialize({ departure, returnDate, category, selectedId })) {
+      const external = new URLSearchParams(paramsText);
+      setDeparture(external.get('depart') ?? '');
+      setReturnDate(external.get('retour') ?? '');
+      setCategory(external.get('categorie') ?? 'all');
+      setSelectedId(external.get('vehicule'));
+    }
+  }
 
   const bounds = useMemo(() => {
     const prices = vehicles.map((v) => Number(v.rental_price)).filter((price) => price > 0);
@@ -107,6 +131,12 @@ export function CatalogView({ whatsappPhone }: { whatsappPhone?: string | null }
     // Les véhicules libres d'abord, les occupés grisés à la suite.
     return [...rows.filter((v) => v.is_available), ...rows.filter((v) => !v.is_available)];
   }, [vehicles, category, transmission, fuel, minSeats, priceLimit, hideUnavailable, sort]);
+
+  // « Voir plus » : le nombre affiché repart de zéro dès qu'un filtre change.
+  const filterKey = [category, transmission, fuel, minSeats, priceLimit, hideUnavailable, sort, period].join('|');
+  const [limitState, setLimitState] = useState({ key: '', limit: pageSize });
+  const limit = limitState.key === filterKey ? limitState.limit : pageSize;
+  const shown = visible.slice(0, limit);
 
   const filterChips: { key: string; label: string; clear: () => void }[] = [];
   if (transmission !== 'all') filterChips.push({ key: 'transmission', label: transmission === 'automatic' ? 'Automatique' : 'Manuelle', clear: () => setTransmission('all') });
@@ -314,8 +344,9 @@ export function CatalogView({ whatsappPhone }: { whatsappPhone?: string | null }
           ))}
         </div>
       ) : visible.length ? (
+        <>
         <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((vehicle, i) => (
+          {shown.map((vehicle, i) => (
             <AnimatedContent key={vehicle.id} distance={30} delay={(i % 3) * 0.06}>
               <VehicleCard
                 vehicle={vehicle}
@@ -335,6 +366,14 @@ export function CatalogView({ whatsappPhone }: { whatsappPhone?: string | null }
             </AnimatedContent>
           ))}
         </div>
+        {visible.length > shown.length && (
+          <div className="mt-8 text-center">
+            <Button variant="outline" size="lg" onClick={() => setLimitState({ key: filterKey, limit: limit + pageSize })}>
+              Voir plus ({visible.length - shown.length} autre{visible.length - shown.length > 1 ? 's' : ''})
+            </Button>
+          </div>
+        )}
+        </>
       ) : (
         <div className="mt-10 flex flex-col items-center gap-3 text-center text-muted-foreground">
           <SearchX className="size-8" />

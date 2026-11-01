@@ -4,7 +4,6 @@ import type { Database } from '@/lib/database.types';
 import { resolveSupabaseConfig } from '@/lib/supabase/config';
 import { localizedFetch } from '@/lib/supabase/localized-fetch';
 import {
-  catalogPageContent,
   footerContent,
   homeContent,
   isValidSlug,
@@ -12,7 +11,6 @@ import {
   pageContent,
   pageKey,
   settingsContent,
-  type CatalogPageContent,
   type FooterContent,
   type HomeContent,
   type MenuContent,
@@ -60,8 +58,4 @@ export async function getPage(slug: string): Promise<PageContent | null> {
   if (!isValidSlug(slug)) return null;
   const stored = (await readSiteContent())[pageKey(slug)];
   return stored ? pageContent(stored) : null;
-}
-
-export async function getCatalogPage(): Promise<CatalogPageContent> {
-  return catalogPageContent((await readSiteContent()).catalog);
 }

@@ -43,7 +43,8 @@ export function Hero({ content }: { content: BlockData['hero'] }) {
     if (departure) params.set('depart', departure);
     if (returnDate) params.set('retour', returnDate);
     if (category !== 'all') params.set('categorie', category);
-    router.push(`/vehicules${params.size ? `?${params}` : ''}`);
+    // Le catalogue est sur l'accueil : la recherche le filtre puis fait défiler jusqu'à lui.
+    router.push(`/${params.size ? `?${params}` : ''}#vehicules`);
   }
 
   return (

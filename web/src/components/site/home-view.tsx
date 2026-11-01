@@ -7,11 +7,11 @@ import { Hero } from '@/components/site/hero';
 import { SiteFooter } from '@/components/site/site-footer';
 import { SiteHeader } from '@/components/site/site-header';
 import { SiteIcon } from '@/components/site/site-icon';
-import { VehicleCard } from '@/components/site/vehicle-card';
+import { CatalogView } from '@/components/site/catalog-view';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { availableVehicles, companyContact, whatsappLink } from '@/lib/data/public-catalog';
+import { companyContact, whatsappLink } from '@/lib/data/public-catalog';
 import { safeHref, youtubeEmbed, type Block, type Faq, type FooterContent, type Link as MenuLink, type Announcement } from '@/lib/data/site-content';
 import { createClient } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
@@ -42,38 +42,15 @@ function FaqList({ items }: { items: Faq[] }) {
 /** Coordonnées lues une seule fois par requête, même si plusieurs blocs les affichent. */
 const getCompany = cache(async () => companyContact(await createClient()));
 
-/** Aperçu du catalogue : disponibilités lues à chaque visite. */
-async function CatalogPreview({ count }: { count: number }) {
-  const db = await createClient();
-  const vehicles = await availableVehicles(db);
-  const preview = vehicles.data.slice(0, Math.max(1, count));
-  if (!preview.length)
-    return (
-      <p className="mt-10 rounded-2xl border border-dashed py-12 text-center text-muted-foreground">
-        Les véhicules disponibles s’affichent ici dès qu’ils sont publiés.
-      </p>
-    );
-  return (
-    <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {preview.map((vehicle, i) => (
-        <AnimatedContent key={vehicle.id} distance={40} delay={(i % 3) * 0.08}>
-          <VehicleCard
-            vehicle={vehicle}
-            action={
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/vehicules?vehicule=${vehicle.id}`}>Voir</Link>
-              </Button>
-            }
-          />
-        </AnimatedContent>
-      ))}
-    </div>
-  );
+/** Le catalogue filtrable (le même que celui de la page Véhicules), avec le numéro WhatsApp de l'agence. */
+async function Catalog({ count }: { count: number }) {
+  const company = await getCompany();
+  return <CatalogView whatsappPhone={company?.whatsapp_phone} pageSize={Math.max(1, count)} />;
 }
 
 function CatalogSkeleton() {
   return (
-    <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {[0, 1, 2].map((i) => (
         <Skeleton key={i} className="aspect-[4/3] w-full rounded-xl" />
       ))}
@@ -183,17 +160,12 @@ function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
     case 'catalog': {
       const { eyebrow, title, text, count } = block.data;
       return (
-        <section className="mx-auto max-w-6xl px-4 py-20">
+        <section id={anchor ? 'vehicules' : undefined} className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20">
           <SectionTitle eyebrow={eyebrow} title={title} text={text} />
-          <Suspense fallback={<CatalogSkeleton />}>
-            <CatalogPreview count={count} />
-          </Suspense>
-          <div className="mt-10 text-center">
-            <Button asChild size="lg">
-              <Link href="/vehicules">
-                Tout le catalogue <ArrowRight />
-              </Link>
-            </Button>
+          <div className="mt-10">
+            <Suspense fallback={<CatalogSkeleton />}>
+              <Catalog count={count} />
+            </Suspense>
           </div>
         </section>
       );
