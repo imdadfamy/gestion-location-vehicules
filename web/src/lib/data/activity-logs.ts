@@ -22,6 +22,8 @@ export const LOG_MODULES: Record<string, string> = {
   vehicle_maintenance: 'Maintenance',
   incidents: 'Incidents',
   site_content: 'Site web',
+  marketing_expenses: 'Marketing',
+  marketing_campaigns: 'Campagnes marketing',
 };
 
 export function activityPage(db: Db, from: number) {

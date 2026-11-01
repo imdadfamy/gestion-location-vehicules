@@ -790,6 +790,81 @@ export type Database = {
           },
         ];
       };
+      marketing_campaigns: {
+        Row: { budget: number | null; created_at: string; created_by: string | null; ends_on: string | null; id: string; name: string; notes: string | null; starts_on: string | null };
+        Insert: { budget?: number | null; created_at?: string; created_by?: string | null; ends_on?: string | null; id?: string; name: string; notes?: string | null; starts_on?: string | null };
+        Update: { budget?: number | null; created_at?: string; created_by?: string | null; ends_on?: string | null; id?: string; name?: string; notes?: string | null; starts_on?: string | null };
+        Relationships: [];
+      };
+      marketing_expenses: {
+        Row: {
+          amount: number;
+          campaign_id: string | null;
+          channel: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          in_kind: boolean;
+          influencer_name: string | null;
+          label: string;
+          loan_days: number | null;
+          notes: string | null;
+          receipt_path: string | null;
+          spent_on: string;
+          updated_at: string;
+          vehicle_id: string | null;
+        };
+        Insert: {
+          amount: number;
+          campaign_id?: string | null;
+          channel: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          in_kind?: boolean;
+          influencer_name?: string | null;
+          label: string;
+          loan_days?: number | null;
+          notes?: string | null;
+          receipt_path?: string | null;
+          spent_on?: string;
+          updated_at?: string;
+          vehicle_id?: string | null;
+        };
+        Update: {
+          amount?: number;
+          campaign_id?: string | null;
+          channel?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          in_kind?: boolean;
+          influencer_name?: string | null;
+          label?: string;
+          loan_days?: number | null;
+          notes?: string | null;
+          receipt_path?: string | null;
+          spent_on?: string;
+          updated_at?: string;
+          vehicle_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'marketing_expenses_campaign_id_fkey';
+            columns: ['campaign_id'];
+            isOneToOne: false;
+            referencedRelation: 'marketing_campaigns';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'marketing_expenses_vehicle_id_fkey';
+            columns: ['vehicle_id'];
+            isOneToOne: false;
+            referencedRelation: 'vehicles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       notifications: {
         Row: {
           created_at: string;

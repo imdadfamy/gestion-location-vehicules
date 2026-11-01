@@ -53,6 +53,7 @@ const MODULES: Record<string, string> = {
   activity_logs: 'Journal',
   partners: 'Partenaires',
   website: 'Site web',
+  marketing: 'Marketing',
 };
 const actionKeys = Object.keys(ACTIONS);
 const moduleKeys = Object.keys(MODULES);

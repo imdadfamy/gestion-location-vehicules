@@ -11,6 +11,7 @@ import {
   History,
   KeyRound,
   LayoutDashboard,
+  Megaphone,
   type LucideIcon,
   BarChart3,
   Settings,
@@ -58,6 +59,7 @@ export const MENU: { label: string; items: MenuItem[] }[] = [
       { title: 'Mes informations', href: '/app/my-profile', icon: UserCircle },
       { title: 'Notifications', href: '/app/notifications', icon: Bell, module: 'notifications' },
       { title: 'Rapports', href: '/app/reports', icon: BarChart3, module: 'reports' },
+      { title: 'Marketing', href: '/app/marketing', icon: Megaphone, module: 'marketing' },
     ],
   },
   {

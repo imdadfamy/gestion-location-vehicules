@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { FormMessage } from '@/components/auth/form-message';
 import { Field } from '@/components/staff/form-field';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,22 @@ function Ranked({ name, value, label, max }: { name: string; value: number; labe
   );
 }
 
-export function ReportsView() {
+/** Ligne de la cascade du résultat net : montant précédé de + ou −. */
+function NetLine({ label, amount, sign, hint, strong }: { label: string; amount: number; sign?: '+' | '−'; hint?: string; strong?: boolean }) {
+  return (
+    <li className={cn('flex items-baseline justify-between gap-3 py-2 text-sm', strong && 'font-semibold')}>
+      <span className="min-w-0">
+        {label}
+        {hint && <span className="block text-xs font-normal text-muted-foreground">{hint}</span>}
+      </span>
+      <span className="shrink-0 tabular-nums">
+        {sign} {formatMoney(Math.abs(amount))}
+      </span>
+    </li>
+  );
+}
+
+export function ReportsView({ includeMarketing = false }: { includeMarketing?: boolean }) {
   // Période par défaut : du 1er janvier à aujourd'hui (jour local).
   const [from, setFrom] = useState(() => `${new Date().getFullYear()}-01-01`);
   const [to, setTo] = useState(() => new Date().toLocaleDateString('en-CA'));
@@ -39,7 +55,7 @@ export function ReportsView() {
 
   useEffect(() => {
     let current = true;
-    buildReport(createClient(), period.from, period.to).then(({ data, error: failure }) => {
+    buildReport(createClient(), period.from, period.to, includeMarketing).then(({ data, error: failure }) => {
       if (!current) return;
       setLoading(false);
       if (failure) return setError(frenchError(failure));
@@ -49,7 +65,7 @@ export function ReportsView() {
     return () => {
       current = false;
     };
-  }, [period]);
+  }, [period, includeMarketing]);
 
   function exportCsv() {
     if (!report) return;
@@ -102,6 +118,34 @@ export function ReportsView() {
       ) : (
         report && (
           <>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Résultat net de la période</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="divide-y">
+                  <NetLine label="Revenus de location encaissés" amount={report.net.rentalRevenue} sign="+" />
+                  <NetLine label="Revenus des transferts terminés" amount={report.net.transferRevenue} sign="+" />
+                  <NetLine label="Part des partenaires" amount={report.net.partnerShare} sign="−" hint="Jours loués × prix demandé par chaque partenaire, locations commencées sur la période." />
+                  <NetLine label="Coûts de maintenance" amount={report.net.maintenance} sign="−" />
+                  {report.net.marketingIncluded && (
+                    <NetLine
+                      label="Dépenses marketing"
+                      amount={report.net.marketing}
+                      sign="−"
+                      hint={report.net.marketingInKind ? `dont ${formatMoney(report.net.marketingInKind)} de véhicules prêtés, valorisés au prix de location (pas de sortie d’argent).` : undefined}
+                    />
+                  )}
+                  <li className={cn('flex items-baseline justify-between gap-3 py-3 text-base font-semibold', report.net.net < 0 ? 'text-destructive' : 'text-emerald-600 dark:text-emerald-400')}>
+                    <span>Résultat net</span>
+                    <span className="tabular-nums">
+                      {report.net.net < 0 ? '−' : ''} {formatMoney(Math.abs(report.net.net))}
+                    </span>
+                  </li>
+                </ul>
+                {!report.net.marketingIncluded && <p className="mt-2 text-xs text-muted-foreground">Les dépenses marketing ne sont pas incluses : elles demandent la permission « Marketing ».</p>}
+              </CardContent>
+            </Card>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
               {report.stats.map((stat) => (
                 <Card key={stat.label} className="gap-0 py-4">

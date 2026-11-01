@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
 
 type Db = SupabaseClient<Database>;
-export type Bucket = 'rental-documents' | 'contract-assets' | 'inspection-photos';
+export type Bucket = 'rental-documents' | 'contract-assets' | 'inspection-photos' | 'marketing-receipts';
 
 /** Chemin unique `<dossier>/<uuid>-<nom nettoyé>`. */
 export function uniquePath(folder: string, file: File) {
