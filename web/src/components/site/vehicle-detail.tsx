@@ -7,25 +7,27 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import type { Translate } from '@/lib/i18n';
 import { formatMoney, fuelLabel, rentalDays, transmissionLabel, whatsappLink, type CatalogVehicle } from '@/lib/data/public-catalog';
 import { cn } from '@/lib/utils';
+import { useLang } from './lang-provider';
 import { VehicleGallery } from './vehicle-gallery';
 
-const DATE_FORMAT = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-const formatLocal = (value: string) => DATE_FORMAT.format(new Date(value));
+const formatLocal = (value: string, locale: string) =>
+  new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 
 type Spec = { icon: React.ReactNode; label: string; value: string };
 
-function specsOf(vehicle: CatalogVehicle): Spec[] {
+function specsOf(vehicle: CatalogVehicle, t: Translate, locale: string): Spec[] {
   const specs: Spec[] = [];
-  if (vehicle.year) specs.push({ icon: <Calendar />, label: 'Année', value: String(vehicle.year) });
-  if (vehicle.seats) specs.push({ icon: <Users />, label: 'Places', value: String(vehicle.seats) });
-  if (vehicle.doors) specs.push({ icon: <DoorOpen />, label: 'Portes', value: String(vehicle.doors) });
-  specs.push({ icon: <Cog />, label: 'Boîte', value: transmissionLabel[vehicle.transmission ?? ''] ?? 'Non renseignée' });
-  specs.push({ icon: <Fuel />, label: 'Carburant', value: fuelLabel[vehicle.fuel_type ?? ''] ?? vehicle.fuel_type ?? 'Non renseigné' });
-  if (vehicle.air_conditioning !== null) specs.push({ icon: <Snowflake />, label: 'Climatisation', value: vehicle.air_conditioning ? 'Oui' : 'Non' });
-  if (vehicle.mileage) specs.push({ icon: <Gauge />, label: 'Kilométrage', value: `${Number(vehicle.mileage).toLocaleString('fr-FR')} km` });
-  if (vehicle.color) specs.push({ icon: <Palette />, label: 'Couleur', value: vehicle.color });
+  if (vehicle.year) specs.push({ icon: <Calendar />, label: t('Année'), value: String(vehicle.year) });
+  if (vehicle.seats) specs.push({ icon: <Users />, label: t('Places'), value: String(vehicle.seats) });
+  if (vehicle.doors) specs.push({ icon: <DoorOpen />, label: t('Portes'), value: String(vehicle.doors) });
+  specs.push({ icon: <Cog />, label: t('Boîte'), value: t(transmissionLabel[vehicle.transmission ?? ''] ?? 'Non renseignée') });
+  specs.push({ icon: <Fuel />, label: t('Carburant'), value: t(fuelLabel[vehicle.fuel_type ?? ''] ?? vehicle.fuel_type ?? 'Non renseigné') });
+  if (vehicle.air_conditioning !== null) specs.push({ icon: <Snowflake />, label: t('Climatisation'), value: vehicle.air_conditioning ? t('Oui') : t('Non') });
+  if (vehicle.mileage) specs.push({ icon: <Gauge />, label: t('Kilométrage'), value: `${Number(vehicle.mileage).toLocaleString(locale)} km` });
+  if (vehicle.color) specs.push({ icon: <Palette />, label: t('Couleur'), value: vehicle.color });
   return specs;
 }
 
@@ -51,6 +53,8 @@ export function VehicleDetail({
   onReserve: (vehicle: CatalogVehicle) => void;
   onSelect: (vehicle: CatalogVehicle) => void;
 }) {
+  const { lang, t, plural, locale, href } = useLang();
+  const money = (value: unknown) => formatMoney(value, locale);
   const days = rentalDays(departure, returnDate);
   const unavailable = vehicle.is_available === false;
   const name = `${vehicle.make} ${vehicle.model}`;
@@ -70,17 +74,17 @@ export function VehicleDetail({
     const params = new URLSearchParams({ vehicule: vehicle.id });
     if (departure) params.set('depart', departure);
     if (returnDate) params.set('retour', returnDate);
-    return `${window.location.origin}/vehicules?${params}`;
+    return `${window.location.origin}${href('/vehicules')}?${params}`;
   }
 
-  const period = departure && returnDate ? ` du ${formatLocal(departure)} au ${formatLocal(returnDate)}` : '';
-  const message = () => `Bonjour FIMA AUTO, je suis intéressé par la ${name}${withDriver ? ' avec chauffeur' : ''}${period}. ${link()}`;
+  const period = departure && returnDate ? ` ${t('du {from} au {to}', { from: formatLocal(departure, locale), to: formatLocal(returnDate, locale) })}` : '';
+  const message = () => `${t('Bonjour FIMA AUTO, je suis intéressé par {name}', { name })}${withDriver ? ` ${t('avec chauffeur')}` : ''}${period}. ${link()}`;
 
   async function share() {
     const url = link();
     if (navigator.share) {
       try {
-        await navigator.share({ title: `${name} – FIMA AUTO`, text: `${name} à louer chez FIMA AUTO`, url });
+        await navigator.share({ title: `${name} – FIMA AUTO`, text: t('{name} à louer chez FIMA AUTO', { name }), url });
       } catch {
         // Partage annulé : rien à faire.
       }
@@ -88,36 +92,36 @@ export function VehicleDetail({
     }
     try {
       await navigator.clipboard.writeText(url);
-      toast.success('Lien copié.');
+      toast.success(t('Lien copié.'));
     } catch {
-      toast.error('Copie impossible : copiez l’adresse du navigateur.');
+      toast.error(t('Copie impossible : copiez l’adresse du navigateur.'));
     }
   }
 
   const askHref = whatsappLink(whatsappPhone, message());
-  const shareHref = `https://wa.me/?text=${encodeURIComponent(`${name} à louer chez FIMA AUTO : ${typeof window === 'undefined' ? '' : link()}`)}`;
+  const shareHref = `https://wa.me/?text=${encodeURIComponent(`${t('{name} à louer chez FIMA AUTO', { name })} : ${typeof window === 'undefined' ? '' : link()}`)}`;
 
   return (
     <div className="grid gap-4">
       <VehicleGallery key={vehicle.id} photos={vehicle.photos} alt={name} />
 
       <div className="flex flex-wrap items-center gap-2">
-        {vehicle.category && <Badge variant="secondary">{vehicle.category}</Badge>}
-        {unavailable ? <Badge variant="destructive">Indisponible sur ces dates</Badge> : <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">{departure && returnDate ? 'Disponible sur ces dates' : 'Disponible'}</Badge>}
+        {vehicle.category && <Badge variant="secondary">{t(vehicle.category)}</Badge>}
+        {unavailable ? <Badge variant="destructive">{t('Indisponible sur ces dates')}</Badge> : <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">{departure && returnDate ? t('Disponible sur ces dates') : t('Disponible')}</Badge>}
         <div className="ml-auto flex gap-2">
           <Button type="button" size="sm" variant="outline" onClick={share}>
-            <Share2 /> Partager
+            <Share2 /> {t('Partager')}
           </Button>
           <Button asChild size="sm" variant="outline">
-            <a href={shareHref} target="_blank" rel="noopener noreferrer" aria-label="Partager sur WhatsApp">
-              <MessageCircle /> <span className="hidden sm:inline">Envoyer</span>
+            <a href={shareHref} target="_blank" rel="noopener noreferrer" aria-label={t('Partager sur WhatsApp')}>
+              <MessageCircle /> <span className="hidden sm:inline">{t('Envoyer')}</span>
             </a>
           </Button>
         </div>
       </div>
 
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {specsOf(vehicle).map((spec) => (
+        {specsOf(vehicle, t, locale).map((spec) => (
           <div key={spec.label} className="rounded-lg border p-3">
             <dt className="flex items-center gap-1.5 text-xs text-muted-foreground [&_svg]:size-3.5">
               {spec.icon} {spec.label}
@@ -129,7 +133,7 @@ export function VehicleDetail({
 
       {vehicle.features.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-medium">Équipements</h3>
+          <h3 className="mb-2 text-sm font-medium">{t('Équipements')}</h3>
           <ul className="flex flex-wrap gap-2">
             {vehicle.features.map((feature) => (
               <li key={feature}>
@@ -140,19 +144,19 @@ export function VehicleDetail({
         </div>
       )}
 
-      <section className="rounded-xl border p-4" aria-label="Prix">
+      <section className="rounded-xl border p-4" aria-label={t('Prix')}>
         <div className="mb-4">
           <p id="mode-label" className="mb-2 text-sm font-medium">
-            Mode de location
+            {t('Mode de location')}
           </p>
           <ToggleGroup type="single" variant="outline" value={withDriver ? 'driver' : 'self'} onValueChange={(value) => value && onDriverChange(value === 'driver')} aria-labelledby="mode-label" className="grid w-full grid-cols-2">
             <ToggleGroupItem value="self" className="h-auto flex-col gap-0.5 py-2">
-              <span>Sans chauffeur</span>
-              <span className="text-xs font-normal text-muted-foreground">Je conduis</span>
+              <span>{t('Sans chauffeur')}</span>
+              <span className="text-xs font-normal text-muted-foreground">{t('Je conduis')}</span>
             </ToggleGroupItem>
             <ToggleGroupItem value="driver" className="h-auto flex-col gap-0.5 py-2">
-              <span>Avec chauffeur</span>
-              <span className="text-xs font-normal text-muted-foreground">+ {formatMoney(driverPrice)} / jour</span>
+              <span>{t('Avec chauffeur')}</span>
+              <span className="text-xs font-normal text-muted-foreground">+ {money(driverPrice)} {t('/ jour')}</span>
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -160,50 +164,50 @@ export function VehicleDetail({
           <div className="grid gap-1 text-sm">
             <div className="flex justify-between gap-3 text-muted-foreground">
               <span>
-                {formatMoney(vehicle.rental_price)} × {days} jour{days > 1 ? 's' : ''}
+                {money(vehicle.rental_price)} × {days} {plural(days, 'jour', 'jours')}
               </span>
-              <span className="tabular-nums">{formatMoney(rentalTotal)}</span>
+              <span className="tabular-nums">{money(rentalTotal)}</span>
             </div>
             {withDriver && (
               <div className="flex justify-between gap-3 text-muted-foreground">
                 <span>
-                  Chauffeur : {formatMoney(driverPrice)} × {days} jour{days > 1 ? 's' : ''}
+                  {t('Chauffeur')} : {money(driverPrice)} × {days} {plural(days, 'jour', 'jours')}
                 </span>
-                <span className="tabular-nums">{formatMoney(driverTotal)}</span>
+                <span className="tabular-nums">{money(driverTotal)}</span>
               </div>
             )}
             <div className="flex justify-between gap-3 text-base font-semibold">
-              <span>Total estimé</span>
-              <span className="tabular-nums">{formatMoney(total)}</span>
+              <span>{t('Total estimé')}</span>
+              <span className="tabular-nums">{money(total)}</span>
             </div>
             <div className="flex items-center justify-between gap-3 text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck className="size-4" /> Caution (restituée au retour)
+                <ShieldCheck className="size-4" /> {t('Caution (restituée au retour)')}
               </span>
-              <span className="tabular-nums">{formatMoney(vehicle.deposit_amount)}</span>
+              <span className="tabular-nums">{money(vehicle.deposit_amount)}</span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Estimation : tout jour entamé est compté. Le montant final est confirmé à la réservation.</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t('Estimation : tout jour entamé est compté. Le montant final est confirmé à la réservation.')}</p>
           </div>
         ) : (
           <div>
-            <p className="text-sm text-muted-foreground">Tarif de location</p>
+            <p className="text-sm text-muted-foreground">{t('Tarif de location')}</p>
             <p className="text-2xl font-semibold">
-              {formatMoney(vehicle.rental_price)}
-              <span className="text-base font-normal text-muted-foreground"> / jour</span>
+              {money(vehicle.rental_price)}
+              <span className="text-base font-normal text-muted-foreground"> {t('/ jour')}</span>
             </p>
-            <p className="text-sm text-muted-foreground">Caution : {formatMoney(vehicle.deposit_amount)}</p>
-            {withDriver && <p className="text-sm text-muted-foreground">Chauffeur : + {formatMoney(driverPrice)} / jour</p>}
-            <p className="mt-1 text-xs text-muted-foreground">Choisissez vos dates dans la recherche pour voir le total.</p>
+            <p className="text-sm text-muted-foreground">{t('Caution')} : {money(vehicle.deposit_amount)}</p>
+            {withDriver && <p className="text-sm text-muted-foreground">{t('Chauffeur')} : + {money(driverPrice)} {t('/ jour')}</p>}
+            <p className="mt-1 text-xs text-muted-foreground">{t('Choisissez vos dates dans la recherche pour voir le total.')}</p>
           </div>
         )}
         <div className="mt-4 flex flex-wrap gap-2">
           <Button size="lg" className="flex-1" disabled={unavailable} onClick={() => onReserve(vehicle)}>
-            {unavailable ? 'Indisponible sur ces dates' : withDriver ? 'Réserver avec chauffeur' : 'Réserver ce véhicule'}
+            {unavailable ? t('Indisponible sur ces dates') : withDriver ? t('Réserver avec chauffeur') : t('Réserver ce véhicule')}
           </Button>
           {askHref && (
             <Button asChild size="lg" variant="outline">
               <a href={askHref} target="_blank" rel="noopener noreferrer">
-                <MessageCircle /> Demander sur WhatsApp
+                <MessageCircle /> {t('Demander sur WhatsApp')}
               </a>
             </Button>
           )}
@@ -211,8 +215,8 @@ export function VehicleDetail({
       </section>
 
       {similar.length > 0 && (
-        <section aria-label="Véhicules similaires">
-          <h3 className="mb-2 text-sm font-medium">{sameCategory && vehicle.category ? `Autres ${vehicle.category.toLowerCase()}s disponibles` : 'Autres véhicules disponibles'}</h3>
+        <section aria-label={t('Véhicules similaires')}>
+          <h3 className="mb-2 text-sm font-medium">{sameCategory && vehicle.category ? t('Autres {category} disponibles', { category: lang === 'en' ? `${t(vehicle.category)}s` : `${t(vehicle.category).toLowerCase()}s` }) : t('Autres véhicules disponibles')}</h3>
           <Carousel opts={{ align: 'start', dragFree: true }} className="px-0">
             <CarouselContent className="-ml-3">
               {similar.map((other) => (
@@ -232,7 +236,7 @@ export function VehicleDetail({
                       <p className="truncate text-sm font-medium">
                         {other.make} {other.model}
                       </p>
-                      <p className="text-xs text-muted-foreground">{formatMoney(other.rental_price)} / jour</p>
+                      <p className="text-xs text-muted-foreground">{money(other.rental_price)} {t('/ jour')}</p>
                     </div>
                   </button>
                 </CarouselItem>

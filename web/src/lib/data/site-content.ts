@@ -307,7 +307,7 @@ export const DEFAULT_SETTINGS: SettingsContent = {
 };
 
 /** Adresses réservées : une page ne peut pas les prendre. */
-const RESERVED_SLUGS = ['admin', 'api', 'app', 'apercu', 'client', 'invite', 'login', 'partner', 'p', 'suivi-transfert', 'vehicules'];
+const RESERVED_SLUGS = ['admin', 'api', 'app', 'apercu', 'client', 'invite', 'login', 'partner', 'p', 'suivi-transfert', 'en', 'vehicules'];
 export const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 export const isValidSlug = (slug: string) => SLUG_PATTERN.test(slug) && slug.length <= 60 && !RESERVED_SLUGS.includes(slug);
 export const pageKey = (slug: string) => `page:${slug}`;

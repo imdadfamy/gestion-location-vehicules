@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
 import { formatMoney } from '@/lib/data/public-catalog';
 import type { TransferRoute } from '@/lib/data/site-content';
+import { translate, localeOf, type Lang } from '@/lib/i18n';
 
 type Db = SupabaseClient<Database>;
 export type TransferRequest = Database['public']['Tables']['transfer_requests']['Row'];
@@ -40,10 +41,10 @@ export const hasPriceRange = (routes: TransferRoute[]) =>
   routes.some((route) => [route.price, ...Object.values(route.prices ?? {})].some((value) => value.trim() && !isExactPrice(value)));
 
 /** Prix affichable : exact → « 15 000 FCFA » ; fourchette → « 10 000 – 12 000 FCFA » ; rien → « Sur devis ». */
-export function showPrice(price: string | null | undefined) {
+export function showPrice(price: string | null | undefined, lang: Lang = 'fr') {
   const value = String(price ?? '').trim();
-  if (!value) return 'Sur devis';
-  if (isExactPrice(value)) return formatMoney(Number(compact(value)));
+  if (!value) return translate(lang, 'Sur devis');
+  if (isExactPrice(value)) return formatMoney(Number(compact(value)), localeOf(lang));
   return /\d/.test(value) && !/[a-z]/i.test(value) ? `${value} FCFA` : value;
 }
 

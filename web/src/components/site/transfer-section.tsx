@@ -17,6 +17,7 @@ import { categoryPrice, createTransfer, hasPriceRange, lowestPrice, numericPrice
 import { frenchError } from '@/lib/errors';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { useLang } from './lang-provider';
 
 const OTHER = 'other';
 /** Date saisie (heure locale) strictement à venir. */
@@ -31,6 +32,7 @@ const field = 'border-white/20 bg-white/90 text-foreground';
 export function TransferSection({ content, whatsappPhone, anchor = true }: { content: BlockData['transfer']; whatsappPhone?: string | null; anchor?: boolean }) {
   const { eyebrow, title, text, steps, routes, button } = content;
   const params = useSearchParams();
+  const { lang, t, locale, href } = useLang();
   const [route, setRoute] = useState(routes.length ? '0' : OTHER);
   const [other, setOther] = useState('');
   const [when, setWhen] = useState('');
@@ -83,11 +85,11 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError('');
-    if (!routeText) return setError('Indiquez le trajet souhaité.');
-    if (!isFuture(when)) return setError('Choisissez une date et une heure à venir.');
-    if (name.trim().length < 2) return setError('Indiquez votre nom.');
-    if (phone.replace(/\D/g, '').length < 6) return setError('Indiquez un numéro de téléphone valide.');
-    const [from, to] = chosenRoute ? [chosenRoute.from, chosenRoute.to] : [other.trim(), 'À préciser'];
+    if (!routeText) return setError(t('Indiquez le trajet souhaité.'));
+    if (!isFuture(when)) return setError(t('Choisissez une date et une heure à venir.'));
+    if (name.trim().length < 2) return setError(t('Indiquez votre nom.'));
+    if (phone.replace(/\D/g, '').length < 6) return setError(t('Indiquez un numéro de téléphone valide.'));
+    const [from, to] = chosenRoute ? [chosenRoute.from, chosenRoute.to] : [other.trim(), t('À préciser')];
     setSending(true);
     const { data, error: failure } = await createTransfer(createClient(), {
       routeFrom: from,
@@ -98,15 +100,15 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
       flightNumber: flight.trim(),
       vehicleId: vehicle?.id,
       quotedPrice: numericPrice(priceText),
-      notes: priceText && numericPrice(priceText) === null ? `Prix annoncé : ${showPrice(priceText)}` : undefined,
+      notes: priceText && numericPrice(priceText) === null ? `Prix annoncé : ${showPrice(priceText, lang)}` : undefined,
       name: name.trim(),
       phone: phone.trim(),
     });
     setSending(false);
-    if (failure || !data) return setError(failure ? frenchError(failure) : 'Votre demande n’a pas pu être envoyée. Réessayez ou contactez l’agence.');
+    if (failure || !data) return setError(failure ? frenchError(failure) : t('Votre demande n’a pas pu être envoyée. Réessayez ou contactez l’agence.'));
     setDone({
       reference: data,
-      summary: [routeText, new Date(when).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' }), vehicleName, priceText && showPrice(priceText)].filter(Boolean).join(' · '),
+      summary: [routeText, new Date(when).toLocaleString(locale, { dateStyle: 'full', timeStyle: 'short' }), vehicleName, priceText && showPrice(priceText, lang)].filter(Boolean).join(' · '),
     });
   }
 
@@ -116,7 +118,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
   }
 
   const confirmLink = done
-    ? whatsappLink(whatsappPhone, `Bonjour FIMA AUTO, je viens de faire une demande de transfert aéroport (référence ${done.reference}).\n${done.summary}`)
+    ? whatsappLink(whatsappPhone, `${t('Bonjour FIMA AUTO, je viens de faire une demande de transfert aéroport (référence {ref}).', { ref: done.reference })}\n${done.summary}`)
     : null;
 
   return (
@@ -153,7 +155,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
 
             {routes.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium tracking-widest text-[#5fd3df] uppercase">{!hasPrices ? 'Trajets les plus demandés' : ranges ? 'Tarifs par trajet' : 'Prix fixes par trajet'}</h3>
+                <h3 className="text-sm font-medium tracking-widest text-[#5fd3df] uppercase">{!hasPrices ? t('Trajets les plus demandés') : ranges ? t('Tarifs par trajet') : t('Prix fixes par trajet')}</h3>
                 <ul className="mt-3 grid gap-2">
                   {routes.map((item, i) => {
                     const from = lowestPrice(item);
@@ -169,7 +171,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                             {item.from} <span aria-hidden>→</span> {item.to}
                           </span>
                           <span className="shrink-0 font-semibold text-[#5fd3df]">
-                            {item.price.trim() ? showPrice(item.price) : from !== null ? `dès ${showPrice(String(from))}` : 'Sur devis'}
+                            {item.price.trim() ? showPrice(item.price, lang) : from !== null ? t('dès {price}', { price: showPrice(String(from), lang) }) : t('Sur devis')}
                           </span>
                         </button>
                       </li>
@@ -178,10 +180,10 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                 </ul>
                 <p className="mt-2 text-xs text-white/60">
                   {!hasPrices
-                    ? 'Le prix est confirmé par l’agence avant le transfert.'
+                    ? t('Le prix est confirmé par l’agence avant le transfert.')
                     : ranges
-                      ? 'Fourchettes selon la catégorie du véhicule : l’agence confirme le prix exact avant le transfert.'
-                      : 'Le prix dépend de la catégorie du véhicule que vous choisissez.'}
+                      ? t('Fourchettes selon la catégorie du véhicule : l’agence confirme le prix exact avant le transfert.')
+                      : t('Le prix dépend de la catégorie du véhicule que vous choisissez.')}
                 </p>
               </div>
             )}
@@ -192,15 +194,15 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
               <div className="grid gap-4 text-center">
                 <CheckCircle2 className="mx-auto size-10 text-[#5fd3df]" />
                 <div>
-                  <h3 className="text-lg font-semibold">Demande envoyée</h3>
-                  <p className="mt-1 text-sm text-white/70">L’agence vous confirmera le chauffeur et le véhicule.</p>
+                  <h3 className="text-lg font-semibold">{t('Demande envoyée')}</h3>
+                  <p className="mt-1 text-sm text-white/70">{t('L’agence vous confirmera le chauffeur et le véhicule.')}</p>
                 </div>
                 <div className="rounded-xl border border-white/15 bg-white/5 p-4">
-                  <p className="text-xs tracking-widest text-white/60 uppercase">Votre référence</p>
+                  <p className="text-xs tracking-widest text-white/60 uppercase">{t('Votre référence')}</p>
                   <p className="mt-1 font-mono text-2xl font-semibold tracking-wider text-[#5fd3df]">{done.reference}</p>
                   <p className="mt-2 text-sm text-white/70">{done.summary}</p>
                 </div>
-                <p className="text-xs text-white/60">Conservez cette référence : elle permet de suivre votre demande avec votre numéro de téléphone.</p>
+                <p className="text-xs text-white/60">{t('Conservez cette référence : elle permet de suivre votre demande avec votre numéro de téléphone.')}</p>
                 <div className="grid gap-2">
                   {confirmLink && (
                     <Button asChild size="lg">
@@ -210,21 +212,21 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                     </Button>
                   )}
                   <Button asChild size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white">
-                    <Link href={`/suivi-transfert?ref=${done.reference}`}>Suivre ma demande</Link>
+                    <Link href={href(`/suivi-transfert?ref=${done.reference}`)}>{t('Suivre ma demande')}</Link>
                   </Button>
                   <Button type="button" variant="ghost" onClick={reset} className="text-white/80 hover:bg-white/10 hover:text-white">
-                    Faire une autre demande
+                    {t('Faire une autre demande')}
                   </Button>
                 </div>
               </div>
             ) : (
               <form onSubmit={submit} className="grid gap-4">
                 <h3 className="flex items-center gap-2 text-lg font-semibold">
-                  <Plane className="size-5 text-[#5fd3df]" /> Votre demande
+                  <Plane className="size-5 text-[#5fd3df]" /> {t('Votre demande')}
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-1.5 sm:col-span-2">
-                    <Label className="text-white/80">Trajet</Label>
+                    <Label className="text-white/80">{t('Trajet')}</Label>
                     <Select value={route} onValueChange={setRoute}>
                       <SelectTrigger className={cn('w-full', field)}>
                         <SelectValue />
@@ -235,46 +237,46 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                             {item.from} → {item.to}
                           </SelectItem>
                         ))}
-                        <SelectItem value={OTHER}>Autre trajet (sur devis)</SelectItem>
+                        <SelectItem value={OTHER}>{t('Autre trajet (sur devis)')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   {route === OTHER && (
                     <div className="grid gap-1.5 sm:col-span-2">
                       <Label htmlFor="transfer-other" className="text-white/80">
-                        Départ et destination
+                        {t('Départ et destination')}
                       </Label>
-                      <Input id="transfer-other" value={other} onChange={(e) => setOther(e.target.value)} placeholder="Ex. Aéroport → Ouidah" className={field} maxLength={120} />
+                      <Input id="transfer-other" value={other} onChange={(e) => setOther(e.target.value)} placeholder={t('Ex. Aéroport → Ouidah')} className={field} maxLength={120} />
                     </div>
                   )}
                   <div className="grid gap-1.5 sm:col-span-2">
                     <Label htmlFor="transfer-when" className="text-white/80">
-                      Date et heure d’arrivée (ou de prise en charge)
+                      {t('Date et heure d’arrivée (ou de prise en charge)')}
                     </Label>
                     <Input id="transfer-when" type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className={field} />
                   </div>
                   <div className="grid gap-1.5">
                     <Label htmlFor="transfer-passengers" className="text-white/80">
-                      Passagers
+                      {t('Passagers')}
                     </Label>
                     <Input id="transfer-passengers" type="number" inputMode="numeric" min={1} max={20} value={passengers} onChange={(e) => setPassengers(e.target.value)} className={field} />
                   </div>
                   <div className="grid gap-1.5">
                     <Label htmlFor="transfer-luggage" className="text-white/80">
-                      Bagages (facultatif)
+                      {t('Bagages (facultatif)')}
                     </Label>
                     <Input id="transfer-luggage" type="number" inputMode="numeric" min={0} max={50} value={luggage} onChange={(e) => setLuggage(e.target.value)} className={field} />
                   </div>
                   <div className="grid gap-1.5 sm:col-span-2">
                     <Label htmlFor="transfer-flight" className="text-white/80">
-                      Numéro de vol (facultatif)
+                      {t('Numéro de vol (facultatif)')}
                     </Label>
                     <Input id="transfer-flight" value={flight} onChange={(e) => setFlight(e.target.value)} placeholder="Ex. AF 936" className={field} maxLength={20} />
                   </div>
                 </div>
 
                 <fieldset className="grid gap-2">
-                  <legend className="mb-1 text-sm text-white/80">Véhicule</legend>
+                  <legend className="mb-1 text-sm text-white/80">{t('Véhicule')}</legend>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {vehicles.map((item) => {
                       const ok = fits(item);
@@ -305,7 +307,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                               {item.make} {item.model}
                             </span>
                             <span className="flex items-center gap-1 text-xs text-white/60">
-                              {item.category}
+                              {t(item.category)}
                               {item.seats != null && (
                                 <>
                                   {' · '}
@@ -314,7 +316,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                               )}
                             </span>
                             <span className="block text-xs font-semibold text-[#5fd3df]">
-                              {!item.is_available ? 'Indisponible à cette heure' : !ok ? 'Trop petit pour votre groupe' : chosenRoute ? showPrice(price) : ''}
+                              {!item.is_available ? t('Indisponible à cette heure') : !ok ? t('Trop petit pour votre groupe') : chosenRoute ? showPrice(price, lang) : ''}
                             </span>
                           </span>
                         </button>
@@ -322,36 +324,36 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                     })}
                   </div>
                   <p className="text-xs text-white/60">
-                    {vehicle ? `${vehicleName} choisi.` : 'Aucune préférence : l’agence choisit un véhicule adapté et confirme le prix.'}
-                    {!when && ' Indiquez la date pour voir les véhicules libres.'}
+                    {vehicle ? t('{name} choisi.', { name: vehicleName }) : t('Aucune préférence : l’agence choisit un véhicule adapté et confirme le prix.')}
+                    {!when && ` ${t('Indiquez la date pour voir les véhicules libres.')}`}
                   </p>
                 </fieldset>
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-1.5">
                     <Label htmlFor="transfer-name" className="text-white/80">
-                      Votre nom
+                      {t('Votre nom')}
                     </Label>
                     <Input id="transfer-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" className={field} maxLength={120} />
                   </div>
                   <div className="grid gap-1.5">
                     <Label htmlFor="transfer-phone" className="text-white/80">
-                      Téléphone (WhatsApp)
+                      {t('Téléphone (WhatsApp)')}
                     </Label>
                     <Input id="transfer-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="+229 …" className={field} maxLength={30} />
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3">
-                  <span className="text-sm text-white/70">Prix du transfert</span>
-                  <span className="text-lg font-semibold text-[#5fd3df]">{chosenRoute ? showPrice(priceText) : 'Sur devis'}</span>
+                  <span className="text-sm text-white/70">{t('Prix du transfert')}</span>
+                  <span className="text-lg font-semibold text-[#5fd3df]">{chosenRoute ? showPrice(priceText, lang) : t('Sur devis')}</span>
                 </div>
 
                 <FormMessage error={error} />
                 <Button type="submit" size="lg" disabled={sending}>
-                  {sending ? <Loader2 className="animate-spin" /> : <Plane />} Envoyer ma demande
+                  {sending ? <Loader2 className="animate-spin" /> : <Plane />} {t('Envoyer ma demande')}
                 </Button>
-                <p className="text-center text-xs text-white/60">Aucun paiement en ligne : l’agence vous confirme le chauffeur et le véhicule.</p>
+                <p className="text-center text-xs text-white/60">{t('Aucun paiement en ligne : l’agence vous confirme le chauffeur et le véhicule.')}</p>
               </form>
             )}
           </div>

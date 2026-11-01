@@ -17,6 +17,8 @@ import {
   type PageContent,
   type SettingsContent,
 } from './site-content';
+import { englishBlocks, englishFooter, englishMenu, englishSettings } from './site-content-en';
+import type { Lang } from '@/lib/i18n';
 
 export const SITE_CONTENT_TAG = 'site-content';
 
@@ -37,25 +39,31 @@ async function readSiteContent() {
   return Object.fromEntries((data ?? []).map((row) => [row.key, row.content])) as Record<string, unknown>;
 }
 
-export async function getHomeContent(): Promise<HomeContent> {
-  return homeContent((await readSiteContent()).home);
+export async function getHomeContent(lang: Lang = 'fr'): Promise<HomeContent> {
+  const home = homeContent((await readSiteContent()).home);
+  return lang === 'en' ? { blocks: englishBlocks(home.blocks) } : home;
 }
 
-export async function getFooterContent(): Promise<FooterContent> {
-  return footerContent((await readSiteContent()).footer);
+export async function getFooterContent(lang: Lang = 'fr'): Promise<FooterContent> {
+  const footer = footerContent((await readSiteContent()).footer);
+  return lang === 'en' ? englishFooter(footer) : footer;
 }
 
-export async function getMenuContent(): Promise<MenuContent> {
-  return menuContent((await readSiteContent()).menu);
+export async function getMenuContent(lang: Lang = 'fr'): Promise<MenuContent> {
+  const menu = menuContent((await readSiteContent()).menu);
+  return lang === 'en' ? englishMenu(menu) : menu;
 }
 
-export async function getSettings(): Promise<SettingsContent> {
-  return settingsContent((await readSiteContent()).settings);
+export async function getSettings(lang: Lang = 'fr'): Promise<SettingsContent> {
+  const settings = settingsContent((await readSiteContent()).settings);
+  return lang === 'en' ? englishSettings(settings) : settings;
 }
 
 /** Page supplémentaire publiée, ou null si elle n'existe pas. */
-export async function getPage(slug: string): Promise<PageContent | null> {
+export async function getPage(slug: string, lang: Lang = 'fr'): Promise<PageContent | null> {
   if (!isValidSlug(slug)) return null;
   const stored = (await readSiteContent())[pageKey(slug)];
-  return stored ? pageContent(stored) : null;
+  if (!stored) return null;
+  const page = pageContent(stored);
+  return lang === 'en' ? { ...page, blocks: englishBlocks(page.blocks) } : page;
 }

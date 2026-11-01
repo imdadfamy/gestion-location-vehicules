@@ -3,12 +3,15 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { formatMoney, fuelLabel, transmissionLabel, type CardVehicle } from '@/lib/data/public-catalog';
 import { cn } from '@/lib/utils';
+import { useLang } from './lang-provider';
 
 /**
  * Carte d'un véhicule du catalogue public ; l'action (bouton) est fournie par la page.
  * `days` (période choisie) affiche le total estimé ; `is_available === false` grise la carte.
  */
 export function VehicleCard({ vehicle, action, days = 0, onOpen }: { vehicle: CardVehicle; action?: React.ReactNode; days?: number; onOpen?: () => void }) {
+  const { t, plural, locale } = useLang();
+  const money = (value: unknown) => formatMoney(value, locale);
   const photo = vehicle.photos[0];
   const unavailable = vehicle.is_available === false;
   const image = (
@@ -29,7 +32,7 @@ export function VehicleCard({ vehicle, action, days = 0, onOpen }: { vehicle: Ca
       )}
       {vehicle.category && (
         <Badge className="absolute top-3 left-3" variant="secondary">
-          {vehicle.category}
+          {t(vehicle.category)}
         </Badge>
       )}
       {vehicle.photos.length > 1 && (
@@ -38,14 +41,14 @@ export function VehicleCard({ vehicle, action, days = 0, onOpen }: { vehicle: Ca
         </span>
       )}
       {unavailable && (
-        <span className="absolute inset-x-0 bottom-0 bg-foreground/80 px-3 py-1.5 text-center text-xs font-medium text-background">Indisponible sur ces dates</span>
+        <span className="absolute inset-x-0 bottom-0 bg-foreground/80 px-3 py-1.5 text-center text-xs font-medium text-background">{t('Indisponible sur ces dates')}</span>
       )}
     </div>
   );
   return (
     <Card className={cn('group gap-0 overflow-hidden py-0 transition-shadow hover:shadow-lg', unavailable && 'opacity-80')}>
       {onOpen ? (
-        <button type="button" onClick={onOpen} className="block w-full cursor-pointer text-left" aria-label={`Voir la fiche : ${vehicle.make} ${vehicle.model}`}>
+        <button type="button" onClick={onOpen} className="block w-full cursor-pointer text-left" aria-label={`${t('Voir la fiche')} : ${vehicle.make} ${vehicle.model}`}>
           {image}
         </button>
       ) : (
@@ -59,20 +62,20 @@ export function VehicleCard({ vehicle, action, days = 0, onOpen }: { vehicle: Ca
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <Gauge className="size-4" />
-            {transmissionLabel[vehicle.transmission ?? ''] ?? 'Boîte non renseignée'}
+            {t(transmissionLabel[vehicle.transmission ?? ''] ?? 'Boîte non renseignée')}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Fuel className="size-4" />
-            {fuelLabel[vehicle.fuel_type ?? ''] ?? vehicle.fuel_type ?? 'Carburant non renseigné'}
+            {t(fuelLabel[vehicle.fuel_type ?? ''] ?? vehicle.fuel_type ?? 'Carburant non renseigné')}
           </span>
           {vehicle.seats ? (
             <span className="inline-flex items-center gap-1.5">
-              <Users className="size-4" /> {vehicle.seats} places
+              <Users className="size-4" /> {vehicle.seats} {t('places')}
             </span>
           ) : null}
           {vehicle.air_conditioning ? (
             <span className="inline-flex items-center gap-1.5">
-              <Snowflake className="size-4" /> Clim
+              <Snowflake className="size-4" /> {t('Clim')}
             </span>
           ) : null}
         </div>
@@ -82,21 +85,21 @@ export function VehicleCard({ vehicle, action, days = 0, onOpen }: { vehicle: Ca
           {days > 0 ? (
             <>
               <p className="text-xs text-muted-foreground">
-                Total estimé · {days} jour{days > 1 ? 's' : ''}
+                {t('Total estimé')} · {days} {plural(days, 'jour', 'jours')}
               </p>
-              <p className="text-lg font-semibold">{formatMoney(Number(vehicle.rental_price) * days)}</p>
+              <p className="text-lg font-semibold">{money(Number(vehicle.rental_price) * days)}</p>
               <p className="text-xs text-muted-foreground">
-                {formatMoney(vehicle.rental_price)} / jour · caution {formatMoney(vehicle.deposit_amount)}
+                {money(vehicle.rental_price)} {t('/ jour')} · {t('caution')} {money(vehicle.deposit_amount)}
               </p>
             </>
           ) : (
             <>
-              <p className="text-xs text-muted-foreground">À partir de</p>
+              <p className="text-xs text-muted-foreground">{t('À partir de')}</p>
               <p className="text-lg font-semibold">
-                {formatMoney(vehicle.rental_price)}
-                <span className="text-sm font-normal text-muted-foreground"> / jour</span>
+                {money(vehicle.rental_price)}
+                <span className="text-sm font-normal text-muted-foreground"> {t('/ jour')}</span>
               </p>
-              <p className="text-xs text-muted-foreground">Caution {formatMoney(vehicle.deposit_amount)}</p>
+              <p className="text-xs text-muted-foreground">{t('Caution')} {money(vehicle.deposit_amount)}</p>
             </>
           )}
         </div>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/components/ui/carousel';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useLang } from './lang-provider';
 
 /** Suit la photo affichée d'un diaporama. */
 function useSelectedIndex(api: CarouselApi | undefined) {
@@ -27,15 +28,16 @@ function useSelectedIndex(api: CarouselApi | undefined) {
 
 /** Photos en plein écran : balayage, flèches du clavier, compteur. */
 function Lightbox({ photos, alt, start, open, onOpenChange }: { photos: string[]; alt: string; start: number; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { t } = useLang();
   const [api, setApi] = useState<CarouselApi>();
   const index = useSelectedIndex(api);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="h-svh max-w-none gap-0 rounded-none border-0 bg-black/95 p-0 text-white sm:max-w-none">
         <DialogTitle className="sr-only">{alt}</DialogTitle>
-        <DialogDescription className="sr-only">Photos du véhicule en plein écran</DialogDescription>
+        <DialogDescription className="sr-only">{t('Photos du véhicule en plein écran')}</DialogDescription>
         <DialogClose asChild>
-          <Button type="button" size="icon" variant="ghost" className="absolute top-3 right-3 z-10 text-white hover:bg-white/15 hover:text-white" aria-label="Fermer">
+          <Button type="button" size="icon" variant="ghost" className="absolute top-3 right-3 z-10 text-white hover:bg-white/15 hover:text-white" aria-label={t('Fermer')}>
             <X />
           </Button>
         </DialogClose>
@@ -67,6 +69,7 @@ function Lightbox({ photos, alt, start, open, onOpenChange }: { photos: string[]
 
 /** Galerie de la fiche : diaporama balayable, miniatures synchronisées et plein écran. */
 export function VehicleGallery({ photos, alt }: { photos: string[]; alt: string }) {
+  const { t } = useLang();
   const [api, setApi] = useState<CarouselApi>();
   const index = useSelectedIndex(api);
   const [full, setFull] = useState(false);
@@ -85,7 +88,7 @@ export function VehicleGallery({ photos, alt }: { photos: string[]; alt: string 
           <CarouselContent className="ml-0">
             {photos.map((photo, i) => (
               <CarouselItem key={photo} className="pl-0">
-                <button type="button" onClick={() => setFull(true)} className="block w-full cursor-zoom-in" aria-label="Agrandir la photo">
+                <button type="button" onClick={() => setFull(true)} className="block w-full cursor-zoom-in" aria-label={t('Agrandir la photo')}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photo} alt={`${alt} – photo ${i + 1}`} className="aspect-[16/10] w-full object-cover" draggable={false} loading={i === 0 ? 'eager' : 'lazy'} />
                 </button>
@@ -104,7 +107,7 @@ export function VehicleGallery({ photos, alt }: { photos: string[]; alt: string 
         </span>
       </div>
       {photos.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Miniatures">
+        <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label={t('Miniatures')}>
           {photos.map((photo, i) => (
             <button
               key={photo}
@@ -113,7 +116,7 @@ export function VehicleGallery({ photos, alt }: { photos: string[]; alt: string 
               aria-selected={i === index}
               onClick={() => api?.scrollTo(i)}
               className={cn('size-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all', i === index ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100')}
-              aria-label={`Photo ${i + 1}`}
+              aria-label={`${t('Photo')} ${i + 1}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={photo} alt="" className="h-full w-full object-cover" loading="lazy" />

@@ -59,8 +59,8 @@ export function whatsappLink(phone?: string | null, text = 'Bonjour FIMA AUTO, j
   return number ? `https://wa.me/${number}?text=${encodeURIComponent(text)}` : null;
 }
 
-export function formatMoney(value: unknown) {
-  return `${Number(value ?? 0).toLocaleString('fr-FR')} FCFA`;
+export function formatMoney(value: unknown, locale = 'fr-FR') {
+  return `${Number(value ?? 0).toLocaleString(locale)} FCFA`;
 }
 
 export const transmissionLabel: Record<string, string> = {

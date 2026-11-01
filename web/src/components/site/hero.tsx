@@ -8,6 +8,7 @@ import RotatingText from '@/components/RotatingText';
 import { Button } from '@/components/ui/button';
 import type { BlockData } from '@/lib/data/site-content';
 import { cn } from '@/lib/utils';
+import { useLang } from './lang-provider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -31,6 +32,7 @@ function useMounted() {
 export function Hero({ content, transfer }: { content: BlockData['hero']; transfer?: BlockData['transfer'] }) {
   const words = content.words;
   const router = useRouter();
+  const { t, href } = useLang();
   const [departure, setDeparture] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [category, setCategory] = useState('all');
@@ -49,7 +51,7 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
     if (returnDate) params.set('retour', returnDate);
     if (category !== 'all') params.set('categorie', category);
     // Le catalogue est sur l'accueil : la recherche le filtre puis fait défiler jusqu'à lui.
-    router.push(`/${params.size ? `?${params}` : ''}#vehicules`);
+    router.push(href(`/${params.size ? `?${params}` : ''}#vehicules`));
   }
 
   function searchTransfer(event: React.FormEvent) {
@@ -57,7 +59,7 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
     const params = new URLSearchParams();
     if (transfer?.routes[Number(route)]) params.set('trajet', route);
     if (transferWhen) params.set('quand', transferWhen);
-    router.push(`/${params.size ? `?${params}` : ''}#transfert`);
+    router.push(href(`/${params.size ? `?${params}` : ''}#transfert`));
   }
 
   return (
@@ -73,7 +75,7 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
 
       <div className="mx-auto flex max-w-6xl flex-col items-center px-4 pt-20 pb-24 text-center md:pt-28 md:pb-32">
         <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium tracking-widest uppercase backdrop-blur">
-          Location de véhicules
+          {t('Location de véhicules')}
         </span>
         <BlurText
           key={content.title}
@@ -85,7 +87,7 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
         />
         {words.length > 0 && (
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-lg text-white/80">
-            <span>Véhicules</span>
+            <span>{t('Véhicules')}</span>
             {mounted && words.length > 1 ? (
               <RotatingText
                 texts={words}
@@ -103,11 +105,11 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
         <p className="mt-3 text-white/70">{content.subtitle}</p>
 
         {transfer && (
-          <div role="tablist" aria-label="Type de recherche" className="mt-10 inline-flex rounded-full border border-white/15 bg-white/10 p-1 backdrop-blur">
+          <div role="tablist" aria-label={t('Type de recherche')} className="mt-10 inline-flex rounded-full border border-white/15 bg-white/10 p-1 backdrop-blur">
             {(
               [
-                ['rental', 'Location', Search],
-                ['transfer', 'Transfert aéroport', Plane],
+                ['rental', t('Location'), Search],
+                ['transfer', t('Transfert aéroport'), Plane],
               ] as const
             ).map(([value, label, Icon]) => (
               <button
@@ -133,7 +135,7 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
             className="mt-4 grid w-full max-w-4xl gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 text-left backdrop-blur-md sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_auto] lg:items-end"
           >
             <div className="grid gap-1.5">
-              <Label className="text-white/80">Trajet</Label>
+              <Label className="text-white/80">{t('Trajet')}</Label>
               <Select value={route} onValueChange={setRoute}>
                 <SelectTrigger className="w-full border-white/20 bg-white/90 text-foreground">
                   <SelectValue />
@@ -144,13 +146,13 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
                       {item.from} → {item.to}
                     </SelectItem>
                   ))}
-                  <SelectItem value="other">Autre trajet</SelectItem>
+                  <SelectItem value="other">{t('Autre trajet')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="hero-transfer-when" className="text-white/80">
-                Date et heure d’arrivée
+                {t('Date et heure d’arrivée')}
               </Label>
               <Input
                 id="hero-transfer-when"
@@ -161,7 +163,7 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
               />
             </div>
             <Button type="submit" size="lg" className="sm:col-span-2 lg:col-span-1">
-              <Plane /> Demander ce transfert
+              <Plane /> {t('Demander ce transfert')}
             </Button>
           </form>
         ) : (
@@ -171,7 +173,7 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
         >
           <div className="grid gap-1.5">
             <Label htmlFor="hero-depart" className="text-white/80">
-              Départ
+              {t('Départ')}
             </Label>
             <Input
               id="hero-depart"
@@ -183,7 +185,7 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="hero-retour" className="text-white/80">
-              Retour
+              {t('Retour')}
             </Label>
             <Input
               id="hero-retour"
@@ -195,23 +197,23 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
             />
           </div>
           <div className="grid gap-1.5">
-            <Label className="text-white/80">Catégorie</Label>
+            <Label className="text-white/80">{t('Catégorie')}</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="w-full border-white/20 bg-white/90 text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="all">{t('Toutes')}</SelectItem>
                 {CATEGORIES.map((c) => (
                   <SelectItem key={c} value={c}>
-                    {c}
+                    {t(c)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <Button type="submit" size="lg" className="sm:col-span-2 lg:col-span-1">
-            <Search /> Voir les véhicules
+            <Search /> {t('Voir les véhicules')}
           </Button>
         </form>
         )}

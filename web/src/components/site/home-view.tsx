@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { companyContact, whatsappLink } from '@/lib/data/public-catalog';
 import { safeHref, youtubeEmbed, type Block, type BlockData, type Faq, type FooterContent, type Link as MenuLink, type Announcement } from '@/lib/data/site-content';
+import { localHref, translator, type Lang } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 
@@ -65,9 +66,10 @@ function CatalogSkeleton() {
   );
 }
 
-async function WhatsAppButton() {
+async function WhatsAppButton({ lang }: { lang: Lang }) {
+  const t = translator(lang);
   const company = await getCompany();
-  const whatsapp = whatsappLink(company?.whatsapp_phone);
+  const whatsapp = whatsappLink(company?.whatsapp_phone, t('Bonjour FIMA AUTO, je souhaite louer un véhicule.'));
   if (!whatsapp) return null;
   return (
     <Button
@@ -77,44 +79,46 @@ async function WhatsAppButton() {
       className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
     >
       <a href={whatsapp} target="_blank" rel="noopener noreferrer">
-        <MessageCircle /> Nous contacter sur WhatsApp
+        <MessageCircle /> {t('Nous contacter sur WhatsApp')}
       </a>
     </Button>
   );
 }
 
 /** Bouton WhatsApp flottant : une question à poser, sans quitter la page. */
-async function FloatingWhatsApp() {
+async function FloatingWhatsApp({ lang }: { lang: Lang }) {
+  const t = translator(lang);
   const company = await getCompany();
-  const whatsapp = whatsappLink(company?.whatsapp_phone);
+  const whatsapp = whatsappLink(company?.whatsapp_phone, t('Bonjour FIMA AUTO, je souhaite louer un véhicule.'));
   if (!whatsapp) return null;
   return (
     <a
       href={whatsapp}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Écrire sur WhatsApp"
+      aria-label={t('Écrire sur WhatsApp')}
       className="fixed right-4 bottom-4 z-40 flex size-12 items-center justify-center rounded-full bg-[#25d366] text-white shadow-lg transition-transform hover:scale-105 sm:size-auto sm:gap-2 sm:px-5 sm:py-3 sm:text-sm sm:font-medium"
     >
       <MessageCircle className="size-6 sm:size-5" />
-      <span className="hidden sm:inline">Une question ?</span>
+      <span className="hidden sm:inline">{t('Une question ?')}</span>
     </a>
   );
 }
 
-async function CompanyFooter({ draft }: { draft?: FooterContent }) {
-  return <SiteFooter company={await getCompany()} draft={draft} />;
+async function CompanyFooter({ draft, lang }: { draft?: FooterContent; lang: Lang }) {
+  return <SiteFooter company={await getCompany()} draft={draft} lang={lang} />;
 }
 
 const paragraphs = (text: string) => text.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
 
-function VideoEmbed({ url }: { url: string }) {
+function VideoEmbed({ url, lang }: { url: string; lang: Lang }) {
+  const t = translator(lang);
   const embed = youtubeEmbed(url);
   if (embed)
     return (
       <iframe
         src={embed}
-        title="Vidéo"
+        title={t('Vidéo')}
         loading="lazy"
         allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowFullScreen
@@ -126,14 +130,16 @@ function VideoEmbed({ url }: { url: string }) {
   return (
     <Button asChild variant="outline">
       <a href={safeHref(url)} target="_blank" rel="noopener noreferrer">
-        Voir la vidéo
+        {t('Voir la vidéo')}
       </a>
     </Button>
   );
 }
 
 /** Une section de l'accueil ; `anchor` pose l'ancre de navigation (#etapes, #faq, #partenaires). */
-function BlockView({ block, anchor, transfer }: { block: Block; anchor: boolean; transfer?: BlockData['transfer'] }) {
+function BlockView({ block, anchor, transfer, lang }: { block: Block; anchor: boolean; transfer?: BlockData['transfer']; lang: Lang }) {
+  const t = translator(lang);
+  const href = (path: string) => localHref(lang, path);
   switch (block.type) {
     case 'hero':
       return <Hero content={block.data} transfer={transfer} />;
@@ -232,7 +238,7 @@ function BlockView({ block, anchor, transfer }: { block: Block; anchor: boolean;
           <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 lg:grid-cols-2">
             <AnimatedContent direction="horizontal" distance={40} reverse>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={partner.image} alt="Partenaire FIMA AUTO" className="aspect-[4/3] w-full rounded-3xl object-cover shadow-lg" loading="lazy" />
+              <img src={partner.image} alt={t('Partenaire FIMA AUTO')} className="aspect-[4/3] w-full rounded-3xl object-cover shadow-lg" loading="lazy" />
             </AnimatedContent>
             <div>
               <p className="text-sm font-medium tracking-widest text-primary uppercase">{partner.eyebrow}</p>
@@ -271,7 +277,7 @@ function BlockView({ block, anchor, transfer }: { block: Block; anchor: boolean;
           )}
           {partner.faq.length > 0 && (
             <div className="mx-auto mt-14 max-w-3xl px-4">
-              <h3 className="text-center text-xl font-semibold">Questions fréquentes pour les partenaires</h3>
+              <h3 className="text-center text-xl font-semibold">{t('Questions fréquentes pour les partenaires')}</h3>
               <FaqList items={partner.faq} />
             </div>
           )}
@@ -290,7 +296,7 @@ function BlockView({ block, anchor, transfer }: { block: Block; anchor: boolean;
             </div>
             <div className="flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" variant="secondary">
-                <Link href="/client/register">Créer mon compte</Link>
+                <Link href="/client/register">{t('Créer mon compte')}</Link>
               </Button>
               <Button
                 asChild
@@ -298,10 +304,10 @@ function BlockView({ block, anchor, transfer }: { block: Block; anchor: boolean;
                 variant="outline"
                 className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
               >
-                <Link href="/client/login">J’ai déjà un compte</Link>
+                <Link href="/client/login">{t('J’ai déjà un compte')}</Link>
               </Button>
               <Suspense fallback={null}>
-                <WhatsAppButton />
+                <WhatsAppButton lang={lang} />
               </Suspense>
             </div>
           </div>
@@ -323,7 +329,7 @@ function BlockView({ block, anchor, transfer }: { block: Block; anchor: boolean;
             </div>
             {buttonLabel && (
               <Button asChild size="lg" className="mt-6">
-                <Link href={safeHref(buttonHref)}>
+                <Link href={href(safeHref(buttonHref))}>
                   {buttonLabel} <ArrowRight />
                 </Link>
               </Button>
@@ -361,7 +367,7 @@ function BlockView({ block, anchor, transfer }: { block: Block; anchor: boolean;
           <p className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-3 text-center text-sm font-medium">
             {text}
             {linkLabel && (
-              <Link href={safeHref(linkHref)} className="inline-flex items-center gap-1 underline underline-offset-4">
+              <Link href={href(safeHref(linkHref))} className="inline-flex items-center gap-1 underline underline-offset-4">
                 {linkLabel} <ArrowRight className="size-4" />
               </Link>
             )}
@@ -422,7 +428,7 @@ function BlockView({ block, anchor, transfer }: { block: Block; anchor: boolean;
         <section className="mx-auto max-w-4xl px-4 py-20 text-center">
           <SectionTitle eyebrow={eyebrow} title={title} />
           <div className="mt-8 flex justify-center">
-            <VideoEmbed url={url.trim()} />
+            <VideoEmbed url={url.trim()} lang={lang} />
           </div>
           {caption && <p className="mt-3 text-sm text-muted-foreground">{caption}</p>}
         </section>
@@ -446,27 +452,27 @@ function BlockView({ block, anchor, transfer }: { block: Block; anchor: boolean;
 }
 
 /** Page d'accueil complète (publique ou aperçu d'un brouillon) à partir de ses sections ; les bandes alternent fond / bande teintée. */
-export function HomeView({ blocks, footer, menu, announcement, lead }: { blocks: Block[]; footer?: FooterContent; menu?: MenuLink[]; announcement?: Announcement; lead?: React.ReactNode }) {
+export function HomeView({ blocks, footer, menu, announcement, lead, lang = 'fr' }: { blocks: Block[]; footer?: FooterContent; menu?: MenuLink[]; announcement?: Announcement; lead?: React.ReactNode; lang?: Lang }) {
   const visible = blocks.filter((block) => block.show);
   const seen = new Set<string>();
   const overHero = !lead && visible[0]?.type === 'hero';
   const transfer = visible.find((block) => block.type === 'transfer')?.data as BlockData['transfer'] | undefined;
   return (
     <>
-      <SiteHeader overHero={overHero} links={menu} announcement={announcement} />
+      <SiteHeader overHero={overHero} links={menu} announcement={announcement} lang={lang} />
       <main className={cn('flex-1', !overHero && 'pt-16')}>
         {lead}
         {visible.map((block) => {
           const anchor = !seen.has(block.type);
           seen.add(block.type);
-          return <BlockView key={block.id} block={block} anchor={anchor} transfer={transfer} />;
+          return <BlockView key={block.id} block={block} anchor={anchor} transfer={transfer} lang={lang} />;
         })}
       </main>
       <Suspense fallback={null}>
-        <FloatingWhatsApp />
+        <FloatingWhatsApp lang={lang} />
       </Suspense>
-      <Suspense fallback={<SiteFooter company={null} />}>
-        <CompanyFooter draft={footer} />
+      <Suspense fallback={<SiteFooter company={null} lang={lang} />}>
+        <CompanyFooter draft={footer} lang={lang} />
       </Suspense>
     </>
   );

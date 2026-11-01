@@ -22,6 +22,7 @@ import { frenchError } from '@/lib/errors';
 import { catalogVehicles, formatMoney, fuelLabel, rentalDays, type CatalogVehicle } from '@/lib/data/public-catalog';
 import { createClient } from '@/lib/supabase/client';
 import { CATEGORIES } from './hero';
+import { useLang } from './lang-provider';
 import { VehicleCard } from './vehicle-card';
 import { VehicleDetail } from './vehicle-detail';
 
@@ -47,6 +48,8 @@ function serialize(state: { departure: string; returnDate: string; category: str
 /** Catalogue filtrable : dates, disponibilité, filtres, fiche en fenêtre. `pageSize` : véhicules affichés avant « Voir plus ». */
 export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: string | null; pageSize?: number }) {
   const router = useRouter();
+  const { t, plural, locale } = useLang();
+  const money = (value: unknown) => formatMoney(value, locale);
   const pathname = usePathname();
   const params = useSearchParams();
   const paramsText = params.toString();
@@ -140,12 +143,12 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
   const shown = visible.slice(0, limit);
 
   const filterChips: { key: string; label: string; clear: () => void }[] = [];
-  if (transmission !== 'all') filterChips.push({ key: 'transmission', label: transmission === 'automatic' ? 'Automatique' : 'Manuelle', clear: () => setTransmission('all') });
-  if (fuel !== 'all') filterChips.push({ key: 'fuel', label: fuelLabel[fuel] ?? fuel, clear: () => setFuel('all') });
-  if (minSeats !== 'all') filterChips.push({ key: 'seats', label: `${minSeats} places et +`, clear: () => setMinSeats('all') });
-  if (priceLimit !== null) filterChips.push({ key: 'price', label: `Jusqu’à ${formatMoney(priceLimit)} / jour`, clear: () => setMaxPrice(null) });
-  if (hideUnavailable) filterChips.push({ key: 'hide', label: 'Disponibles seulement', clear: () => setHideUnavailable(false) });
-  if (category !== 'all') filterChips.push({ key: 'category', label: category, clear: () => setCategory('all') });
+  if (transmission !== 'all') filterChips.push({ key: 'transmission', label: transmission === 'automatic' ? t('Automatique') : t('Manuelle'), clear: () => setTransmission('all') });
+  if (fuel !== 'all') filterChips.push({ key: 'fuel', label: t(fuelLabel[fuel] ?? fuel), clear: () => setFuel('all') });
+  if (minSeats !== 'all') filterChips.push({ key: 'seats', label: t('{n} places et +', { n: minSeats }), clear: () => setMinSeats('all') });
+  if (priceLimit !== null) filterChips.push({ key: 'price', label: t('Jusqu’à {price} / jour', { price: money(priceLimit) }), clear: () => setMaxPrice(null) });
+  if (hideUnavailable) filterChips.push({ key: 'hide', label: t('Disponibles seulement'), clear: () => setHideUnavailable(false) });
+  if (category !== 'all') filterChips.push({ key: 'category', label: t(category), clear: () => setCategory('all') });
 
   function resetFilters() {
     setTransmission('all');
@@ -161,17 +164,17 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
 
   function reserve(vehicle: CatalogVehicle) {
     if (!departure || !returnDate) {
-      toast.error('Choisissez d’abord les dates et heures de départ et de retour.');
+      toast.error(t('Choisissez d’abord les dates et heures de départ et de retour.'));
       setSelectedId(null);
       document.getElementById('catalog-depart')?.focus();
       return;
     }
     if (datesInvalid) {
-      toast.error('La date de retour doit être postérieure au départ.');
+      toast.error(t('La date de retour doit être postérieure au départ.'));
       return;
     }
     if (!vehicle.is_available) {
-      toast.error('Ce véhicule n’est pas disponible sur ces dates.');
+      toast.error(t('Ce véhicule n’est pas disponible sur ces dates.'));
       return;
     }
     // La page de connexion renvoie directement vers l'espace client si la session existe.
@@ -200,11 +203,11 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
       <div className="grid gap-4 rounded-2xl border bg-card p-4 shadow-sm">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
           <div className="grid gap-1.5">
-            <Label htmlFor="catalog-depart">Départ</Label>
+            <Label htmlFor="catalog-depart">{t('Départ')}</Label>
             <Input id="catalog-depart" type="datetime-local" value={departure} onChange={(e) => setDeparture(e.target.value)} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="catalog-retour">Retour</Label>
+            <Label htmlFor="catalog-retour">{t('Retour')}</Label>
             <Input
               id="catalog-retour"
               type="datetime-local"
@@ -216,36 +219,36 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
           </div>
           <p className="flex min-h-9 items-center gap-1.5 text-sm text-muted-foreground">
             <CalendarClock className="size-4" />
-            {days > 0 ? `${days} jour${days > 1 ? 's' : ''} de location` : 'Choisissez vos dates'}
+            {days > 0 ? t(days > 1 ? '{n} jours de location' : '{n} jour de location', { n: days }) : t('Choisissez vos dates')}
           </p>
         </div>
-        {datesInvalid && <p className="text-sm text-destructive">La date de retour doit être postérieure au départ.</p>}
+        {datesInvalid && <p className="text-sm text-destructive">{t('La date de retour doit être postérieure au départ.')}</p>}
 
         <div className="grid gap-3 border-t pt-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="grid gap-1.5">
-            <Label>Boîte</Label>
+            <Label>{t('Boîte')}</Label>
             <Select value={transmission} onValueChange={setTransmission}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes</SelectItem>
-                <SelectItem value="automatic">Automatique</SelectItem>
-                <SelectItem value="manual">Manuelle</SelectItem>
+                <SelectItem value="all">{t('Toutes')}</SelectItem>
+                <SelectItem value="automatic">{t('Automatique')}</SelectItem>
+                <SelectItem value="manual">{t('Manuelle')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-1.5">
-            <Label>Carburant</Label>
+            <Label>{t('Carburant')}</Label>
             <Select value={fuel} onValueChange={setFuel}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="all">{t('Tous')}</SelectItem>
                 {fuels.map((value) => (
                   <SelectItem key={value} value={value}>
-                    {fuelLabel[value] ?? value}
+                    {t(fuelLabel[value] ?? value)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -253,10 +256,10 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
           </div>
           {hasSeats && (
             <div className="grid gap-1.5">
-              <Label id="seats-label">Places</Label>
+              <Label id="seats-label">{t('Places')}</Label>
               <ToggleGroup type="single" variant="outline" value={minSeats} onValueChange={(value) => setMinSeats(value || 'all')} aria-labelledby="seats-label" className="w-full">
                 <ToggleGroupItem value="all" className="flex-1">
-                  Toutes
+                  {t('Toutes')}
                 </ToggleGroupItem>
                 {['4', '5', '7'].map((count) => (
                   <ToggleGroupItem key={count} value={count} className="flex-1">
@@ -267,15 +270,15 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
             </div>
           )}
           <div className="grid gap-1.5">
-            <Label>Tri</Label>
+            <Label>{t('Tri')}</Label>
             <Select value={sort} onValueChange={setSort}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="relevance">Pertinence</SelectItem>
-                <SelectItem value="asc">Prix croissant</SelectItem>
-                <SelectItem value="desc">Prix décroissant</SelectItem>
+                <SelectItem value="relevance">{t('Pertinence')}</SelectItem>
+                <SelectItem value="asc">{t('Prix croissant')}</SelectItem>
+                <SelectItem value="desc">{t('Prix décroissant')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -285,7 +288,7 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
           {bounds && bounds.max > bounds.min && (
             <div className="grid min-w-56 flex-1 gap-2">
               <Label htmlFor="price-slider">
-                Prix maximum : <span className="font-semibold">{formatMoney(priceLimit ?? bounds.max)}</span> / jour
+                {t('Prix maximum')} : <span className="font-semibold">{money(priceLimit ?? bounds.max)}</span> {t('/ jour')}
               </Label>
               <Slider
                 id="price-slider"
@@ -294,13 +297,13 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
                 step={PRICE_STEP}
                 value={[priceLimit ?? bounds.max]}
                 onValueChange={([value]) => setMaxPrice(value)}
-                aria-label="Prix maximum par jour"
+                aria-label={t('Prix maximum par jour')}
               />
             </div>
           )}
           {period && (
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={hideUnavailable} onCheckedChange={setHideUnavailable} /> Masquer les indisponibles
+              <Switch checked={hideUnavailable} onCheckedChange={setHideUnavailable} /> {t('Masquer les indisponibles')}
             </label>
           )}
         </div>
@@ -308,10 +311,10 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
 
       <Tabs value={category} onValueChange={setCategory} className="mt-6">
         <TabsList>
-          <TabsTrigger value="all">Toutes</TabsTrigger>
+          <TabsTrigger value="all">{t('Toutes')}</TabsTrigger>
           {CATEGORIES.map((c) => (
             <TabsTrigger key={c} value={c}>
-              {c}
+              {t(c)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -320,20 +323,20 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
       {!loading && !error && (
         <div className="mt-4 flex flex-wrap items-center gap-2" aria-live="polite">
           <p className="text-sm font-medium">
-            {visible.length} véhicule{visible.length > 1 ? 's' : ''}
-            {period && visible.length > availableCount ? ` · ${availableCount} disponible${availableCount > 1 ? 's' : ''} sur ces dates` : ''}
+            {visible.length} {plural(visible.length, 'véhicule', 'véhicules')}
+            {period && visible.length > availableCount ? ` · ${availableCount} ${plural(availableCount, 'disponible', 'disponibles')} ${t('sur ces dates')}` : ''}
           </p>
           {filterChips.map((chip) => (
             <Badge key={chip.key} variant="secondary" className="gap-1 pr-1">
               {chip.label}
-              <button type="button" onClick={chip.clear} className="rounded-full p-0.5 hover:bg-foreground/10" aria-label={`Retirer le filtre ${chip.label}`}>
+              <button type="button" onClick={chip.clear} className="rounded-full p-0.5 hover:bg-foreground/10" aria-label={t('Retirer le filtre {label}', { label: chip.label })}>
                 <X className="size-3" />
               </button>
             </Badge>
           ))}
           {filterChips.length > 0 && (
             <Button type="button" variant="ghost" size="sm" onClick={resetFilters}>
-              Tout réinitialiser
+              {t('Tout réinitialiser')}
             </Button>
           )}
         </div>
@@ -342,7 +345,7 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
       {error && <p className="mt-6 text-sm text-destructive">{error}</p>}
 
       {loading ? (
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-label="Recherche des véhicules…">
+        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-label={t('Recherche des véhicules…')}>
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="aspect-[4/3] w-full rounded-xl" />
           ))}
@@ -359,10 +362,10 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
                 action={
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => setSelectedId(vehicle.id)}>
-                      Voir la fiche
+                      {t('Voir la fiche')}
                     </Button>
                     <Button size="sm" disabled={!vehicle.is_available} onClick={() => reserve(vehicle)}>
-                      Réserver
+                      {t('Réserver')}
                     </Button>
                   </div>
                 }
@@ -373,7 +376,7 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
         {visible.length > shown.length && (
           <div className="mt-8 text-center">
             <Button variant="outline" size="lg" onClick={() => setLimitState({ key: filterKey, limit: limit + pageSize })}>
-              Voir plus ({visible.length - shown.length} autre{visible.length - shown.length > 1 ? 's' : ''})
+              {t('Voir plus')} ({visible.length - shown.length} {plural(visible.length - shown.length, 'autre', 'autres')})
             </Button>
           </div>
         )}
@@ -383,14 +386,14 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
           <SearchX className="size-8" />
           <p>
             {filterChips.length
-              ? 'Aucun véhicule ne correspond à ces filtres.'
+              ? t('Aucun véhicule ne correspond à ces filtres.')
               : departure && returnDate
-                ? 'Aucun véhicule disponible pour cette période.'
-                : 'Aucun véhicule disponible pour le moment.'}
+                ? t('Aucun véhicule disponible pour cette période.')
+                : t('Aucun véhicule disponible pour le moment.')}
           </p>
           {filterChips.length > 0 && (
             <Button type="button" variant="outline" onClick={resetFilters}>
-              Réinitialiser les filtres
+              {t('Réinitialiser les filtres')}
             </Button>
           )}
         </div>
@@ -401,7 +404,7 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
           <DrawerContent className="max-h-[92svh]">
             <DrawerHeader className="text-left">
               <DrawerTitle>{title}</DrawerTitle>
-              <DrawerDescription>Fiche véhicule</DrawerDescription>
+              <DrawerDescription>{t('Fiche véhicule')}</DrawerDescription>
             </DrawerHeader>
             <div className="overflow-y-auto px-4 pb-6">{detail}</div>
           </DrawerContent>
@@ -411,7 +414,7 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
           <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>
-              <DialogDescription>Fiche véhicule</DialogDescription>
+              <DialogDescription>{t('Fiche véhicule')}</DialogDescription>
             </DialogHeader>
             {detail}
           </DialogContent>
