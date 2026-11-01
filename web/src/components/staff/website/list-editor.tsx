@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, ImageUp, Loader2, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ImageUp, Images, Loader2, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { Field } from '@/components/staff/form-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { frenchError } from '@/lib/errors';
 import { ICON_LABELS, ICON_NAMES, type IconName } from '@/lib/data/site-content';
 import { uniquePath } from '@/lib/data/storage';
 import { createClient } from '@/lib/supabase/client';
+import { MediaPicker } from './media-library';
 
 const MAX_IMAGE = 5 * 1024 * 1024;
 
@@ -85,20 +86,21 @@ export function ImageField({
   label,
   value,
   fallback,
-  folder,
   onChange,
   disabled,
 }: {
   label: string;
   value: string;
   fallback: string;
-  folder: 'home' | 'partners' | 'footer';
+  /** Conservé pour les appelants : tout est rangé dans la médiathèque. */
+  folder?: string;
   onChange: (url: string) => void;
   disabled?: boolean;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [picking, setPicking] = useState(false);
 
   async function upload(file: File | undefined) {
     if (!file) return;
@@ -107,7 +109,7 @@ export function ImageField({
     if (file.size > MAX_IMAGE) return setError('Image trop lourde (5 Mo maximum).');
     setBusy(true);
     const db = createClient();
-    const path = uniquePath(folder, file);
+    const path = uniquePath('library', file);
     const { error: failure } = await db.storage.from('site-assets').upload(path, file, { contentType: file.type, upsert: false });
     setBusy(false);
     if (input.current) input.current.value = '';
@@ -128,6 +130,9 @@ export function ImageField({
           <Button type="button" size="sm" variant="outline" disabled={disabled || busy} onClick={() => input.current?.click()}>
             {busy ? <Loader2 className="animate-spin" /> : <ImageUp />} {value ? 'Changer l’image' : 'Choisir une image'}
           </Button>
+          <Button type="button" size="sm" variant="outline" disabled={disabled || busy} onClick={() => setPicking(true)}>
+            <Images /> Médiathèque
+          </Button>
           {fallback && value !== fallback && (
             <Button type="button" size="sm" variant="ghost" disabled={disabled || busy} onClick={() => onChange(fallback)}>
               <RotateCcw /> Image d’origine
@@ -137,6 +142,7 @@ export function ImageField({
         <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => upload(event.target.files?.[0])} aria-label={label} />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
+      <MediaPicker open={picking} onOpenChange={setPicking} onPick={onChange} canEdit={!disabled} />
     </Field>
   );
 }

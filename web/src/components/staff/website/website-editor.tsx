@@ -40,6 +40,7 @@ import {
   BLOCK_TYPES,
   footerContent,
   homeContent,
+  menuContent,
   newBlock,
   safeHref,
   type Block,
@@ -47,6 +48,7 @@ import {
   type FooterContent,
   type HomeContent,
   type Link,
+  type MenuContent,
 } from '@/lib/data/site-content';
 import { frenchError } from '@/lib/errors';
 import { frDateTime } from '@/lib/format';
@@ -54,10 +56,12 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { BlockForm, LinksList } from './block-forms';
 import { TextRow } from './list-editor';
+import { MediaLibrary } from './media-library';
 import { useSiteDoc, type DocStatus } from './use-site-doc';
 
 const parseHome = (raw: unknown) => homeContent(raw);
 const parseFooter = (raw: unknown) => footerContent(raw);
+const parseMenu = (raw: unknown) => menuContent(raw);
 
 const nonEmpty = (text: string) => text.trim().length > 0;
 const cleanLinks = (list: Link[]) => list.filter((link) => nonEmpty(link.label)).map((link) => ({ label: link.label.trim(), href: safeHref(link.href) }));
@@ -97,6 +101,7 @@ function cleanBlock(block: Block): Block {
   }
 }
 const cleanHome = (home: HomeContent): HomeContent => ({ blocks: home.blocks.map(cleanBlock) });
+const cleanMenu = (menu: MenuContent): MenuContent => ({ links: cleanLinks(menu.links) });
 const cleanFooter = (footer: FooterContent): FooterContent => ({ ...footer, links: cleanLinks(footer.links), socials: cleanLinks(footer.socials) });
 
 const STATUS: Record<DocStatus, { label: string; tone: 'success' | 'info' | 'warning' }> = {
@@ -459,15 +464,26 @@ function HomeTab({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-function FooterTab({ canEdit }: { canEdit: boolean }) {
-  const doc = useSiteDoc('footer', parseFooter, cleanFooter);
+/** Contenu simple (pied de page, menu…) avec son cycle brouillon → publication. */
+function DocTab<T>({
+  docKey,
+  parse,
+  clean,
+  canEdit,
+  children,
+}: {
+  docKey: string;
+  parse: (raw: unknown) => T;
+  clean: (value: T) => T;
+  canEdit: boolean;
+  children: (value: T, set: (value: T) => void) => React.ReactNode;
+}) {
+  const doc = useSiteDoc(docKey, parse, clean);
   const [history, setHistory] = useState(false);
   const [preview, setPreview] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   if (!doc.ready) return doc.error ? <FormMessage error={doc.error} /> : <Skeleton className="h-72 rounded-xl" />;
-  const value = doc.value!;
-  const set = (patch: Partial<FooterContent>) => doc.setValue({ ...value, ...patch });
 
   async function openPreview() {
     if (canEdit && doc.status === 'unsaved') {
@@ -490,30 +506,64 @@ function FooterTab({ canEdit }: { canEdit: boolean }) {
         onHistory={() => setHistory(true)}
       />
       <FormMessage error={doc.error} message={doc.error ? '' : doc.message} />
-      <Card>
-        <CardContent className="grid gap-4">
-          <h2 className="text-base font-medium">Présentation</h2>
-          <TextRow id="footer-tagline" label="Phrase d’accroche" value={value.tagline} onChange={(tagline) => set({ tagline })} disabled={!canEdit} />
-          <TextRow id="footer-note" label="Mention complémentaire (facultative)" value={value.note} onChange={(note) => set({ note })} disabled={!canEdit} />
-          <p className="text-xs text-muted-foreground">Téléphone, WhatsApp, adresse et horaires se modifient dans Paramètres.</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="grid gap-4">
-          <h2 className="text-base font-medium">Liens du pied de page</h2>
-          <LinksList scope="footer-link" items={value.links} onChange={(links) => set({ links })} disabled={!canEdit} addLabel="Ajouter un lien" />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="grid gap-4">
-          <h2 className="text-base font-medium">Réseaux sociaux</h2>
-          <LinksList scope="footer-social" items={value.socials} onChange={(socials) => set({ socials })} disabled={!canEdit} addLabel="Ajouter un réseau" />
-          <p className="text-xs text-muted-foreground">Exemple : libellé « Facebook », adresse https://facebook.com/votre-page.</p>
-        </CardContent>
-      </Card>
-      <HistoryDialog docKey="footer" open={history} onOpenChange={setHistory} onRestore={doc.restore} disabled={!canEdit} />
+      {children(doc.value as T, (value) => doc.setValue(value))}
+      <HistoryDialog docKey={docKey} open={history} onOpenChange={setHistory} onRestore={doc.restore} disabled={!canEdit} />
       <PreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} version={preview} />
     </div>
+  );
+}
+
+function FooterTab({ canEdit }: { canEdit: boolean }) {
+  return (
+    <DocTab docKey="footer" parse={parseFooter} clean={cleanFooter} canEdit={canEdit}>
+      {(value, setValue) => {
+        const set = (patch: Partial<FooterContent>) => setValue({ ...value, ...patch });
+        return (
+          <>
+            <Card>
+              <CardContent className="grid gap-4">
+                <h2 className="text-base font-medium">Présentation</h2>
+                <TextRow id="footer-tagline" label="Phrase d’accroche" value={value.tagline} onChange={(tagline) => set({ tagline })} disabled={!canEdit} />
+                <TextRow id="footer-note" label="Mention complémentaire (facultative)" value={value.note} onChange={(note) => set({ note })} disabled={!canEdit} />
+                <p className="text-xs text-muted-foreground">Téléphone, WhatsApp, adresse et horaires se modifient dans Paramètres.</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="grid gap-4">
+                <h2 className="text-base font-medium">Liens du pied de page</h2>
+                <LinksList scope="footer-link" items={value.links} onChange={(links) => set({ links })} disabled={!canEdit} addLabel="Ajouter un lien" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="grid gap-4">
+                <h2 className="text-base font-medium">Réseaux sociaux</h2>
+                <LinksList scope="footer-social" items={value.socials} onChange={(socials) => set({ socials })} disabled={!canEdit} addLabel="Ajouter un réseau" />
+                <p className="text-xs text-muted-foreground">Exemple : libellé « Facebook », adresse https://facebook.com/votre-page.</p>
+              </CardContent>
+            </Card>
+          </>
+        );
+      }}
+    </DocTab>
+  );
+}
+
+function MenuTab({ canEdit }: { canEdit: boolean }) {
+  return (
+    <DocTab docKey="menu" parse={parseMenu} clean={cleanMenu} canEdit={canEdit}>
+      {(value, setValue) => (
+        <Card>
+          <CardContent className="grid gap-4">
+            <h2 className="text-base font-medium">Menu du haut du site</h2>
+            <p className="text-sm text-muted-foreground">
+              Les liens s’affichent dans cet ordre. Pour pointer vers une section de l’accueil, utilisez /#etapes, /#faq, /#partenaires ou /#contact.
+            </p>
+            <LinksList scope="menu-link" items={value.links} onChange={(links) => setValue({ ...value, links })} disabled={!canEdit} addLabel="Ajouter un lien" />
+            <p className="text-xs text-muted-foreground">« Se connecter » et « Créer un compte » restent toujours affichés.</p>
+          </CardContent>
+        </Card>
+      )}
+    </DocTab>
   );
 }
 
@@ -523,7 +573,7 @@ export function WebsiteEditor({ canEdit }: { canEdit: boolean }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Site web</h1>
-          <p className="text-sm text-muted-foreground">Composez la page d’accueil : ajoutez, déplacez et masquez des sections, prévisualisez, puis publiez.</p>
+          <p className="text-sm text-muted-foreground">Composez la page d’accueil, le menu et le pied de page : ajoutez, déplacez et masquez des sections, prévisualisez, puis publiez.</p>
         </div>
         <Button asChild variant="outline" size="sm">
           <a href="/" target="_blank" rel="noopener noreferrer">
@@ -535,10 +585,18 @@ export function WebsiteEditor({ canEdit }: { canEdit: boolean }) {
       <Tabs defaultValue="home">
         <TabsList>
           <TabsTrigger value="home">Page d’accueil</TabsTrigger>
+          <TabsTrigger value="menu">Menu</TabsTrigger>
           <TabsTrigger value="footer">Pied de page</TabsTrigger>
+          <TabsTrigger value="media">Médiathèque</TabsTrigger>
         </TabsList>
         <TabsContent value="home" className="mt-4">
           <HomeTab canEdit={canEdit} />
+        </TabsContent>
+        <TabsContent value="menu" className="mt-4">
+          <MenuTab canEdit={canEdit} />
+        </TabsContent>
+        <TabsContent value="media" className="mt-4">
+          <MediaLibrary canEdit={canEdit} />
         </TabsContent>
         <TabsContent value="footer" className="mt-4">
           <FooterTab canEdit={canEdit} />

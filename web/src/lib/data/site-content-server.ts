@@ -3,7 +3,7 @@ import { cacheLife, cacheTag } from 'next/cache';
 import type { Database } from '@/lib/database.types';
 import { resolveSupabaseConfig } from '@/lib/supabase/config';
 import { localizedFetch } from '@/lib/supabase/localized-fetch';
-import { footerContent, homeContent, type FooterContent, type HomeContent } from './site-content';
+import { footerContent, homeContent, menuContent, type FooterContent, type HomeContent, type MenuContent } from './site-content';
 
 export const SITE_CONTENT_TAG = 'site-content';
 
@@ -21,8 +21,7 @@ async function readSiteContent() {
     global: { fetch: localizedFetch },
   });
   const { data } = await db.from('site_content').select('key,content');
-  const byKey = Object.fromEntries((data ?? []).map((row) => [row.key, row.content]));
-  return { home: byKey.home ?? null, footer: byKey.footer ?? null };
+  return Object.fromEntries((data ?? []).map((row) => [row.key, row.content])) as Record<string, unknown>;
 }
 
 export async function getHomeContent(): Promise<HomeContent> {
@@ -31,4 +30,8 @@ export async function getHomeContent(): Promise<HomeContent> {
 
 export async function getFooterContent(): Promise<FooterContent> {
   return footerContent((await readSiteContent()).footer);
+}
+
+export async function getMenuContent(): Promise<MenuContent> {
+  return menuContent((await readSiteContent()).menu);
 }

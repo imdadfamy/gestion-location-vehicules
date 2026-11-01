@@ -247,6 +247,17 @@ export const DEFAULT_FOOTER: FooterContent = {
   note: '',
 };
 
+export type MenuContent = { links: Link[] };
+
+export const DEFAULT_MENU: MenuContent = {
+  links: [
+    { label: 'Véhicules', href: '/vehicules' },
+    { label: 'Comment ça marche', href: '/#etapes' },
+    { label: 'Partenaires', href: '/#partenaires' },
+    { label: 'Contact', href: '/#contact' },
+  ],
+};
+
 /**
  * Fusionne le contenu enregistré avec les valeurs par défaut : une clé absente ou d'un
  * mauvais type retombe sur le défaut, une liste enregistrée remplace la liste par défaut.
@@ -281,6 +292,7 @@ export function normalizeBlocks(stored: unknown, fallback: Block[] = []): Block[
 
 export const homeContent = (stored: unknown): HomeContent => ({ blocks: normalizeBlocks(stored, DEFAULT_HOME_BLOCKS) });
 export const footerContent = (stored: unknown) => mergeContent(DEFAULT_FOOTER, stored);
+export const menuContent = (stored: unknown) => mergeContent(DEFAULT_MENU, stored);
 
 /** Adresses acceptées pour un lien : interne, https, mailto ou tel (jamais javascript:). */
 export function safeHref(value: string) {

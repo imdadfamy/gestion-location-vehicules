@@ -12,7 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { availableVehicles, companyContact, whatsappLink } from '@/lib/data/public-catalog';
-import { safeHref, youtubeEmbed, type Block, type Faq, type FooterContent } from '@/lib/data/site-content';
+import { safeHref, youtubeEmbed, type Block, type Faq, type FooterContent, type Link as MenuLink } from '@/lib/data/site-content';
 import { createClient } from '@/lib/supabase/server';
 
 function SectionTitle({ eyebrow, title, text }: { eyebrow?: string; title: string; text?: string }) {
@@ -459,12 +459,12 @@ function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
 }
 
 /** Page d'accueil complète (publique ou aperçu d'un brouillon) à partir de ses sections. */
-export function HomeView({ blocks, footer }: { blocks: Block[]; footer?: FooterContent }) {
+export function HomeView({ blocks, footer, menu }: { blocks: Block[]; footer?: FooterContent; menu?: MenuLink[] }) {
   const visible = blocks.filter((block) => block.show);
   const seen = new Set<string>();
   return (
     <>
-      <SiteHeader overHero={visible[0]?.type === 'hero'} />
+      <SiteHeader overHero={visible[0]?.type === 'hero'} links={menu} />
       <main className="flex-1">
         {visible.map((block) => {
           const anchor = !seen.has(block.type);
