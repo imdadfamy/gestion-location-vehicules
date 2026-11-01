@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Car, CheckCircle2, Loader2, MessageCircle, Plane, Users } from 'lucide-react';
 import AnimatedContent from '@/components/AnimatedContent';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DEFAULT_COUNTRY, findCountry, localDigits, toInternational } from '@/lib/countries';
+import { COUNTRIES, DEFAULT_COUNTRY, countryFromLanguage, findCountry, localDigits, toInternational } from '@/lib/countries';
 import { catalogVehicles, whatsappLink, type CatalogVehicle } from '@/lib/data/public-catalog';
 import type { BlockData } from '@/lib/data/site-content';
 import { categoryPrice, createTransfer, hasPriceRange, lowestPrice, numericPrice, showPrice, TRANSFER_HOURS } from '@/lib/data/transfers';
@@ -46,6 +46,23 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState(DEFAULT_COUNTRY);
+  const countryChosen = useRef(false);
+
+  // Pays par défaut : celui du visiteur (adresse IP, via Vercel), à défaut la région de sa langue, à défaut le Bénin.
+  // Un choix déjà fait par le visiteur n'est jamais écrasé.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/geo')
+      .then((response) => response.json())
+      .catch(() => ({ country: null }))
+      .then(({ country: detected }: { country: string | null }) => {
+        const iso = (detected && COUNTRIES.some((item) => item.iso === detected) ? detected : null) ?? countryFromLanguage(navigator.languages);
+        if (!cancelled && iso && !countryChosen.current) setCountry(iso);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [vehicles, setVehicles] = useState<CatalogVehicle[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -344,7 +361,10 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                     <Label htmlFor="transfer-phone" className="text-white/80">
                       {t('Téléphone (WhatsApp)')}
                     </Label>
-                    <PhoneField id="transfer-phone" country={country} onCountryChange={setCountry} value={phone} onChange={setPhone} className={field} />
+                    <PhoneField id="transfer-phone" country={country} onCountryChange={(iso) => {
+                        countryChosen.current = true;
+                        setCountry(iso);
+                      }} value={phone} onChange={setPhone} className={field} />
                   </div>
                 </div>
 

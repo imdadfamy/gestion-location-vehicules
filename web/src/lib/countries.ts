@@ -84,6 +84,19 @@ export const COUNTRIES: Country[] = [
   { iso: 'ZA', dial: '27', fr: 'Afrique du Sud', en: 'South Africa' },
 ];
 
+/** Pays déduit de la langue du navigateur (« fr-FR » → FR), ou null s'il n'y en a pas de reconnu. */
+export function countryFromLanguage(languages: readonly string[]) {
+  for (const language of languages) {
+    try {
+      const region = new Intl.Locale(language).region;
+      if (region && COUNTRIES.some((country) => country.iso === region)) return region;
+    } catch {
+      // Étiquette de langue invalide : on passe à la suivante.
+    }
+  }
+  return null;
+}
+
 export const countryName = (country: Country, lang: 'fr' | 'en') => country[lang];
 export const findCountry = (iso: string) => COUNTRIES.find((country) => country.iso === iso) ?? COUNTRIES[0];
 
