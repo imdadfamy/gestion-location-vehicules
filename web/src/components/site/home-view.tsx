@@ -175,7 +175,7 @@ function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
       const { eyebrow, title, items } = block.data;
       if (!items.length) return null;
       return (
-        <section id={anchor ? 'etapes' : undefined} className="scroll-mt-20 overflow-x-clip border-y bg-muted/40 py-20">
+        <section id={anchor ? 'etapes' : undefined} className="scroll-mt-20 overflow-x-clip border-y border-border/60 bg-band py-20">
           <div className="mx-auto max-w-6xl px-4">
             <SectionTitle eyebrow={eyebrow} title={title} />
             <ol className="relative mt-14 grid gap-10 md:grid-flow-col md:auto-cols-fr md:gap-6">
@@ -214,7 +214,7 @@ function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
     case 'partner': {
       const partner = block.data;
       return (
-        <section id={anchor ? 'partenaires' : undefined} className="scroll-mt-20 overflow-x-clip border-t bg-muted/40 py-20">
+        <section id={anchor ? 'partenaires' : undefined} className="scroll-mt-20 overflow-x-clip border-t border-border/60 bg-band py-20">
           <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 lg:grid-cols-2">
             <AnimatedContent direction="horizontal" distance={40} reverse>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -360,7 +360,7 @@ function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
       const { eyebrow, title, items } = block.data;
       if (!items.length) return null;
       return (
-        <section className="border-y bg-muted/40 py-20">
+        <section className="border-y border-border/60 bg-band py-20">
           <div className="mx-auto max-w-6xl px-4">
             <SectionTitle eyebrow={eyebrow} title={title} />
             <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -431,7 +431,7 @@ function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
   }
 }
 
-/** Page d'accueil complète (publique ou aperçu d'un brouillon) à partir de ses sections. */
+/** Page d'accueil complète (publique ou aperçu d'un brouillon) à partir de ses sections ; les bandes alternent fond / bande teintée. */
 export function HomeView({ blocks, footer, menu, announcement, lead }: { blocks: Block[]; footer?: FooterContent; menu?: MenuLink[]; announcement?: Announcement; lead?: React.ReactNode }) {
   const visible = blocks.filter((block) => block.show);
   const seen = new Set<string>();
