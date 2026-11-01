@@ -22,10 +22,10 @@ const LINKS = {
   ],
   partner: [
     { href: '/partner/vehicles', label: 'Mes véhicules', icon: CarFront },
-    { href: '/partner/maintenance', label: 'Entretien', icon: Wrench },
+    { href: '/partner/maintenance', label: 'Maintenance', icon: Wrench },
     { href: '/partner/inspections', label: 'Inspections', icon: ClipboardCheck },
-    { href: '/partner/earnings', label: 'Mes gains', icon: Wallet },
-    { href: '/partner/account', label: 'Mon compte', icon: UserCircle },
+    { href: '/partner/earnings', label: 'Mes revenus', icon: Wallet },
+    { href: '/partner/account', label: 'Mon profil', icon: UserCircle },
   ],
 };
 

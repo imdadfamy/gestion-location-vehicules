@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { SpaceHome } from '@/components/auth/space-home';
+import { PartnerVehicles } from '@/components/portal/partner-vehicles';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const metadata: Metadata = { title: 'Mes véhicules' };
 
 export default function PartnerVehiclesPage() {
   return (
-    <Suspense>
-      <SpaceHome space="Espace partenaire" loginPath="/partner/login" />
+    <Suspense fallback={<Skeleton className="h-96 rounded-xl" />}>
+      <PartnerVehicles />
     </Suspense>
   );
 }
