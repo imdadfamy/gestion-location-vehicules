@@ -1570,11 +1570,38 @@ export type Database = {
           },
         ];
       };
-      transfer_requests: {
-        Row: { id: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number: string | null; passengers: number; luggage: number | null; vehicle_id: string | null; vehicle_label: string | null; quoted_price: number | null; final_price: number | null; customer_name: string; customer_phone: string; notes: string | null; status: string; staff_notes: string | null; created_at: string; updated_at: string; };
-        Insert: { id?: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name: string; customer_phone: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
-        Update: { id?: string; reference?: string; route_from?: string; route_to?: string; pickup_at?: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name?: string; customer_phone?: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
+      transfer_drivers: {
+        Row: { created_at: string; full_name: string; id: string; is_active: boolean; phone: string };
+        Insert: { created_at?: string; full_name: string; id?: string; is_active?: boolean; phone: string };
+        Update: { created_at?: string; full_name?: string; id?: string; is_active?: boolean; phone?: string };
+        Relationships: [];
+      };
+      transfer_events: {
+        Row: { created_at: string; id: string; note: string | null; push_sent_at: string | null; status: string; transfer_id: string };
+        Insert: { created_at?: string; id?: string; note?: string | null; push_sent_at?: string | null; status: string; transfer_id: string };
+        Update: { created_at?: string; id?: string; note?: string | null; push_sent_at?: string | null; status?: string; transfer_id?: string };
         Relationships: [
+          {
+            foreignKeyName: 'transfer_events_transfer_id_fkey';
+            columns: ['transfer_id'];
+            isOneToOne: false;
+            referencedRelation: 'transfer_requests';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      transfer_requests: {
+        Row: { driver_id: string | null; meeting_point: string | null; id: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number: string | null; passengers: number; luggage: number | null; vehicle_id: string | null; vehicle_label: string | null; quoted_price: number | null; final_price: number | null; customer_name: string; customer_phone: string; notes: string | null; status: string; staff_notes: string | null; created_at: string; updated_at: string; };
+        Insert: { driver_id?: string | null; meeting_point?: string | null; id?: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name: string; customer_phone: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
+        Update: { driver_id?: string | null; meeting_point?: string | null; id?: string; reference?: string; route_from?: string; route_to?: string; pickup_at?: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name?: string; customer_phone?: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
+        Relationships: [
+          {
+            foreignKeyName: 'transfer_requests_driver_id_fkey';
+            columns: ['driver_id'];
+            isOneToOne: false;
+            referencedRelation: 'transfer_drivers';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'transfer_requests_vehicle_id_fkey';
             columns: ['vehicle_id'];
@@ -2090,15 +2117,19 @@ export type Database = {
       };
       public_transfer_status: {
         Args: { target_phone: string; target_reference: string };
-        Returns: {
-          pickup_at: string;
-          price: number | null;
-          reference: string;
-          route_from: string;
-          route_to: string;
-          status: string;
-          vehicle_label: string | null;
-        }[];
+        Returns: Json;
+      };
+      public_cancel_transfer: {
+        Args: { target_phone: string; target_reference: string };
+        Returns: boolean;
+      };
+      public_update_transfer: {
+        Args: { target_flight_number?: string; target_phone: string; target_pickup_at: string; target_reference: string };
+        Returns: boolean;
+      };
+      public_subscribe_transfer_push: {
+        Args: { target_auth: string; target_endpoint: string; target_lang?: string; target_p256dh: string; target_phone: string; target_reference: string };
+        Returns: boolean;
       };
       register_push_subscription: {
         Args: { target_auth: string; target_endpoint: string; target_p256dh: string; target_user_agent?: string };

@@ -35,8 +35,8 @@ export async function pushState(): Promise<PushState> {
   return subscription && Notification.permission === 'granted' ? 'on' : 'off';
 }
 
-/** Demande l'autorisation, abonne l'appareil et l'enregistre pour l'utilisateur connecté. */
-export async function enablePush(db: Db) {
+/** Demande l'autorisation puis abonne cet appareil aux alertes ; renvoie ses coordonnées d'envoi ou une erreur. */
+export async function subscribeDevice(): Promise<{ device: { endpoint: string; p256dh: string; auth: string } } | { error: string }> {
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return { error: 'Les notifications ont été refusées pour ce site. Autorisez-les dans les réglages du navigateur.' };
   const reg = await registration();
@@ -45,10 +45,17 @@ export async function enablePush(db: Db) {
     (await reg.pushManager.getSubscription()) ??
     (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toKey(vapidKey()) }));
   const json = subscription.toJSON();
+  return { device: { endpoint: subscription.endpoint, p256dh: json.keys?.p256dh ?? '', auth: json.keys?.auth ?? '' } };
+}
+
+/** Active les alertes de l'équipe sur cet appareil, pour l'utilisateur connecté. */
+export async function enablePush(db: Db) {
+  const result = await subscribeDevice();
+  if ('error' in result) return { error: result.error };
   const { error } = await db.rpc('register_push_subscription', {
-    target_endpoint: subscription.endpoint,
-    target_p256dh: json.keys?.p256dh ?? '',
-    target_auth: json.keys?.auth ?? '',
+    target_endpoint: result.device.endpoint,
+    target_p256dh: result.device.p256dh,
+    target_auth: result.device.auth,
     target_user_agent: navigator.userAgent,
   });
   return { error: error ? error.message : null };

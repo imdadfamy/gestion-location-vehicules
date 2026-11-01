@@ -23,7 +23,7 @@ export function markRead(db: Db, ids: string[]) {
  */
 export async function operationalAlerts(db: Db): Promise<{ data: Alert[] | null; error: unknown }> {
   const refresh = await db.rpc('refresh_overdue_rentals');
-  const [contracts, rentals, payments, maintenance, vehicles, incidents] = await Promise.all([
+  const [contracts, rentals, payments, maintenance, vehicles, incidents, transfers] = await Promise.all([
     db.from('contracts').select('contract_number').eq('status', 'pending_signature'),
     db.from('rentals').select('id,status,return_date,rental_price,vehicles(registration_number),vehicle_inspections(inspection_type)'),
     db.from('payments').select('rental_id,amount'),
@@ -33,14 +33,32 @@ export async function operationalAlerts(db: Db): Promise<{ data: Alert[] | null;
       .neq('status', 'completed'),
     db.from('vehicles').select('registration_number,insurance_expiry_date,technical_inspection_expiry_date'),
     db.from('incidents').select('id').in('status', ['open', 'in_progress']),
+    db.from('transfer_requests').select('id,reference,customer_name,route_from,route_to,pickup_at,status,driver_id').in('status', ['new', 'confirmed', 'assigned', 'en_route', 'arrived']),
   ]);
   const error =
-    refresh.error ?? contracts.error ?? rentals.error ?? payments.error ?? maintenance.error ?? vehicles.error ?? incidents.error;
+    refresh.error ?? contracts.error ?? rentals.error ?? payments.error ?? maintenance.error ?? vehicles.error ?? incidents.error ?? transfers.error;
   if (error) return { data: null, error };
 
   const now = Date.now();
   const soon = now + 30 * 86400000;
   const alerts: Alert[] = [];
+  for (const transfer of transfers.data ?? []) {
+    const pickup = new Date(transfer.pickup_at).getTime();
+    if (transfer.status === 'new')
+      alerts.push({
+        key: `transfer-new-${transfer.id}`,
+        title: 'Nouvelle demande de transfert',
+        message: `${transfer.customer_name} : ${transfer.route_from} → ${transfer.route_to} (${transfer.reference}).`,
+        href: '/app/transfers',
+      });
+    else if (!transfer.driver_id && pickup < now + 48 * 3600000)
+      alerts.push({
+        key: `transfer-driver-${transfer.id}`,
+        title: 'Transfert sans chauffeur',
+        message: `${transfer.reference} (${transfer.customer_name}) a lieu dans moins de 48 h et n’a pas de chauffeur.`,
+        href: '/app/transfers',
+      });
+  }
   for (const contract of contracts.data ?? [])
     alerts.push({
       key: `contract-${contract.contract_number}`,

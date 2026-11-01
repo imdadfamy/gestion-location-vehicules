@@ -1,38 +1,61 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, MessageCircle, Plane, Search } from 'lucide-react';
+import { ArrowRight, Loader2, MessageCircle, Plane, Search, TriangleAlert, UserPlus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
 import { Field } from '@/components/staff/form-field';
 import { StatusBadge } from '@/components/staff/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { vehicleOptions } from '@/lib/data/reservations';
-import { listTransfers, showPrice, TRANSFER_STATUSES, updateTransfer, type TransferRequest } from '@/lib/data/transfers';
+import {
+  addDriver,
+  listDrivers,
+  listTransfers,
+  setDriverActive,
+  showPrice,
+  TRANSFER_STATUSES,
+  transferConflicts,
+  updateTransfer,
+  type TransferDriver,
+  type TransferRequest,
+} from '@/lib/data/transfers';
 import { frenchError } from '@/lib/errors';
 import { frDateTime, whatsappNumber } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 
 type VehicleChoice = { id: string; registration_number: string; make: string; model: string };
 
+const OPEN = ['new', 'confirmed', 'assigned', 'en_route', 'arrived'];
 const FILTERS: Record<string, string> = {
-  active: 'À traiter : nouvelles, confirmées, assignées',
+  active: 'À traiter : demandes en cours',
+  soon: 'Aujourd’hui et demain',
   new: 'Nouvelles',
   confirmed: 'Confirmées',
   assigned: 'Chauffeur assigné',
+  en_route: 'Chauffeur en route',
+  arrived: 'Chauffeur arrivé',
   done: 'Terminées',
   cancelled: 'Annulées',
   all: 'Toutes',
 };
 
-function replyText(item: TransferRequest) {
+/** Vrai si l'heure est dans moins de `hours` heures (hors du rendu : `Date.now()` n'est pas pur). */
+const startsWithin = (iso: string, hours: number) => new Date(iso).getTime() < Date.now() + hours * 3600000;
+
+/** Étape suivante proposée en un clic. */
+const NEXT: Record<string, string> = { new: 'confirmed', confirmed: 'assigned', assigned: 'en_route', en_route: 'arrived', arrived: 'done' };
+
+function replyText(item: TransferRequest, driver: TransferDriver | undefined, origin: string) {
   const price = item.final_price ?? item.quoted_price;
   const details = [
     `${item.route_from} → ${item.route_to}`,
@@ -43,27 +66,36 @@ function replyText(item: TransferRequest) {
     .filter(Boolean)
     .join(' · ');
   const base = `Bonjour ${item.customer_name}, ici FIMA AUTO. Votre transfert ${item.reference} (${details})`;
+  const follow = `\nSuivez-le ici : ${origin}/suivi-transfert?ref=${item.reference}`;
+  const meeting = item.meeting_point ? `\nPoint de rendez-vous : ${item.meeting_point}.` : '';
   if (item.status === 'cancelled') return `${base} a été annulé.`;
-  if (item.status === 'assigned') return `${base} est confirmé. Votre chauffeur vous attendra à l’heure prévue.`;
-  if (item.status === 'confirmed') return `${base} est confirmé.`;
-  return `${base} : nous avons bien reçu votre demande.`;
+  if (item.status === 'arrived') return `${base} : votre chauffeur est arrivé et vous attend.${meeting}`;
+  if (item.status === 'en_route') return `${base} : votre chauffeur est en route.${follow}`;
+  if (item.status === 'assigned')
+    return `${base} est confirmé. Votre chauffeur${driver ? ` ${driver.full_name} (${driver.phone})` : ''} vous attendra à l’heure prévue.${meeting}${follow}`;
+  if (item.status === 'confirmed') return `${base} est confirmé.${meeting}${follow}`;
+  if (item.status === 'done') return `${base} est terminé. Merci de votre confiance !`;
+  return `${base} : nous avons bien reçu votre demande.${follow}`;
 }
 
 export function TransfersManager({ canUpdate }: { canUpdate: boolean }) {
   const [rows, setRows] = useState<TransferRequest[]>([]);
   const [vehicles, setVehicles] = useState<VehicleChoice[]>([]);
+  const [drivers, setDrivers] = useState<TransferDriver[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('active');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [driversOpen, setDriversOpen] = useState(false);
 
   function load() {
     const db = createClient();
-    return Promise.all([listTransfers(db), vehicleOptions(db)]).then(([transfers, cars]) => {
+    return Promise.all([listTransfers(db), vehicleOptions(db), listDrivers(db)]).then(([transfers, cars, people]) => {
       setRows(transfers.data ?? []);
       setVehicles(cars.data ?? []);
-      const failure = transfers.error ?? cars.error;
+      setDrivers(people.data ?? []);
+      const failure = transfers.error ?? cars.error ?? people.error;
       setError(failure ? frenchError(failure) : '');
       setLoading(false);
     });
@@ -74,21 +106,36 @@ export function TransfersManager({ canUpdate }: { canUpdate: boolean }) {
   }, []);
 
   const term = query.trim().toLowerCase();
-  const visible = rows.filter(
-    (item) =>
-      (filter === 'all' ? true : filter === 'active' ? ['new', 'confirmed', 'assigned'].includes(item.status) : item.status === filter) &&
-      (!term || `${item.reference} ${item.customer_name} ${item.customer_phone} ${item.route_from} ${item.route_to}`.toLowerCase().includes(term)),
-  );
+  const visible = rows.filter((item) => {
+    const open = OPEN.includes(item.status);
+    const startOfToday = new Date().setHours(0, 0, 0, 0);
+    const pickup = new Date(item.pickup_at).getTime();
+    const matchesFilter =
+      filter === 'all'
+        ? true
+        : filter === 'active'
+          ? open
+          : filter === 'soon'
+            ? open && pickup >= startOfToday && pickup < startOfToday + 2 * 86400000
+            : item.status === filter;
+    return matchesFilter && (!term || `${item.reference} ${item.customer_name} ${item.customer_phone} ${item.route_from} ${item.route_to}`.toLowerCase().includes(term));
+  });
   const selected = rows.find((item) => item.id === selectedId) ?? null;
+  const driverName = (id: string | null) => drivers.find((driver) => driver.id === id)?.full_name;
 
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-5">
-      <div>
-        <p className="text-xs font-medium tracking-wide text-primary uppercase">Service chauffeur</p>
-        <h2 className="text-2xl font-semibold tracking-tight">Transferts aéroport</h2>
-        <p className="text-sm text-muted-foreground">
-          Demandes envoyées depuis le site. Confirmez le prix, choisissez le véhicule puis répondez au client sur WhatsApp.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium tracking-wide text-primary uppercase">Service chauffeur</p>
+          <h2 className="text-2xl font-semibold tracking-tight">Transferts aéroport</h2>
+          <p className="text-sm text-muted-foreground">
+            Demandes envoyées depuis le site. Confirmez le prix, choisissez le véhicule et le chauffeur, faites avancer les étapes : le client est prévenu sur son téléphone.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => setDriversOpen(true)}>
+          <Users /> Chauffeurs ({drivers.filter((driver) => driver.is_active).length})
+        </Button>
       </div>
 
       <div className="grid gap-2 md:grid-cols-[1fr_20rem]">
@@ -137,13 +184,14 @@ export function TransfersManager({ canUpdate }: { canUpdate: boolean }) {
                 <TableHead className="pl-4">Client</TableHead>
                 <TableHead className="hidden sm:table-cell">Trajet</TableHead>
                 <TableHead className="hidden md:table-cell">Date et heure</TableHead>
-                <TableHead className="hidden lg:table-cell">Véhicule</TableHead>
+                <TableHead className="hidden lg:table-cell">Véhicule / chauffeur</TableHead>
                 <TableHead className="pr-4">Statut</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {visible.map((item) => {
                 const status = TRANSFER_STATUSES[item.status] ?? TRANSFER_STATUSES.new;
+                const unassigned = OPEN.includes(item.status) && !item.driver_id && startsWithin(item.pickup_at, 48);
                 return (
                   <TableRow key={item.id} className="cursor-pointer" onClick={() => setSelectedId(item.id)}>
                     <TableCell className="pl-4 whitespace-normal">
@@ -155,9 +203,13 @@ export function TransfersManager({ canUpdate }: { canUpdate: boolean }) {
                       {item.route_from} → {item.route_to}
                     </TableCell>
                     <TableCell className="hidden text-xs tabular-nums md:table-cell">{frDateTime(item.pickup_at)}</TableCell>
-                    <TableCell className="hidden text-xs lg:table-cell">{item.vehicle_label ?? '—'}</TableCell>
+                    <TableCell className="hidden text-xs lg:table-cell">
+                      {item.vehicle_label ?? '—'}
+                      <span className="block text-muted-foreground">{driverName(item.driver_id) ?? (unassigned ? 'Sans chauffeur' : '—')}</span>
+                    </TableCell>
                     <TableCell className="pr-4">
                       <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+                      {unassigned && <TriangleAlert className="ml-1 inline size-4 text-amber-500" aria-label="Sans chauffeur" />}
                     </TableCell>
                   </TableRow>
                 );
@@ -173,16 +225,20 @@ export function TransfersManager({ canUpdate }: { canUpdate: boolean }) {
             <TransferDetail
               key={selected.id + selected.updated_at}
               item={selected}
+              rows={rows}
               vehicles={vehicles}
+              drivers={drivers}
               canUpdate={canUpdate}
               onSaved={() => {
-                toast.success('Transfert mis à jour.');
+                toast.success('Transfert mis à jour. Le client est prévenu s’il a activé les alertes.');
                 load();
               }}
             />
           )}
         </SheetContent>
       </Sheet>
+
+      <DriversDialog open={driversOpen} onOpenChange={setDriversOpen} drivers={drivers} canUpdate={canUpdate} onChanged={load} />
     </div>
   );
 }
@@ -196,26 +252,49 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-function TransferDetail({ item, vehicles, canUpdate, onSaved }: { item: TransferRequest; vehicles: VehicleChoice[]; canUpdate: boolean; onSaved: () => void }) {
+function TransferDetail({
+  item,
+  rows,
+  vehicles,
+  drivers,
+  canUpdate,
+  onSaved,
+}: {
+  item: TransferRequest;
+  rows: TransferRequest[];
+  vehicles: VehicleChoice[];
+  drivers: TransferDriver[];
+  canUpdate: boolean;
+  onSaved: () => void;
+}) {
   const [status, setStatus] = useState(item.status);
   const [price, setPrice] = useState(String(item.final_price ?? item.quoted_price ?? ''));
   const [vehicleId, setVehicleId] = useState(item.vehicle_id ?? 'none');
+  const [driverId, setDriverId] = useState(item.driver_id ?? 'none');
+  const [meeting, setMeeting] = useState(item.meeting_point ?? '');
   const [notes, setNotes] = useState(item.staff_notes ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const vehicle = vehicles.find((v) => v.id === vehicleId);
   const vehicleLabel = vehicle ? `${vehicle.make} ${vehicle.model}` : vehicleId === 'none' ? null : item.vehicle_label;
+  const driver = drivers.find((d) => d.id === driverId);
+  const conflicts = transferConflicts(rows, item, driver?.id ?? null, vehicle?.id ?? null);
+  const next = NEXT[status];
+  const needsDriver = next === 'assigned' && !driver;
 
-  async function save() {
+  async function save(overrideStatus?: string) {
     setError('');
     if (price.trim() !== '' && !(Number(price) >= 0)) return setError('Le prix doit être un montant positif.');
+    const nextStatus = overrideStatus ?? status;
     setSaving(true);
     const { error: failure } = await updateTransfer(createClient(), item.id, {
-      status,
+      status: nextStatus,
       final_price: price.trim() === '' ? null : Number(price),
       vehicle_id: vehicle ? vehicle.id : null,
       vehicle_label: vehicleLabel,
+      driver_id: driver ? driver.id : null,
+      meeting_point: meeting.trim() || null,
       staff_notes: notes.trim() || null,
     });
     setSaving(false);
@@ -223,8 +302,8 @@ function TransferDetail({ item, vehicles, canUpdate, onSaved }: { item: Transfer
     onSaved();
   }
 
-  const draft = { ...item, status, final_price: price.trim() === '' ? null : Number(price), vehicle_label: vehicleLabel };
-  const link = `https://wa.me/${whatsappNumber(item.customer_phone)}?text=${encodeURIComponent(replyText(draft))}`;
+  const draft = { ...item, status, final_price: price.trim() === '' ? null : Number(price), vehicle_label: vehicleLabel, meeting_point: meeting.trim() || null };
+  const link = `https://wa.me/${whatsappNumber(item.customer_phone)}?text=${encodeURIComponent(replyText(draft, driver, window.location.origin))}`;
 
   return (
     <>
@@ -248,6 +327,15 @@ function TransferDetail({ item, vehicles, canUpdate, onSaved }: { item: Transfer
           <Row label="Prix annoncé">{item.quoted_price !== null ? showPrice(String(item.quoted_price)) : (item.notes?.replace(/^Prix annoncé : /, '') ?? 'Sur devis')}</Row>
           <Row label="Reçue le">{frDateTime(item.created_at, true)}</Row>
         </dl>
+
+        {canUpdate && next && (
+          <div className="grid gap-1">
+            <Button type="button" disabled={saving || needsDriver} onClick={() => save(next)}>
+              {saving ? <Loader2 className="animate-spin" /> : <ArrowRight />} Passer à : {TRANSFER_STATUSES[next].label}
+            </Button>
+            {needsDriver && <p className="text-xs text-muted-foreground">Choisissez d’abord un chauffeur ci-dessous.</p>}
+          </div>
+        )}
 
         <div className="grid gap-4">
           <Field label="Statut" htmlFor="transfer-status">
@@ -279,10 +367,59 @@ function TransferDetail({ item, vehicles, canUpdate, onSaved }: { item: Transfer
               </SelectContent>
             </Select>
           </Field>
+          <Field label="Chauffeur" htmlFor="transfer-driver">
+            <Select
+              value={driverId}
+              onValueChange={(value) => {
+                setDriverId(value);
+                if (value !== 'none' && (status === 'new' || status === 'confirmed')) setStatus('assigned');
+              }}
+              disabled={!canUpdate}
+            >
+              <SelectTrigger id="transfer-driver" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">À choisir</SelectItem>
+                {drivers
+                  .filter((d) => d.is_active || d.id === item.driver_id)
+                  .map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.full_name} — {d.phone}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          {conflicts.length > 0 && (
+            <div className="flex gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-500" />
+              <div>
+                <p className="font-medium">Déjà occupé à cette heure</p>
+                <ul className="text-muted-foreground">
+                  {conflicts.map((other) => (
+                    <li key={other.id}>
+                      {frDateTime(other.pickup_at)} · {other.route_from} → {other.route_to} ({other.reference})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+          <Field label="Point de rendez-vous (visible par le client)" htmlFor="transfer-meeting">
+            <Input
+              id="transfer-meeting"
+              value={meeting}
+              onChange={(e) => setMeeting(e.target.value)}
+              placeholder="Ex. Sortie des arrivées, pancarte au nom du client"
+              maxLength={300}
+              disabled={!canUpdate}
+            />
+          </Field>
           <Field label="Prix confirmé (FCFA)" htmlFor="transfer-price">
             <Input id="transfer-price" type="number" min={0} inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value)} disabled={!canUpdate} />
           </Field>
-          <Field label="Notes internes (chauffeur, remarques)" htmlFor="transfer-notes">
+          <Field label="Notes internes (non visibles par le client)" htmlFor="transfer-notes">
             <Textarea id="transfer-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} disabled={!canUpdate} maxLength={1000} />
           </Field>
         </div>
@@ -295,11 +432,88 @@ function TransferDetail({ item, vehicles, canUpdate, onSaved }: { item: Transfer
           </a>
         </Button>
         {canUpdate && (
-          <Button onClick={save} disabled={saving}>
+          <Button onClick={() => save()} disabled={saving}>
             {saving && <Loader2 className="animate-spin" />} Enregistrer
           </Button>
         )}
       </SheetFooter>
     </>
+  );
+}
+
+function DriversDialog({
+  open,
+  onOpenChange,
+  drivers,
+  canUpdate,
+  onChanged,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  drivers: TransferDriver[];
+  canUpdate: boolean;
+  onChanged: () => void;
+}) {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  async function add(event: React.FormEvent) {
+    event.preventDefault();
+    setError('');
+    if (name.trim().length < 2 || phone.replace(/\D/g, '').length < 6) return setError('Indiquez le nom et un numéro de téléphone valide.');
+    setSaving(true);
+    const { error: failure } = await addDriver(createClient(), name, phone);
+    setSaving(false);
+    if (failure) return setError(frenchError(failure));
+    setName('');
+    setPhone('');
+    onChanged();
+  }
+
+  async function toggle(driver: TransferDriver) {
+    const { error: failure } = await setDriverActive(createClient(), driver.id, !driver.is_active);
+    if (failure) return setError(frenchError(failure));
+    onChanged();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Chauffeurs</DialogTitle>
+          <DialogDescription>Les chauffeurs que vous pouvez assigner aux transferts. Le client voit son nom et son numéro une fois qu’il est assigné.</DialogDescription>
+        </DialogHeader>
+        <ul className="grid gap-2">
+          {drivers.length === 0 && <li className="text-sm text-muted-foreground">Aucun chauffeur pour le moment.</li>}
+          {drivers.map((driver) => (
+            <li key={driver.id} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate font-medium">{driver.full_name}</p>
+                <p className="text-xs text-muted-foreground tabular-nums">{driver.phone}</p>
+              </div>
+              <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                {driver.is_active ? 'Actif' : 'Inactif'}
+                <Switch checked={driver.is_active} onCheckedChange={() => toggle(driver)} disabled={!canUpdate} />
+              </label>
+            </li>
+          ))}
+        </ul>
+        {canUpdate && (
+          <form onSubmit={add} className="grid gap-3 border-t pt-4">
+            <p className="text-sm font-medium">Ajouter un chauffeur</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom complet" aria-label="Nom du chauffeur" maxLength={120} />
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+229 …" aria-label="Téléphone du chauffeur" type="tel" maxLength={30} />
+            </div>
+            <FormMessage error={error} />
+            <Button type="submit" disabled={saving} className="justify-self-start">
+              {saving ? <Loader2 className="animate-spin" /> : <UserPlus />} Ajouter
+            </Button>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

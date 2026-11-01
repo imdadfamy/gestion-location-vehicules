@@ -11,6 +11,8 @@ export const TRANSFER_STATUSES: Record<string, { label: string; tone: 'success' 
   new: { label: 'Nouvelle demande', tone: 'warning', hint: 'Votre demande a bien été reçue. L’agence vous confirmera le chauffeur et le véhicule.' },
   confirmed: { label: 'Confirmée', tone: 'info', hint: 'Votre transfert est confirmé. Le chauffeur vous sera communiqué.' },
   assigned: { label: 'Chauffeur assigné', tone: 'info', hint: 'Un chauffeur est assigné à votre transfert. Il vous attendra à l’heure prévue.' },
+  en_route: { label: 'Chauffeur en route', tone: 'info', hint: 'Votre chauffeur est en route.' },
+  arrived: { label: 'Chauffeur arrivé', tone: 'success', hint: 'Votre chauffeur est arrivé et vous attend.' },
   done: { label: 'Terminée', tone: 'success', hint: 'Ce transfert est terminé. Merci de votre confiance.' },
   cancelled: { label: 'Annulée', tone: 'muted', hint: 'Ce transfert a été annulé. Contactez l’agence pour toute question.' },
 };
@@ -82,9 +84,87 @@ export function createTransfer(db: Db, input: NewTransfer) {
   });
 }
 
+/** Étapes dans l'ordre où un transfert les traverse (« annulée » sort de ce parcours). */
+export const TRANSFER_FLOW = ['new', 'confirmed', 'assigned', 'en_route', 'arrived', 'done'] as const;
+
+export type TransferTracking = {
+  reference: string;
+  route_from: string;
+  route_to: string;
+  pickup_at: string;
+  flight_number: string | null;
+  passengers: number;
+  status: string;
+  price: number | null;
+  vehicle_label: string | null;
+  vehicle_plate: string | null;
+  vehicle_photo: string | null;
+  meeting_point: string | null;
+  driver_name: string | null;
+  driver_phone: string | null;
+  can_cancel: boolean;
+  can_edit: boolean;
+  events: { status: string; note: string | null; at: string }[];
+};
+
 /** Suivi public d'une demande : la référence et le téléphone doivent correspondre. */
-export function transferStatus(db: Db, reference: string, phone: string) {
-  return db.rpc('public_transfer_status', { target_reference: reference, target_phone: phone });
+export async function transferStatus(db: Db, reference: string, phone: string) {
+  const { data, error } = await db.rpc('public_transfer_status', { target_reference: reference, target_phone: phone });
+  return { data: (data as TransferTracking | null) ?? null, error };
+}
+
+export function cancelTransfer(db: Db, reference: string, phone: string) {
+  return db.rpc('public_cancel_transfer', { target_reference: reference, target_phone: phone });
+}
+
+/** Le client corrige l'heure et/ou le numéro de vol (tant que le transfert n'est pas en cours). */
+export function changeTransfer(db: Db, reference: string, phone: string, pickupAt: string, flightNumber: string) {
+  return db.rpc('public_update_transfer', {
+    target_reference: reference,
+    target_phone: phone,
+    target_pickup_at: new Date(pickupAt).toISOString(),
+    target_flight_number: flightNumber || undefined,
+  });
+}
+
+export function subscribeTransferPush(
+  db: Db,
+  reference: string,
+  phone: string,
+  device: { endpoint: string; p256dh: string; auth: string },
+  lang: Lang,
+) {
+  return db.rpc('public_subscribe_transfer_push', {
+    target_reference: reference,
+    target_phone: phone,
+    target_endpoint: device.endpoint,
+    target_p256dh: device.p256dh,
+    target_auth: device.auth,
+    target_lang: lang,
+  });
+}
+
+/** Fichier calendrier (.ics) d'un transfert, pour l'ajouter à l'agenda du client. */
+export function transferCalendar(transfer: TransferTracking, title: string) {
+  const stamp = (date: Date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const start = new Date(transfer.pickup_at);
+  const end = new Date(start.getTime() + TRANSFER_HOURS * 3600000);
+  const escape = (text: string) => text.replace(/[\\;,]/g, '\\$&').replace(/\n/g, '\\n');
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//FIMA AUTO//Transfert//FR',
+    'BEGIN:VEVENT',
+    `UID:${transfer.reference}@fima-auto`,
+    `DTSTAMP:${stamp(new Date())}`,
+    `DTSTART:${stamp(start)}`,
+    `DTEND:${stamp(end)}`,
+    `SUMMARY:${escape(title)}`,
+    `LOCATION:${escape(transfer.meeting_point || transfer.route_from)}`,
+    `DESCRIPTION:${escape(`${transfer.route_from} → ${transfer.route_to} (${transfer.reference})`)}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
 }
 
 // ── Personnel ──
@@ -92,8 +172,39 @@ export function listTransfers(db: Db) {
   return db.from('transfer_requests').select('*').order('pickup_at', { ascending: true });
 }
 
-export type TransferUpdate = Partial<Pick<TransferRequest, 'status' | 'final_price' | 'staff_notes' | 'vehicle_id' | 'vehicle_label'>>;
+export type TransferUpdate = Partial<Pick<TransferRequest, 'status' | 'final_price' | 'staff_notes' | 'vehicle_id' | 'vehicle_label' | 'driver_id' | 'meeting_point'>>;
 
 export function updateTransfer(db: Db, id: string, patch: TransferUpdate) {
   return db.from('transfer_requests').update(patch).eq('id', id).select().single();
+}
+
+// ── Chauffeurs ──
+export type TransferDriver = Database['public']['Tables']['transfer_drivers']['Row'];
+
+export function listDrivers(db: Db) {
+  return db.from('transfer_drivers').select('*').order('full_name');
+}
+
+export function addDriver(db: Db, fullName: string, phone: string) {
+  return db.from('transfer_drivers').insert({ full_name: fullName.trim(), phone: phone.trim() }).select().single();
+}
+
+export function setDriverActive(db: Db, id: string, isActive: boolean) {
+  return db.from('transfer_drivers').update({ is_active: isActive }).eq('id', id);
+}
+
+/**
+ * Autres transferts qui occupent déjà le même chauffeur ou le même véhicule autour de l'heure de
+ * `item` (même fenêtre que la disponibilité d'un véhicule) : sert à prévenir l'équipe, sans bloquer.
+ */
+export function transferConflicts(rows: TransferRequest[], item: TransferRequest, driverId: string | null, vehicleId: string | null) {
+  const window = TRANSFER_HOURS * 3600000;
+  const start = new Date(item.pickup_at).getTime();
+  return rows.filter(
+    (other) =>
+      other.id !== item.id &&
+      ['confirmed', 'assigned', 'en_route', 'arrived'].includes(other.status) &&
+      Math.abs(new Date(other.pickup_at).getTime() - start) < window &&
+      ((driverId && other.driver_id === driverId) || (vehicleId && other.vehicle_id === vehicleId)),
+  );
 }
