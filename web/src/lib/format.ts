@@ -3,6 +3,12 @@ export function frDate(value: string | null | undefined) {
   return value ? value.slice(0, 10).split('-').reverse().join('/') : '—';
 }
 
+/** Numéro pour wa.me : « + » explicite = tel quel, sinon indicatif du Bénin ajouté aux numéros locaux. */
+export function whatsappNumber(phone: string) {
+  const digits = phone.replace(/\D+/g, '');
+  return phone.trim().startsWith('+') || digits.length > 10 ? digits : `229${digits}`;
+}
+
 /** Saisie de téléphone : chiffres uniquement (comme la directive Angular appDigitsOnly). */
 export function digitsOnly(value: string) {
   return value.replace(/\D+/g, '');

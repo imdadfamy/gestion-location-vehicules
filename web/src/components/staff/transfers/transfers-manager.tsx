@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { vehicleOptions } from '@/lib/data/reservations';
 import { listTransfers, showPrice, TRANSFER_STATUSES, updateTransfer, type TransferRequest } from '@/lib/data/transfers';
 import { frenchError } from '@/lib/errors';
-import { digitsOnly, frDateTime } from '@/lib/format';
+import { frDateTime, whatsappNumber } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 
 type VehicleChoice = { id: string; registration_number: string; make: string; model: string };
@@ -31,12 +31,6 @@ const FILTERS: Record<string, string> = {
   cancelled: 'Annulées',
   all: 'Toutes',
 };
-
-/** Numéro WhatsApp : « + » explicite = tel quel, sinon indicatif du Bénin ajouté aux numéros locaux. */
-function whatsappNumber(phone: string) {
-  const digits = digitsOnly(phone);
-  return phone.trim().startsWith('+') || digits.length > 10 ? digits : `229${digits}`;
-}
 
 function replyText(item: TransferRequest) {
   const price = item.final_price ?? item.quoted_price;

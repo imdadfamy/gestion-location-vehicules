@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { createReservation, portalVehicles, type PortalVehicle } from '@/lib/data/client-portal';
-import { formatMoney, fuelLabel, transmissionLabel } from '@/lib/data/public-catalog';
+import { companyContact, formatMoney, fuelLabel, transmissionLabel, whatsappLink } from '@/lib/data/public-catalog';
 import { frenchError } from '@/lib/errors';
 import { createClient } from '@/lib/supabase/client';
 
@@ -43,6 +43,11 @@ export function ClientVehicles() {
   const [photo, setPhoto] = useState(0);
   const [observation, setObservation] = useState('');
   const [withDriver, setWithDriver] = useState(params.get('chauffeur') === '1');
+  // Numéro WhatsApp de l'agence : permet de la prévenir en un clic après une réservation.
+  const [agencyPhone, setAgencyPhone] = useState<string | null>(null);
+  useEffect(() => {
+    companyContact(createClient()).then((contact) => setAgencyPhone(contact?.whatsapp_phone || contact?.phone || null));
+  }, []);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [version, setVersion] = useState(0);
@@ -94,8 +99,13 @@ export function ClientVehicles() {
     setSaving(false);
     if (failure) return setFormError(frenchError(failure));
     setSelectedId(null);
+    const message = `Bonjour FIMA AUTO, je viens de réserver ${selected.make} ${selected.model}${withDriver ? ' avec chauffeur' : ''} du ${new Date(departure).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })} au ${new Date(returnDate).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}.`;
+    const whatsapp = whatsappLink(agencyPhone, message);
     toast.success('Votre réservation a été envoyée. Vous pouvez la suivre dans « Mes réservations ».', {
-      action: { label: 'Voir', onClick: () => router.push('/client/reservations') },
+      duration: 15000,
+      action: whatsapp
+        ? { label: 'Prévenir l’agence sur WhatsApp', onClick: () => window.open(whatsapp, '_blank', 'noopener,noreferrer') }
+        : { label: 'Voir', onClick: () => router.push('/client/reservations') },
     });
     setVersion((value) => value + 1);
   }

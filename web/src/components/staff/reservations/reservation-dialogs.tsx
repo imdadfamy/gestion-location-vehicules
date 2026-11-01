@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, MessageCircle, Search } from 'lucide-react';
 import { FormMessage } from '@/components/auth/form-message';
 import { Field } from '@/components/staff/form-field';
 import { StatusBadge } from '@/components/staff/status-badge';
@@ -34,7 +34,7 @@ import {
   type ReservationForm,
 } from '@/lib/data/reservations';
 import { frenchError } from '@/lib/errors';
-import { digitsOnly, frDateTime } from '@/lib/format';
+import { digitsOnly, frDateTime, whatsappNumber } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 
 export type VehicleOption = { id: string; registration_number: string; make: string; model: string };
@@ -162,6 +162,21 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 /** Détail d'une réservation (lecture seule). */
+/** Message WhatsApp prêt à envoyer au client, selon l'état de sa réservation. */
+function replyLink(item: Reservation) {
+  const vehicle = item.vehicles ? `${item.vehicles.make} ${item.vehicles.model}` : 'le véhicule demandé';
+  const period = `du ${frDateTime(item.planned_departure_date, true)} au ${frDateTime(item.planned_return_date, true)}`;
+  const mode = item.with_driver ? ' avec chauffeur' : '';
+  const base = `Bonjour ${item.first_name}, ici FIMA AUTO. Votre réservation de ${vehicle}${mode} ${period}`;
+  const text =
+    item.status === 'cancelled'
+      ? `${base} a été annulée.`
+      : item.status === 'validated'
+        ? `${base} est validée. Nous vous envoyons le dossier à signer depuis votre espace client.`
+        : `${base} : nous l’avons bien reçue et la traitons très vite.`;
+  return `https://wa.me/${whatsappNumber(item.phone)}?text=${encodeURIComponent(text)}`;
+}
+
 export function ReservationDetailSheet({ item: current, onClose }: { item: Reservation | null; onClose: () => void }) {
   const item = useLast(current);
   if (!item) return null;
@@ -201,6 +216,13 @@ export function ReservationDetailSheet({ item: current, onClose }: { item: Reser
             </Row>
           )}
         </dl>
+        <div className="border-t p-4">
+          <Button asChild variant="outline" className="w-full">
+            <a href={replyLink(item)} target="_blank" rel="noopener noreferrer">
+              <MessageCircle /> Répondre sur WhatsApp
+            </a>
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
   );

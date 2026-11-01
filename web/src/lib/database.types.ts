@@ -797,6 +797,7 @@ export type Database = {
           entity_type: string | null;
           id: string;
           is_read: boolean;
+          push_sent_at: string | null;
           message: string;
           notification_type: string;
           read_at: string | null;
@@ -809,6 +810,7 @@ export type Database = {
           entity_type?: string | null;
           id?: string;
           is_read?: boolean;
+          push_sent_at?: string | null;
           message: string;
           notification_type: string;
           read_at?: string | null;
@@ -821,6 +823,7 @@ export type Database = {
           entity_type?: string | null;
           id?: string;
           is_read?: boolean;
+          push_sent_at?: string | null;
           message?: string;
           notification_type?: string;
           read_at?: string | null;
@@ -1553,6 +1556,20 @@ export type Database = {
           },
         ];
       };
+      push_subscriptions: {
+        Row: { auth: string; created_at: string; endpoint: string; id: string; p256dh: string; user_agent: string | null; user_id: string };
+        Insert: { auth: string; created_at?: string; endpoint: string; id?: string; p256dh: string; user_agent?: string | null; user_id: string };
+        Update: { auth?: string; created_at?: string; endpoint?: string; id?: string; p256dh?: string; user_agent?: string | null; user_id?: string };
+        Relationships: [
+          {
+            foreignKeyName: 'push_subscriptions_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       transfer_requests: {
         Row: { id: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number: string | null; passengers: number; luggage: number | null; vehicle_id: string | null; vehicle_label: string | null; quoted_price: number | null; final_price: number | null; customer_name: string; customer_phone: string; notes: string | null; status: string; staff_notes: string | null; created_at: string; updated_at: string; };
         Insert: { id?: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name: string; customer_phone: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
@@ -2082,6 +2099,10 @@ export type Database = {
           status: string;
           vehicle_label: string | null;
         }[];
+      };
+      register_push_subscription: {
+        Args: { target_auth: string; target_endpoint: string; target_p256dh: string; target_user_agent?: string };
+        Returns: undefined;
       };
       public_company_contact: {
         Args: never;

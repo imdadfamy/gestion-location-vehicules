@@ -20,3 +20,6 @@ frontend/public/config.local.js
 .idea/
 .DS_Store
 Thumbs.db
+
+# Clé publique des alertes push (générée sur le poste, non versionnée).
+web/.vapid-public.txt

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { AlertTriangle, Bell, ChevronRight, RefreshCw } from 'lucide-react';
 import { FormMessage } from '@/components/auth/form-message';
+import { PushAlerts } from '@/components/staff/push-alerts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -70,6 +71,8 @@ export function NotificationsView({ userId }: { userId: string }) {
           <RefreshCw /> Actualiser
         </Button>
       </div>
+
+      <PushAlerts />
 
       <FormMessage error={error} />
 
