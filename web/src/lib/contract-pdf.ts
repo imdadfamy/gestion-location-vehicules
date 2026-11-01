@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { jsPDF as JsPdf } from 'jspdf';
 import type { Database } from '@/lib/database.types';
-import { contentOf, contractDuration, contractMoney, identityDocuments, type Contract } from '@/lib/data/contracts';
+import { contentOf, contractDriver, contractDuration, contractMoney, identityDocuments, type Contract } from '@/lib/data/contracts';
 
 type Db = SupabaseClient<Database>;
 type Signature = Database['public']['Tables']['contract_signatures']['Row'];
@@ -140,6 +140,7 @@ export async function buildContractPdf(db: Db, contract: Contract, signatures: S
   );
   text(`Durée : ${contractDuration(rental)} | Départ : ${frDate(rental.departure_date)} | Retour prévu : ${frDate(rental.return_date)}`);
   text(`Lieu de départ : ${rental.departure_location ?? 'Non renseigné'} | Lieu de retour : ${rental.return_location ?? 'Non renseigné'}`);
+  text(`Mode de location : ${contractDriver(rental)}`);
   text(`Zone de conduite déclarée : ${rental.driving_zone ?? 'Non renseignée'}`);
   text(`Prix de location : ${contractMoney(rental.rental_price)}`, 9.5);
   text(`Caution : ${contractMoney(rental.deposit_amount)}`, 9.5);

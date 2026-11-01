@@ -62,6 +62,7 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
   const [sort, setSort] = useState('relevance');
   const [result, setResult] = useState<{ key: string; data: CatalogVehicle[]; error: string } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(params.get('vehicule'));
+  const [withDriver, setWithDriver] = useState(false);
 
   const datesInvalid = !!departure && !!returnDate && new Date(returnDate) <= new Date(departure);
   // La période n'est appliquée que si les deux dates sont saisies.
@@ -175,6 +176,7 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
     }
     // La page de connexion renvoie directement vers l'espace client si la session existe.
     const target = new URLSearchParams({ vehicle: vehicle.id, depart: departure, retour: returnDate });
+    if (withDriver) target.set('chauffeur', '1');
     router.push(`/client/login?${target}`);
   }
 
@@ -185,6 +187,8 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
       departure={departure}
       returnDate={returnDate}
       whatsappPhone={whatsappPhone}
+      withDriver={withDriver}
+      onDriverChange={setWithDriver}
       onReserve={reserve}
       onSelect={(vehicle) => setSelectedId(vehicle.id)}
     />

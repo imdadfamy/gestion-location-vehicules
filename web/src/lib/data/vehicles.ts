@@ -37,6 +37,8 @@ export type VehicleForm = {
   features: string;
   rental_price: string;
   deposit_amount: string;
+  /** Supplément « avec chauffeur », en FCFA par jour. */
+  driver_daily_price: string;
   insurance_expiry_date: string;
   technical_inspection_expiry_date: string;
 };
@@ -58,6 +60,7 @@ export const EMPTY_VEHICLE: VehicleForm = {
   features: '',
   rental_price: '0',
   deposit_amount: '0',
+  driver_daily_price: '5000',
   insurance_expiry_date: '',
   technical_inspection_expiry_date: '',
 };
@@ -82,6 +85,7 @@ export function toForm(vehicle: Vehicle): VehicleForm {
     features: (vehicle.features ?? []).join(', '),
     rental_price: text(vehicle.rental_price),
     deposit_amount: text(vehicle.deposit_amount),
+    driver_daily_price: text(vehicle.driver_daily_price),
     insurance_expiry_date: text(vehicle.insurance_expiry_date),
     technical_inspection_expiry_date: text(vehicle.technical_inspection_expiry_date),
   };
@@ -111,6 +115,7 @@ function toRow(form: VehicleForm) {
     features: form.features.split(',').map((item) => item.trim()).filter(Boolean),
     rental_price: number(form.rental_price) ?? undefined,
     deposit_amount: number(form.deposit_amount) ?? undefined,
+    driver_daily_price: number(form.driver_daily_price) ?? undefined,
     insurance_expiry_date: blank(form.insurance_expiry_date),
     technical_inspection_expiry_date: blank(form.technical_inspection_expiry_date),
   };

@@ -184,6 +184,9 @@ export function ReservationDetailSheet({ item: current, onClose }: { item: Reser
           <Row label="Période">
             {frDateTime(item.planned_departure_date, true)} → {frDateTime(item.planned_return_date, true)}
           </Row>
+          <Row label="Mode de location">
+            {item.with_driver ? `Avec chauffeur (+${Number(item.driver_daily_price ?? 0).toLocaleString('fr-FR')} FCFA par jour)` : 'Sans chauffeur'}
+          </Row>
           <Row label="Observation">{item.observation || '—'}</Row>
           {item.status === 'cancelled' && (
             <Row label="Annulation">

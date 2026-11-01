@@ -1054,6 +1054,8 @@ export type Database = {
       };
       rentals: {
         Row: {
+          with_driver: boolean;
+          driver_daily_price: number | null;
           client_id: string;
           created_at: string;
           created_by: string | null;
@@ -1073,6 +1075,8 @@ export type Database = {
           vehicle_id: string;
         };
         Insert: {
+          with_driver?: boolean;
+          driver_daily_price?: number | null;
           client_id: string;
           created_at?: string;
           created_by?: string | null;
@@ -1092,6 +1096,8 @@ export type Database = {
           vehicle_id: string;
         };
         Update: {
+          with_driver?: boolean;
+          driver_daily_price?: number | null;
           client_id?: string;
           created_at?: string;
           created_by?: string | null;
@@ -1143,6 +1149,8 @@ export type Database = {
       };
       reservations: {
         Row: {
+          with_driver: boolean;
+          driver_daily_price: number | null;
           cancellation_reason: string | null;
           cancelled_at: string | null;
           cancelled_by: string | null;
@@ -1172,6 +1180,8 @@ export type Database = {
           vehicle_id: string;
         };
         Insert: {
+          with_driver?: boolean;
+          driver_daily_price?: number | null;
           cancellation_reason?: string | null;
           cancelled_at?: string | null;
           cancelled_by?: string | null;
@@ -1201,6 +1211,8 @@ export type Database = {
           vehicle_id: string;
         };
         Update: {
+          with_driver?: boolean;
+          driver_daily_price?: number | null;
           cancellation_reason?: string | null;
           cancelled_at?: string | null;
           cancelled_by?: string | null;
@@ -1543,6 +1555,7 @@ export type Database = {
       };
       vehicles: {
         Row: {
+          driver_daily_price: number;
           air_conditioning: boolean | null;
           approval_status: string;
           category: string | null;
@@ -1578,6 +1591,7 @@ export type Database = {
           year: number | null;
         };
         Insert: {
+          driver_daily_price?: number;
           air_conditioning?: boolean | null;
           approval_status?: string;
           category?: string | null;
@@ -1613,6 +1627,7 @@ export type Database = {
           year?: number | null;
         };
         Update: {
+          driver_daily_price?: number;
           air_conditioning?: boolean | null;
           approval_status?: string;
           category?: string | null;
@@ -1706,6 +1721,7 @@ export type Database = {
           rental_price: number;
           transmission: string;
           year: number;
+          driver_daily_price: number;
         }[];
       };
       client_can_add_inspection_photo: {
@@ -1730,6 +1746,7 @@ export type Database = {
       };
       client_create_reservation: {
         Args: {
+          target_with_driver?: boolean;
           target_departure: string;
           target_observation?: string;
           target_return: string;
@@ -2021,6 +2038,7 @@ export type Database = {
           seats: number | null;
           transmission: string;
           year: number;
+          driver_daily_price: number;
         }[];
       };
       public_company_contact: {

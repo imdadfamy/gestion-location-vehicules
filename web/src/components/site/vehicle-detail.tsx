@@ -5,6 +5,7 @@ import { Calendar, Car, Cog, DoorOpen, Fuel, Gauge, MessageCircle, Palette, Shar
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { formatMoney, fuelLabel, rentalDays, transmissionLabel, whatsappLink, type CatalogVehicle } from '@/lib/data/public-catalog';
 import { cn } from '@/lib/utils';
@@ -35,6 +36,8 @@ export function VehicleDetail({
   departure,
   returnDate,
   whatsappPhone,
+  withDriver,
+  onDriverChange,
   onReserve,
   onSelect,
 }: {
@@ -43,13 +46,18 @@ export function VehicleDetail({
   departure: string;
   returnDate: string;
   whatsappPhone?: string | null;
+  withDriver: boolean;
+  onDriverChange: (value: boolean) => void;
   onReserve: (vehicle: CatalogVehicle) => void;
   onSelect: (vehicle: CatalogVehicle) => void;
 }) {
   const days = rentalDays(departure, returnDate);
   const unavailable = vehicle.is_available === false;
   const name = `${vehicle.make} ${vehicle.model}`;
-  const total = Number(vehicle.rental_price) * days;
+  const driverPrice = Number(vehicle.driver_daily_price ?? 0);
+  const rentalTotal = Number(vehicle.rental_price) * days;
+  const driverTotal = withDriver ? driverPrice * days : 0;
+  const total = rentalTotal + driverTotal;
 
   const { list: similar, sameCategory } = useMemo(() => {
     const others = all.filter((other) => other.id !== vehicle.id && other.is_available);
@@ -66,7 +74,7 @@ export function VehicleDetail({
   }
 
   const period = departure && returnDate ? ` du ${formatLocal(departure)} au ${formatLocal(returnDate)}` : '';
-  const message = () => `Bonjour FIMA AUTO, je suis intéressé par la ${name}${period}. ${link()}`;
+  const message = () => `Bonjour FIMA AUTO, je suis intéressé par la ${name}${withDriver ? ' avec chauffeur' : ''}${period}. ${link()}`;
 
   async function share() {
     const url = link();
@@ -133,14 +141,37 @@ export function VehicleDetail({
       )}
 
       <section className="rounded-xl border p-4" aria-label="Prix">
+        <div className="mb-4">
+          <p id="mode-label" className="mb-2 text-sm font-medium">
+            Mode de location
+          </p>
+          <ToggleGroup type="single" variant="outline" value={withDriver ? 'driver' : 'self'} onValueChange={(value) => value && onDriverChange(value === 'driver')} aria-labelledby="mode-label" className="grid w-full grid-cols-2">
+            <ToggleGroupItem value="self" className="h-auto flex-col gap-0.5 py-2">
+              <span>Sans chauffeur</span>
+              <span className="text-xs font-normal text-muted-foreground">Je conduis</span>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="driver" className="h-auto flex-col gap-0.5 py-2">
+              <span>Avec chauffeur</span>
+              <span className="text-xs font-normal text-muted-foreground">+ {formatMoney(driverPrice)} / jour</span>
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
         {days > 0 ? (
           <div className="grid gap-1 text-sm">
             <div className="flex justify-between gap-3 text-muted-foreground">
               <span>
                 {formatMoney(vehicle.rental_price)} × {days} jour{days > 1 ? 's' : ''}
               </span>
-              <span className="tabular-nums">{formatMoney(total)}</span>
+              <span className="tabular-nums">{formatMoney(rentalTotal)}</span>
             </div>
+            {withDriver && (
+              <div className="flex justify-between gap-3 text-muted-foreground">
+                <span>
+                  Chauffeur : {formatMoney(driverPrice)} × {days} jour{days > 1 ? 's' : ''}
+                </span>
+                <span className="tabular-nums">{formatMoney(driverTotal)}</span>
+              </div>
+            )}
             <div className="flex justify-between gap-3 text-base font-semibold">
               <span>Total estimé</span>
               <span className="tabular-nums">{formatMoney(total)}</span>
@@ -161,12 +192,13 @@ export function VehicleDetail({
               <span className="text-base font-normal text-muted-foreground"> / jour</span>
             </p>
             <p className="text-sm text-muted-foreground">Caution : {formatMoney(vehicle.deposit_amount)}</p>
+            {withDriver && <p className="text-sm text-muted-foreground">Chauffeur : + {formatMoney(driverPrice)} / jour</p>}
             <p className="mt-1 text-xs text-muted-foreground">Choisissez vos dates dans la recherche pour voir le total.</p>
           </div>
         )}
         <div className="mt-4 flex flex-wrap gap-2">
           <Button size="lg" className="flex-1" disabled={unavailable} onClick={() => onReserve(vehicle)}>
-            {unavailable ? 'Indisponible sur ces dates' : 'Réserver ce véhicule'}
+            {unavailable ? 'Indisponible sur ces dates' : withDriver ? 'Réserver avec chauffeur' : 'Réserver ce véhicule'}
           </Button>
           {askHref && (
             <Button asChild size="lg" variant="outline">

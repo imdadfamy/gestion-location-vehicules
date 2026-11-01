@@ -270,6 +270,9 @@ export function VehicleSheet({
             <Field label="Caution (FCFA)" className="sm:col-span-3" htmlFor="vehicle-deposit_amount">
               <Input type="number" min={0} inputMode="numeric" {...input('deposit_amount')} />
             </Field>
+            <Field label="Supplément chauffeur (FCFA/jour)" className="sm:col-span-3" htmlFor="vehicle-driver_daily_price">
+              <Input type="number" min={0} inputMode="numeric" {...input('driver_daily_price')} />
+            </Field>
             <Field label="Expiration assurance" className="sm:col-span-3" htmlFor="vehicle-insurance_expiry_date">
               <Input type="date" {...input('insurance_expiry_date')} />
             </Field>

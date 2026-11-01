@@ -22,7 +22,7 @@ import { frenchError } from '@/lib/errors';
 import { frDateTime } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 
-type Summary = { name: string; plate: string; departure: string; return: string };
+type Summary = { name: string; plate: string; departure: string; return: string; /** Supplément chauffeur par jour, ou null sans chauffeur. */ driver: number | null };
 
 /** Étape 2 de la préparation interne : créer la location et finaliser la réservation. */
 export function ReservationRentalStep({ reservationId, clientId }: { reservationId: string; clientId: string }) {
@@ -58,6 +58,7 @@ export function ReservationRentalStep({ reservationId, clientId }: { reservation
         plate: vehicle.data.registration_number,
         departure: reservation.planned_departure_date,
         return: reservation.planned_return_date,
+        driver: reservation.with_driver ? Number(reservation.driver_daily_price ?? 0) : null,
       });
       setForm((current) => ({
         ...current,
@@ -117,6 +118,11 @@ export function ReservationRentalStep({ reservationId, clientId }: { reservation
             <p className="text-sm text-muted-foreground">
               {frDateTime(summary.departure)} au {frDateTime(summary.return)}
             </p>
+            {summary.driver !== null && (
+              <p className="text-sm font-medium text-primary">
+                Location avec chauffeur : supplément de {summary.driver.toLocaleString('fr-FR')} FCFA par jour, à inclure dans le prix total.
+              </p>
+            )}
           </CardHeader>
           <CardContent className="grid gap-5">
             <div className="grid gap-4 sm:grid-cols-6">

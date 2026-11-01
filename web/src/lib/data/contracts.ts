@@ -155,6 +155,11 @@ export function contractDuration(rental: ContractContent['rental']) {
   return days ? `${days} jour${days > 1 ? 's' : ''}${rest ? ` et ${rest} h` : ''}` : `${hours} h`;
 }
 
+/** Mode de location écrit dans le contrat : avec ou sans chauffeur (supplément par jour). */
+export function contractDriver(rental: { with_driver?: unknown; driver_daily_price?: unknown } | undefined | null) {
+  return rental?.with_driver ? `Avec chauffeur (supplément de ${contractMoney(rental.driver_daily_price)} par jour)` : 'Sans chauffeur (le locataire conduit)';
+}
+
 /** Montant du contrat : « 35 000 FCFA » (espaces simples, compatibles avec le PDF). */
 export function contractMoney(value: unknown) {
   return `${Number(value ?? 0).toLocaleString('en-US').replace(/,/g, ' ')} FCFA`;

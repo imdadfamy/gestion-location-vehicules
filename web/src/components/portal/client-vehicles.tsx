@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { createReservation, portalVehicles, type PortalVehicle } from '@/lib/data/client-portal';
 import { formatMoney, fuelLabel, transmissionLabel } from '@/lib/data/public-catalog';
 import { frenchError } from '@/lib/errors';
@@ -41,6 +42,7 @@ export function ClientVehicles() {
   const [selectedId, setSelectedId] = useState<string | null>(params.get('vehicle'));
   const [photo, setPhoto] = useState(0);
   const [observation, setObservation] = useState('');
+  const [withDriver, setWithDriver] = useState(params.get('chauffeur') === '1');
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [version, setVersion] = useState(0);
@@ -88,7 +90,7 @@ export function ClientVehicles() {
     if (!departure || !returnDate) return setFormError('Choisissez d’abord les dates et heures de départ et de retour.');
     if (invalid) return setFormError('La date de retour doit être postérieure au départ.');
     setSaving(true);
-    const { error: failure } = await createReservation(createClient(), selected.id, iso(departure)!, iso(returnDate)!, observation.trim() || undefined);
+    const { error: failure } = await createReservation(createClient(), selected.id, iso(departure)!, iso(returnDate)!, observation.trim() || undefined, withDriver);
     setSaving(false);
     if (failure) return setFormError(frenchError(failure));
     setSelectedId(null);
@@ -259,6 +261,21 @@ export function ClientVehicles() {
               </p>
               <p className="text-sm text-muted-foreground">Caution : {formatMoney(selected.deposit_amount)}</p>
             </div>
+            <div className="grid gap-2">
+              <p id="portal-mode-label" className="text-sm font-medium">
+                Mode de location
+              </p>
+              <ToggleGroup type="single" variant="outline" value={withDriver ? 'driver' : 'self'} onValueChange={(value) => value && setWithDriver(value === 'driver')} aria-labelledby="portal-mode-label" className="grid w-full grid-cols-2">
+                <ToggleGroupItem value="self" className="h-auto flex-col gap-0.5 py-2">
+                  <span>Sans chauffeur</span>
+                  <span className="text-xs font-normal text-muted-foreground">Je conduis</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="driver" className="h-auto flex-col gap-0.5 py-2">
+                  <span>Avec chauffeur</span>
+                  <span className="text-xs font-normal text-muted-foreground">+ {formatMoney(selected.driver_daily_price)} / jour</span>
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
             <Field label="Observation facultative" htmlFor="portal-observation">
               <Textarea id="portal-observation" rows={3} value={observation} onChange={(event) => setObservation(event.target.value)} />
             </Field>
@@ -270,14 +287,14 @@ export function ClientVehicles() {
                     <span className="text-muted-foreground">
                       {days} jour{days > 1 ? 's' : ''} ·{' '}
                     </span>
-                    <strong>{formatMoney(days * Number(selected.rental_price ?? 0))}</strong>
+                    <strong>{formatMoney(days * (Number(selected.rental_price ?? 0) + (withDriver ? Number(selected.driver_daily_price ?? 0) : 0)))}</strong>
                   </>
                 ) : (
                   <span className="text-muted-foreground">Choisissez vos dates pour voir le total</span>
                 )}
               </p>
               <Button size="lg" onClick={reserve} disabled={saving}>
-                {saving && <Loader2 className="animate-spin" />} Réserver ce véhicule
+                {saving && <Loader2 className="animate-spin" />} {withDriver ? 'Réserver avec chauffeur' : 'Réserver ce véhicule'}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">

@@ -235,6 +235,8 @@ export function RentalDetailSheet({
                     <br />
                     Lieux : {rental.departure_location || '—'} → {rental.return_location || '—'}
                     <br />
+                    Mode : {rental.with_driver ? `Avec chauffeur (+${Number(rental.driver_daily_price ?? 0).toLocaleString('fr-FR')} FCFA par jour)` : 'Sans chauffeur'}
+                    <br />
                     Zone : {rental.driving_zone || '—'}
                   </p>
                 </section>

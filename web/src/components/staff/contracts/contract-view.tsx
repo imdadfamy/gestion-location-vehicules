@@ -14,6 +14,7 @@ import {
   archiveSignedPdf,
   CONTRACT_STATUSES,
   contentOf,
+  contractDriver,
   contractDuration,
   contractMoney,
   contractPdfUrl,
@@ -244,6 +245,7 @@ export function ContractView({
             >
               {contractDuration(rental)}
             </Fact>
+            <Fact label="Mode de location">{contractDriver(rental)}</Fact>
             <Fact label="Zone de conduite">{rental.driving_zone || 'Non renseignée'}</Fact>
             <Fact label="Lieux">
               {rental.departure_location || '—'} → {rental.return_location || '—'}

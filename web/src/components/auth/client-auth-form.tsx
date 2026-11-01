@@ -17,7 +17,7 @@ import { PasswordInput } from './password-input';
 /** Réservation en cours (catalogue → connexion → espace client), conservée tout au long du parcours. */
 function reservationQuery(params: URLSearchParams) {
   const keep = new URLSearchParams();
-  for (const key of ['vehicle', 'depart', 'retour']) {
+  for (const key of ['vehicle', 'depart', 'retour', 'chauffeur']) {
     const value = params.get(key);
     if (value) keep.set(key, value);
   }

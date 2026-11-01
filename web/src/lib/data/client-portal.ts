@@ -131,12 +131,13 @@ export async function portalVehicles(db: Db, departure?: string, returnDate?: st
   return { data: rows, error: null, failedPhotos };
 }
 
-export function createReservation(db: Db, vehicleId: string, departure: string, returnDate: string, observation?: string) {
+export function createReservation(db: Db, vehicleId: string, departure: string, returnDate: string, observation?: string, withDriver = false) {
   return db.rpc('client_create_reservation', {
     target_vehicle_id: vehicleId,
     target_departure: departure,
     target_return: returnDate,
     target_observation: observation,
+    target_with_driver: withDriver,
   });
 }
 

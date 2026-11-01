@@ -25,7 +25,7 @@ import {
   signAsClient,
   type ClientRecord,
 } from '@/lib/data/client-portal';
-import { contentOf, contractDuration, contractMoney, type Contract } from '@/lib/data/contracts';
+import { contentOf, contractDriver, contractDuration, contractMoney, type Contract } from '@/lib/data/contracts';
 import { frenchError } from '@/lib/errors';
 import { frDateTime } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
@@ -39,6 +39,8 @@ type Dossier = {
   planned_return_date: string;
   quoted_rental_price: number | null;
   quoted_deposit_amount: number | null;
+  with_driver?: boolean;
+  driver_daily_price?: number | null;
   vehicles: { make: string; model: string; registration_number: string; color: string | null; category: string | null; transmission: string | null } | null;
 };
 
@@ -315,6 +317,7 @@ export function ClientContracts({ profileId, profile }: { profileId: string; pro
                         {contractDuration({ departure_date: dossier.planned_departure_date, return_date: dossier.planned_return_date })}
                       </Review>
                       <Review label="Prix">{contractMoney(dossier.quoted_rental_price)}</Review>
+                      <Review label="Mode de location" className="sm:col-span-2">{contractDriver(dossier)}</Review>
                       <Review label="Caution">{contractMoney(dossier.quoted_deposit_amount)}</Review>
                       <Review label="Lieu et zone de conduite" className="sm:col-span-2">
                         Ces informations seront précisées par le Responsable.
@@ -345,6 +348,7 @@ export function ClientContracts({ profileId, profile }: { profileId: string; pro
                         </Review>
                         <Review label="Durée">{contractDuration(content.rental)}</Review>
                         <Review label="Prix">{contractMoney(content.rental?.rental_price)}</Review>
+                        <Review label="Mode de location" className="sm:col-span-2">{contractDriver(content.rental)}</Review>
                         <Review label="Caution">{contractMoney(content.rental?.deposit_amount)}</Review>
                         <Review label="Zone de conduite">{String(content.rental?.driving_zone || 'À préciser par le Responsable')}</Review>
                       </div>
