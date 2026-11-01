@@ -251,7 +251,7 @@ function TransferDetail({ item, vehicles, canUpdate, onSaved }: { item: Transfer
             {item.luggage !== null && ` · ${item.luggage} bagage${item.luggage > 1 ? 's' : ''}`}
           </Row>
           <Row label="Numéro de vol">{item.flight_number || '—'}</Row>
-          <Row label="Prix annoncé">{item.quoted_price !== null ? showPrice(String(item.quoted_price)) : 'Sur devis'}</Row>
+          <Row label="Prix annoncé">{item.quoted_price !== null ? showPrice(String(item.quoted_price)) : (item.notes?.replace(/^Prix annoncé : /, '') ?? 'Sur devis')}</Row>
           <Row label="Reçue le">{frDateTime(item.created_at, true)}</Row>
         </dl>
 

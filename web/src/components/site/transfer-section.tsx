@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { catalogVehicles, whatsappLink, type CatalogVehicle } from '@/lib/data/public-catalog';
 import type { BlockData } from '@/lib/data/site-content';
-import { categoryPrice, createTransfer, lowestPrice, numericPrice, showPrice, TRANSFER_HOURS } from '@/lib/data/transfers';
+import { categoryPrice, createTransfer, hasPriceRange, lowestPrice, numericPrice, showPrice, TRANSFER_HOURS } from '@/lib/data/transfers';
 import { frenchError } from '@/lib/errors';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
@@ -71,6 +71,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
 
   // Le titre ne promet des prix fixes que si au moins un trajet en a un.
   const hasPrices = routes.some((item) => lowestPrice(item) !== null);
+  const ranges = hasPriceRange(routes);
   const chosenRoute = route === OTHER ? null : routes[Number(route)];
   const seatsNeeded = (Number(passengers) || 1) + 1; // passagers + le chauffeur
   const fits = (vehicle: CatalogVehicle) => vehicle.is_available && (vehicle.seats == null || vehicle.seats >= seatsNeeded);
@@ -97,6 +98,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
       flightNumber: flight.trim(),
       vehicleId: vehicle?.id,
       quotedPrice: numericPrice(priceText),
+      notes: priceText && numericPrice(priceText) === null ? `Prix annoncé : ${showPrice(priceText)}` : undefined,
       name: name.trim(),
       phone: phone.trim(),
     });
@@ -151,11 +153,10 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
 
             {routes.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium tracking-widest text-[#5fd3df] uppercase">{hasPrices ? 'Prix fixes par trajet' : 'Trajets les plus demandés'}</h3>
+                <h3 className="text-sm font-medium tracking-widest text-[#5fd3df] uppercase">{!hasPrices ? 'Trajets les plus demandés' : ranges ? 'Tarifs par trajet' : 'Prix fixes par trajet'}</h3>
                 <ul className="mt-3 grid gap-2">
                   {routes.map((item, i) => {
                     const from = lowestPrice(item);
-                    const varies = new Set([item.price, ...Object.values(item.prices ?? {})].map((value) => value.trim()).filter(Boolean)).size > 1;
                     return (
                       <li key={i}>
                         <button
@@ -168,7 +169,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                             {item.from} <span aria-hidden>→</span> {item.to}
                           </span>
                           <span className="shrink-0 font-semibold text-[#5fd3df]">
-                            {from !== null ? `${varies ? 'dès ' : ''}${showPrice(String(from))}` : 'Sur devis'}
+                            {item.price.trim() ? showPrice(item.price) : from !== null ? `dès ${showPrice(String(from))}` : 'Sur devis'}
                           </span>
                         </button>
                       </li>
@@ -176,7 +177,11 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                   })}
                 </ul>
                 <p className="mt-2 text-xs text-white/60">
-                  {hasPrices ? 'Le prix dépend de la catégorie du véhicule que vous choisissez.' : 'Le prix est confirmé par l’agence avant le transfert.'}
+                  {!hasPrices
+                    ? 'Le prix est confirmé par l’agence avant le transfert.'
+                    : ranges
+                      ? 'Fourchettes selon la catégorie du véhicule : l’agence confirme le prix exact avant le transfert.'
+                      : 'Le prix dépend de la catégorie du véhicule que vous choisissez.'}
                 </p>
               </div>
             )}

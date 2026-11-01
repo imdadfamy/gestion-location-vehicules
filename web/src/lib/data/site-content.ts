@@ -153,16 +153,16 @@ export const DEFAULT_DATA: BlockData = {
   transfer: {
     eyebrow: 'Transfert aéroport',
     title: 'Un chauffeur vous attend à l’arrivée',
-    text: 'Arrivée ou départ, pas de recherche de véhicule, pas de stress : choisissez votre trajet et votre véhicule, l’agence vous confirme le chauffeur.',
+    text: 'Arrivée ou départ, pas de recherche de véhicule, pas de stress : un tarif annoncé selon le trajet et le véhicule, confirmé par l’agence avant le transfert.',
     steps: [
       { icon: 'calendar-check', title: 'Réservez votre créneau', text: 'Indiquez le trajet, la date et l’heure de votre vol.' },
       { icon: 'badge-check', title: 'Recevez la confirmation', text: 'Chauffeur, véhicule et numéro de vol pris en compte.' },
       { icon: 'car', title: 'Votre chauffeur vous attend', text: 'À l’arrivée, avec une pancarte à votre nom.' },
     ],
     routes: [
-      { from: 'Aéroport de Cotonou', to: 'Cotonou centre', price: '' },
-      { from: 'Aéroport de Cotonou', to: 'Abomey-Calavi', price: '' },
-      { from: 'Aéroport de Cotonou', to: 'Porto-Novo', price: '' },
+      { from: 'Aéroport de Cotonou', to: 'Cotonou centre', price: '5 000 – 12 000', prices: { Citadine: '5 000 – 7 000', Berline: '7 000 – 9 000', SUV: '9 000 – 12 000' } },
+      { from: 'Aéroport de Cotonou', to: 'Abomey-Calavi', price: '8 000 – 17 000', prices: { Citadine: '8 000 – 10 000', Berline: '10 000 – 13 000', SUV: '13 000 – 17 000' } },
+      { from: 'Aéroport de Cotonou', to: 'Porto-Novo', price: '20 000 – 40 000', prices: { Citadine: '20 000 – 25 000', Berline: '25 000 – 30 000', SUV: '30 000 – 40 000' } },
     ],
     button: 'Prévenir l’agence sur WhatsApp',
   },

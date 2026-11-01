@@ -23,21 +23,32 @@ export function categoryPrice(route: TransferRoute, category?: string | null) {
   return own || route.price.trim() || null;
 }
 
-/** Plus petit prix numérique d'un trajet (« à partir de »), ou null s'il n'y en a aucun. */
+const compact = (value: string) => value.replace(/[\s.]/g, '');
+/** Prix exact (« 15000 » ou « 15 000 »), par opposition à une fourchette ou un texte libre. */
+export const isExactPrice = (value: string | null | undefined) => /^\d+$/.test(compact(String(value ?? '')));
+
+/** Plus petit montant lisible d'un trajet (prix exacts ou bornes de fourchettes), ou null s'il n'y en a aucun. */
 export function lowestPrice(route: TransferRoute) {
-  const values = [route.price, ...Object.values(route.prices ?? {})].map((value) => value.trim()).filter((value) => /^\d+$/.test(value));
-  return values.length ? Math.min(...values.map(Number)) : null;
+  const numbers = [route.price, ...Object.values(route.prices ?? {})].flatMap((value) =>
+    (value.match(/\d[\d\s]*/g) ?? []).map((part) => Number(compact(part))),
+  );
+  return numbers.length ? Math.min(...numbers) : null;
 }
 
-/** Prix affichable : un nombre devient « 15 000 FCFA », un texte libre reste tel quel, rien = « Sur devis ». */
+/** Vrai si un trajet a une fourchette ou un texte libre plutôt qu'un prix exact. */
+export const hasPriceRange = (routes: TransferRoute[]) =>
+  routes.some((route) => [route.price, ...Object.values(route.prices ?? {})].some((value) => value.trim() && !isExactPrice(value)));
+
+/** Prix affichable : exact → « 15 000 FCFA » ; fourchette → « 10 000 – 12 000 FCFA » ; rien → « Sur devis ». */
 export function showPrice(price: string | null | undefined) {
   const value = String(price ?? '').trim();
   if (!value) return 'Sur devis';
-  return /^\d+$/.test(value) ? formatMoney(Number(value)) : value;
+  if (isExactPrice(value)) return formatMoney(Number(compact(value)));
+  return /\d/.test(value) && !/[a-z]/i.test(value) ? `${value} FCFA` : value;
 }
 
-/** Prix numérique à enregistrer comme « prix annoncé » (null pour un prix libre ou un devis). */
-export const numericPrice = (price: string | null | undefined) => (/^\d+$/.test(String(price ?? '').trim()) ? Number(price) : null);
+/** Prix numérique à enregistrer comme « prix annoncé » (null pour une fourchette, un texte libre ou un devis). */
+export const numericPrice = (price: string | null | undefined) => (isExactPrice(price) ? Number(compact(String(price))) : null);
 
 export type NewTransfer = {
   routeFrom: string;
