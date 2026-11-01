@@ -8,7 +8,7 @@ export const metadata = { title: 'Site web' };
 
 async function Website() {
   const profile = await requireModule({ module: 'website' });
-  return <WebsiteEditor canEdit={can(profile, 'website', 'update')} />;
+  return <WebsiteEditor canEdit={can(profile, 'website', 'update')} canDelete={can(profile, 'website', 'delete')} />;
 }
 
 export default function WebsitePage() {

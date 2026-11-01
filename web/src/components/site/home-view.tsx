@@ -12,8 +12,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { availableVehicles, companyContact, whatsappLink } from '@/lib/data/public-catalog';
-import { safeHref, youtubeEmbed, type Block, type Faq, type FooterContent, type Link as MenuLink } from '@/lib/data/site-content';
+import { safeHref, youtubeEmbed, type Block, type Faq, type FooterContent, type Link as MenuLink, type Announcement } from '@/lib/data/site-content';
 import { createClient } from '@/lib/supabase/server';
+import { cn } from '@/lib/utils';
 
 function SectionTitle({ eyebrow, title, text }: { eyebrow?: string; title: string; text?: string }) {
   return (
@@ -459,13 +460,14 @@ function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
 }
 
 /** Page d'accueil complète (publique ou aperçu d'un brouillon) à partir de ses sections. */
-export function HomeView({ blocks, footer, menu }: { blocks: Block[]; footer?: FooterContent; menu?: MenuLink[] }) {
+export function HomeView({ blocks, footer, menu, announcement }: { blocks: Block[]; footer?: FooterContent; menu?: MenuLink[]; announcement?: Announcement }) {
   const visible = blocks.filter((block) => block.show);
   const seen = new Set<string>();
+  const overHero = visible[0]?.type === 'hero';
   return (
     <>
-      <SiteHeader overHero={visible[0]?.type === 'hero'} links={menu} />
-      <main className="flex-1">
+      <SiteHeader overHero={overHero} links={menu} announcement={announcement} />
+      <main className={cn('flex-1', !overHero && 'pt-16')}>
         {visible.map((block) => {
           const anchor = !seen.has(block.type);
           seen.add(block.type);

@@ -3,24 +3,22 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { getSettings } from '@/lib/data/site-content-server';
 import './globals.css';
 
 const geistSans = Geist({ variable: '--font-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
-  title: { default: 'FIMA AUTO – Location de véhicules', template: '%s – FIMA AUTO' },
-  description:
-    'FIMA AUTO – Location de véhicules : réservation en ligne, contrat signé à l’écran et suivi de location.',
-  openGraph: {
-    title: 'FIMA AUTO – Location de véhicules',
-    description: 'Réservez votre véhicule en quelques clics avec FIMA AUTO.',
-    images: ['/logo.jpg'],
-    locale: 'fr_FR',
-  },
-  icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+    title: { default: settings.title, template: '%s – FIMA AUTO' },
+    description: settings.description,
+    openGraph: { title: settings.title, description: settings.description, images: ['/logo.jpg'], locale: 'fr_FR' },
+    icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
+  };
+}
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (

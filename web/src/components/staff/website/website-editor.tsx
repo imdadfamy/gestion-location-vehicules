@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowDown,
+  ArrowLeft,
   ArrowUp,
   ChevronDown,
   Copy,
@@ -16,7 +17,9 @@ import {
   Trash2,
   Undo2,
 } from 'lucide-react';
+import { refreshSiteContent } from '@/app/app/website/actions';
 import { FormMessage } from '@/components/auth/form-message';
+import { Field } from '@/components/staff/form-field';
 import { StatusBadge } from '@/components/staff/status-badge';
 import {
   AlertDialog,
@@ -30,18 +33,27 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { listVersions, type SiteVersion } from '@/lib/data/site-content-admin';
+import { listVersions, saveDraft, type SiteVersion } from '@/lib/data/site-content-admin';
 import {
   BLOCK_META,
   BLOCK_TYPES,
   footerContent,
   homeContent,
+  DEFAULT_SETTINGS,
+  isValidSlug,
   menuContent,
   newBlock,
+  pageContent,
+  pageKey,
+  settingsContent,
+  slugify,
   safeHref,
   type Block,
   type BlockType,
@@ -49,6 +61,8 @@ import {
   type HomeContent,
   type Link,
   type MenuContent,
+  type PageContent,
+  type SettingsContent,
 } from '@/lib/data/site-content';
 import { frenchError } from '@/lib/errors';
 import { frDateTime } from '@/lib/format';
@@ -62,6 +76,8 @@ import { useSiteDoc, type DocStatus } from './use-site-doc';
 const parseHome = (raw: unknown) => homeContent(raw);
 const parseFooter = (raw: unknown) => footerContent(raw);
 const parseMenu = (raw: unknown) => menuContent(raw);
+const parsePage = (raw: unknown) => pageContent(raw);
+const parseSettings = (raw: unknown) => settingsContent(raw);
 
 const nonEmpty = (text: string) => text.trim().length > 0;
 const cleanLinks = (list: Link[]) => list.filter((link) => nonEmpty(link.label)).map((link) => ({ label: link.label.trim(), href: safeHref(link.href) }));
@@ -101,6 +117,12 @@ function cleanBlock(block: Block): Block {
   }
 }
 const cleanHome = (home: HomeContent): HomeContent => ({ blocks: home.blocks.map(cleanBlock) });
+const cleanPage = (page: PageContent): PageContent => ({ ...page, title: page.title.trim(), description: page.description.trim(), blocks: page.blocks.map(cleanBlock) });
+const cleanSettings = (settings: SettingsContent): SettingsContent => ({
+  title: settings.title.trim() || DEFAULT_SETTINGS.title,
+  description: settings.description.trim(),
+  announcement: { ...settings.announcement, text: settings.announcement.text.trim(), linkHref: safeHref(settings.announcement.linkHref) },
+});
 const cleanMenu = (menu: MenuContent): MenuContent => ({ links: cleanLinks(menu.links) });
 const cleanFooter = (footer: FooterContent): FooterContent => ({ ...footer, links: cleanLinks(footer.links), socials: cleanLinks(footer.socials) });
 
@@ -272,7 +294,7 @@ function HistoryDialog({ docKey, open, onOpenChange, onRestore, disabled }: { do
   );
 }
 
-function PreviewDialog({ open, onOpenChange, version }: { open: boolean; onOpenChange: (open: boolean) => void; version: number }) {
+function PreviewDialog({ open, onOpenChange, version, query = '' }: { open: boolean; onOpenChange: (open: boolean) => void; version: number; query?: string }) {
   const [mobile, setMobile] = useState(false);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -290,7 +312,7 @@ function PreviewDialog({ open, onOpenChange, version }: { open: boolean; onOpenC
           </Button>
         </div>
         <div className="flex min-h-0 flex-1 justify-center overflow-auto rounded-lg border bg-muted">
-          {open && <iframe key={version} src={`/apercu?v=${version}`} title="Aperçu du site" className={cn('h-full border-0 bg-background', mobile ? 'w-[390px] max-w-full' : 'w-full')} />}
+          {open && <iframe key={version} src={`/apercu?${query}${query ? '&' : ''}v=${version}`} title="Aperçu du site" className={cn('h-full border-0 bg-background', mobile ? 'w-[390px] max-w-full' : 'w-full')} />}
         </div>
       </DialogContent>
     </Dialog>
@@ -345,8 +367,23 @@ function Toolbar({
   );
 }
 
-function HomeTab({ canEdit }: { canEdit: boolean }) {
-  const doc = useSiteDoc('home', parseHome, cleanHome);
+/** Éditeur de sections (accueil ou page) : ajout, ordre, affichage, brouillon, aperçu, historique. */
+function SectionsTab<T extends { blocks: Block[] }>({
+  canEdit,
+  docKey,
+  parse,
+  clean,
+  previewQuery = '',
+  header,
+}: {
+  canEdit: boolean;
+  docKey: string;
+  parse: (raw: unknown) => T;
+  clean: (value: T) => T;
+  previewQuery?: string;
+  header?: (value: T, set: (value: T) => void) => React.ReactNode;
+}) {
+  const doc = useSiteDoc(docKey, parse, clean);
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState<Block | null>(null);
@@ -356,7 +393,7 @@ function HomeTab({ canEdit }: { canEdit: boolean }) {
   const scrollTo = useRef<string | null>(null);
 
   const blocks = doc.value?.blocks ?? [];
-  const setBlocks = (next: Block[]) => doc.setValue({ blocks: next });
+  const setBlocks = (next: Block[]) => doc.setValue({ ...doc.value!, blocks: next });
 
   useEffect(() => {
     if (!scrollTo.current) return;
@@ -411,8 +448,9 @@ function HomeTab({ canEdit }: { canEdit: boolean }) {
         onHistory={() => setHistory(true)}
       />
       <FormMessage error={doc.error} message={doc.error ? '' : doc.message} />
+      {header?.(doc.value as T, (value) => doc.setValue(value))}
       <p className="text-sm text-muted-foreground">
-        Les sections s’affichent sur la page d’accueil dans cet ordre. Rien n’est visible du public avant « Publier ».
+        Les sections s’affichent sur la page dans cet ordre. Rien n’est visible du public avant « Publier ».
       </p>
       {blocks.map((block, index) => (
         <SectionCard
@@ -437,8 +475,8 @@ function HomeTab({ canEdit }: { canEdit: boolean }) {
       )}
 
       <AddSectionDialog open={adding} onOpenChange={setAdding} present={present} onAdd={add} />
-      <HistoryDialog docKey="home" open={history} onOpenChange={setHistory} onRestore={doc.restore} disabled={!canEdit} />
-      <PreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} version={preview} />
+      <HistoryDialog docKey={docKey} open={history} onOpenChange={setHistory} onRestore={doc.restore} disabled={!canEdit} />
+      <PreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} version={preview} query={previewQuery} />
       <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -567,7 +605,272 @@ function MenuTab({ canEdit }: { canEdit: boolean }) {
   );
 }
 
-export function WebsiteEditor({ canEdit }: { canEdit: boolean }) {
+type PageRow = { slug: string; title: string; published: boolean; draft: boolean };
+
+function PageEditor({ slug, canEdit, canDelete, onBack }: { slug: string; canEdit: boolean; canDelete: boolean; onBack: () => void }) {
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState('');
+
+  async function remove() {
+    setError('');
+    const db = createClient();
+    const live = await db.from('site_content').delete().eq('key', pageKey(slug));
+    if (live.error) return setError(frenchError(live.error));
+    const draft = await db.from('site_content_drafts').delete().eq('key', pageKey(slug));
+    if (draft.error) return setError(frenchError(draft.error));
+    await refreshSiteContent();
+    onBack();
+  }
+
+  return (
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={onBack}>
+          <ArrowLeft /> Toutes les pages
+        </Button>
+        <code className="rounded bg-muted px-2 py-0.5 text-xs">/p/{slug}</code>
+        <Button asChild variant="outline" size="sm">
+          <a href={`/p/${slug}`} target="_blank" rel="noopener noreferrer">
+            <ExternalLink /> Voir la page
+          </a>
+        </Button>
+        {canDelete && (
+          <Button type="button" variant="ghost" size="sm" className="ml-auto text-destructive" onClick={() => setDeleting(true)}>
+            <Trash2 /> Supprimer la page
+          </Button>
+        )}
+      </div>
+      <FormMessage error={error} />
+      <SectionsTab
+        canEdit={canEdit}
+        docKey={pageKey(slug)}
+        parse={parsePage}
+        clean={cleanPage}
+        previewQuery={`page=${slug}`}
+        header={(page, set) => (
+          <Card>
+            <CardContent className="grid gap-4">
+              <h2 className="text-base font-medium">Informations de la page</h2>
+              <TextRow id="page-title" label="Titre (onglet du navigateur et Google)" value={page.title} onChange={(title) => set({ ...page, title })} disabled={!canEdit} />
+              <TextRow id="page-description" label="Description pour Google (facultative)" value={page.description} onChange={(description) => set({ ...page, description })} disabled={!canEdit} />
+              <p className="text-xs text-muted-foreground">La page n’est visible qu’après « Publier ». Ajoutez-la au Menu pour que les visiteurs la trouvent.</p>
+            </CardContent>
+          </Card>
+        )}
+      />
+      <AlertDialog open={deleting} onOpenChange={setDeleting}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette page ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La page /p/{slug} ne sera plus accessible. Les liens du menu qui y mènent devront être retirés. L’historique des publications est conservé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void remove()}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function PagesTab({ canEdit, canDelete }: { canEdit: boolean; canDelete: boolean }) {
+  const [rows, setRows] = useState<PageRow[] | null>(null);
+  const [error, setError] = useState('');
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [createError, setCreateError] = useState('');
+
+  const refresh = useCallback(() => {
+    const db = createClient();
+    Promise.all([db.from('site_content').select('key,content').like('key', 'page:%'), db.from('site_content_drafts').select('key,content').like('key', 'page:%')]).then(([live, drafts]) => {
+      const failure = live.error ?? drafts.error;
+      if (failure) return setError(frenchError(failure));
+      const bySlug = new Map<string, PageRow>();
+      for (const [list, isDraft] of [[live.data ?? [], false], [drafts.data ?? [], true]] as const) {
+        for (const row of list) {
+          const key = row.key.slice(5);
+          const previous = bySlug.get(key);
+          const content = pageContent(row.content);
+          bySlug.set(key, {
+            slug: key,
+            title: isDraft || !previous ? content.title || previous?.title || key : previous.title,
+            published: previous?.published || !isDraft,
+            draft: previous?.draft || isDraft,
+          });
+        }
+      }
+      setError('');
+      setRows([...bySlug.values()].sort((a, b) => a.title.localeCompare(b.title, 'fr')));
+    });
+  }, []);
+
+  useEffect(refresh, [refresh]);
+
+  function openCreate() {
+    setTitle('');
+    setSlug('');
+    setSlugTouched(false);
+    setCreateError('');
+    setCreating(true);
+  }
+
+  async function create() {
+    setCreateError('');
+    if (!title.trim()) return setCreateError('Le titre est obligatoire.');
+    if (!isValidSlug(slug)) return setCreateError('Adresse invalide : lettres minuscules, chiffres et tirets (ex. conditions-de-location), hors adresses réservées.');
+    if (rows?.some((row) => row.slug === slug)) return setCreateError('Une page utilise déjà cette adresse.');
+    const draft: PageContent = { title: title.trim(), description: '', blocks: [newBlock('text')] };
+    const { error: failure } = await saveDraft(createClient(), pageKey(slug), draft);
+    if (failure) return setCreateError(frenchError(failure));
+    setCreating(false);
+    setOpenSlug(slug);
+  }
+
+  if (openSlug)
+    return (
+      <PageEditor
+        slug={openSlug}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        onBack={() => {
+          setOpenSlug(null);
+          refresh();
+        }}
+      />
+    );
+
+  return (
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">Pages supplémentaires du site (À propos, Conditions de location, Contact…), accessibles à l’adresse /p/&lt;adresse&gt;.</p>
+        {canEdit && (
+          <Button type="button" onClick={openCreate}>
+            <Plus /> Nouvelle page
+          </Button>
+        )}
+      </div>
+      <FormMessage error={error} />
+      {!rows ? (
+        !error && <Skeleton className="h-32 rounded-xl" />
+      ) : !rows.length ? (
+        <p className="rounded-xl border border-dashed py-10 text-center text-sm text-muted-foreground">Aucune page pour le moment.</p>
+      ) : (
+        <ul className="grid gap-2">
+          {rows.map((row) => (
+            <li key={row.slug}>
+              <button type="button" onClick={() => setOpenSlug(row.slug)} className="flex w-full items-center justify-between gap-3 rounded-xl border bg-card p-3 text-left transition-colors hover:bg-accent">
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium">{row.title}</span>
+                  <span className="block text-xs text-muted-foreground">/p/{row.slug}</span>
+                </span>
+                <StatusBadge tone={row.published ? (row.draft ? 'info' : 'success') : 'warning'}>{row.published ? (row.draft ? 'Publiée, brouillon en cours' : 'Publiée') : 'Brouillon'}</StatusBadge>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Dialog open={creating} onOpenChange={setCreating}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nouvelle page</DialogTitle>
+            <DialogDescription>La page est créée en brouillon : elle ne sera visible qu’après publication.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <TextRow
+              id="new-page-title"
+              label="Titre"
+              value={title}
+              onChange={(value) => {
+                setTitle(value);
+                if (!slugTouched) setSlug(slugify(value));
+              }}
+            />
+            <TextRow
+              id="new-page-slug"
+              label="Adresse (après /p/)"
+              value={slug}
+              onChange={(value) => {
+                setSlugTouched(true);
+                setSlug(value);
+              }}
+            />
+            <FormMessage error={createError} />
+            <Button type="button" onClick={() => void create()}>
+              Créer la page
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function SettingsTab({ canEdit }: { canEdit: boolean }) {
+  return (
+    <DocTab docKey="settings" parse={parseSettings} clean={cleanSettings} canEdit={canEdit}>
+      {(value, setValue) => {
+        const a = value.announcement;
+        const setA = (patch: Partial<typeof a>) => setValue({ ...value, announcement: { ...a, ...patch } });
+        return (
+          <>
+            <Card>
+              <CardContent className="grid gap-4">
+                <h2 className="text-base font-medium">Référencement (Google, partage)</h2>
+                <TextRow id="settings-title" label="Titre du site" value={value.title} onChange={(title) => setValue({ ...value, title })} disabled={!canEdit} />
+                <Field label="Description" htmlFor="settings-description">
+                  <Textarea id="settings-description" rows={3} value={value.description} disabled={!canEdit} onChange={(event) => setValue({ ...value, description: event.target.value })} />
+                </Field>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="grid gap-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-base font-medium">Bandeau d’annonce (en haut de toutes les pages)</h2>
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Switch checked={a.show} onCheckedChange={(show) => setA({ show })} disabled={!canEdit} /> Afficher
+                  </label>
+                </div>
+                <TextRow id="announce-text" label="Message" value={a.text} onChange={(text) => setA({ text })} disabled={!canEdit} />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextRow id="announce-link" label="Texte du lien (facultatif)" value={a.linkLabel} onChange={(linkLabel) => setA({ linkLabel })} disabled={!canEdit} />
+                  <TextRow id="announce-href" label="Adresse du lien" value={a.linkHref} onChange={(linkHref) => setA({ linkHref })} disabled={!canEdit} />
+                </div>
+                <Field label="Style" htmlFor="announce-tone" className="sm:w-60">
+                  <Select value={a.tone} onValueChange={(tone) => setA({ tone: tone as 'info' | 'promo' })} disabled={!canEdit}>
+                    <SelectTrigger id="announce-tone">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="promo">Promotion (jaune)</SelectItem>
+                      <SelectItem value="info">Information (couleur du site)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Début (facultatif)" htmlFor="announce-start">
+                    <Input id="announce-start" type="datetime-local" value={a.startsAt} disabled={!canEdit} onChange={(event) => setA({ startsAt: event.target.value })} />
+                  </Field>
+                  <Field label="Fin (facultatif)" htmlFor="announce-end">
+                    <Input id="announce-end" type="datetime-local" value={a.endsAt} min={a.startsAt || undefined} disabled={!canEdit} onChange={(event) => setA({ endsAt: event.target.value })} />
+                  </Field>
+                </div>
+                <p className="text-xs text-muted-foreground">Sans dates, le bandeau reste affiché tant qu’il est activé.</p>
+              </CardContent>
+            </Card>
+          </>
+        );
+      }}
+    </DocTab>
+  );
+}
+
+export function WebsiteEditor({ canEdit, canDelete }: { canEdit: boolean; canDelete: boolean }) {
   return (
     <div className="mx-auto grid max-w-4xl gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -585,12 +888,20 @@ export function WebsiteEditor({ canEdit }: { canEdit: boolean }) {
       <Tabs defaultValue="home">
         <TabsList>
           <TabsTrigger value="home">Page d’accueil</TabsTrigger>
+          <TabsTrigger value="pages">Pages</TabsTrigger>
           <TabsTrigger value="menu">Menu</TabsTrigger>
           <TabsTrigger value="footer">Pied de page</TabsTrigger>
           <TabsTrigger value="media">Médiathèque</TabsTrigger>
+          <TabsTrigger value="settings">Réglages</TabsTrigger>
         </TabsList>
         <TabsContent value="home" className="mt-4">
-          <HomeTab canEdit={canEdit} />
+          <SectionsTab canEdit={canEdit} docKey="home" parse={parseHome} clean={cleanHome} />
+        </TabsContent>
+        <TabsContent value="pages" className="mt-4">
+          <PagesTab canEdit={canEdit} canDelete={canDelete} />
+        </TabsContent>
+        <TabsContent value="settings" className="mt-4">
+          <SettingsTab canEdit={canEdit} />
         </TabsContent>
         <TabsContent value="menu" className="mt-4">
           <MenuTab canEdit={canEdit} />

@@ -258,6 +258,45 @@ export const DEFAULT_MENU: MenuContent = {
   ],
 };
 
+export type PageContent = { title: string; description: string; blocks: Block[] };
+export const DEFAULT_PAGE: PageContent = { title: '', description: '', blocks: [] };
+
+export type Announcement = {
+  show: boolean;
+  text: string;
+  linkLabel: string;
+  linkHref: string;
+  tone: 'info' | 'promo';
+  /** Dates facultatives (heure locale, « AAAA-MM-JJTHH:MM »). */
+  startsAt: string;
+  endsAt: string;
+};
+export type SettingsContent = { title: string; description: string; announcement: Announcement };
+
+export const DEFAULT_SETTINGS: SettingsContent = {
+  title: 'FIMA AUTO – Location de véhicules',
+  description: 'FIMA AUTO – Location de véhicules : réservation en ligne, contrat signé à l’écran et suivi de location.',
+  announcement: { show: false, text: '', linkLabel: '', linkHref: '/vehicules', tone: 'promo', startsAt: '', endsAt: '' },
+};
+
+/** Adresses réservées : une page ne peut pas les prendre. */
+const RESERVED_SLUGS = ['admin', 'api', 'app', 'apercu', 'client', 'invite', 'login', 'partner', 'p', 'vehicules'];
+export const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+export const isValidSlug = (slug: string) => SLUG_PATTERN.test(slug) && slug.length <= 60 && !RESERVED_SLUGS.includes(slug);
+export const pageKey = (slug: string) => `page:${slug}`;
+export const slugOfKey = (key: string) => (key.startsWith('page:') ? key.slice(5) : null);
+
+/** Adresse à partir d'un titre : minuscules, sans accents, tirets. */
+export function slugify(title: string) {
+  return title
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+}
+
 /**
  * Fusionne le contenu enregistré avec les valeurs par défaut : une clé absente ou d'un
  * mauvais type retombe sur le défaut, une liste enregistrée remplace la liste par défaut.
@@ -292,6 +331,11 @@ export function normalizeBlocks(stored: unknown, fallback: Block[] = []): Block[
 
 export const homeContent = (stored: unknown): HomeContent => ({ blocks: normalizeBlocks(stored, DEFAULT_HOME_BLOCKS) });
 export const footerContent = (stored: unknown) => mergeContent(DEFAULT_FOOTER, stored);
+export const pageContent = (stored: unknown): PageContent => ({
+  ...mergeContent({ title: '', description: '' }, stored),
+  blocks: normalizeBlocks(stored, []),
+});
+export const settingsContent = (stored: unknown) => mergeContent(DEFAULT_SETTINGS, stored);
 export const menuContent = (stored: unknown) => mergeContent(DEFAULT_MENU, stored);
 
 /** Adresses acceptées pour un lien : interne, https, mailto ou tel (jamais javascript:). */

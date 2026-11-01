@@ -3,7 +3,20 @@ import { cacheLife, cacheTag } from 'next/cache';
 import type { Database } from '@/lib/database.types';
 import { resolveSupabaseConfig } from '@/lib/supabase/config';
 import { localizedFetch } from '@/lib/supabase/localized-fetch';
-import { footerContent, homeContent, menuContent, type FooterContent, type HomeContent, type MenuContent } from './site-content';
+import {
+  footerContent,
+  homeContent,
+  isValidSlug,
+  menuContent,
+  pageContent,
+  pageKey,
+  settingsContent,
+  type FooterContent,
+  type HomeContent,
+  type MenuContent,
+  type PageContent,
+  type SettingsContent,
+} from './site-content';
 
 export const SITE_CONTENT_TAG = 'site-content';
 
@@ -34,4 +47,15 @@ export async function getFooterContent(): Promise<FooterContent> {
 
 export async function getMenuContent(): Promise<MenuContent> {
   return menuContent((await readSiteContent()).menu);
+}
+
+export async function getSettings(): Promise<SettingsContent> {
+  return settingsContent((await readSiteContent()).settings);
+}
+
+/** Page supplémentaire publiée, ou null si elle n'existe pas. */
+export async function getPage(slug: string): Promise<PageContent | null> {
+  if (!isValidSlug(slug)) return null;
+  const stored = (await readSiteContent())[pageKey(slug)];
+  return stored ? pageContent(stored) : null;
 }

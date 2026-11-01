@@ -2,15 +2,26 @@
 
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { safeHref, type Link as MenuLink } from '@/lib/data/site-content';
+import { safeHref, type Announcement, type Link as MenuLink } from '@/lib/data/site-content';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './theme-toggle';
 
+const noopSubscribe = () => () => {};
+
+/** Bandeau visible : activé, avec un message, et dans ses dates éventuelles (évalué dans le navigateur). */
+function isActive(a: Announcement) {
+  if (!a.show || !a.text.trim()) return false;
+  const now = Date.now();
+  const start = a.startsAt ? new Date(a.startsAt).getTime() : NaN;
+  const end = a.endsAt ? new Date(a.endsAt).getTime() : NaN;
+  return !(now < start) && !(now > end);
+}
+
 /** En-tête du site public : transparent sur la bannière, opaque au défilement. */
-export function SiteHeaderView({ overHero = false, links }: { overHero?: boolean; links: MenuLink[] }) {
+export function SiteHeaderView({ overHero = false, links, announcement }: { overHero?: boolean; links: MenuLink[]; announcement?: Announcement }) {
   const [scrolled, setScrolled] = useState(!overHero);
   useEffect(() => {
     if (!overHero) return;
@@ -20,14 +31,28 @@ export function SiteHeaderView({ overHero = false, links }: { overHero?: boolean
     return () => window.removeEventListener('scroll', onScroll);
   }, [overHero]);
   const light = overHero && !scrolled;
+  const banner = useSyncExternalStore(noopSubscribe, () => !!announcement && isActive(announcement), () => false);
+  const promo = announcement?.tone === 'promo';
 
   return (
+    <>
+    {banner && <div aria-hidden className={cn('h-9', promo ? 'bg-amber-400' : 'bg-primary')} />}
     <header
       className={cn(
         'fixed inset-x-0 top-0 z-50 transition-colors duration-300',
         light ? 'bg-transparent text-white' : 'border-b bg-background/85 backdrop-blur-md',
       )}
     >
+      {banner && announcement && (
+        <p className={cn('flex h-9 items-center justify-center gap-x-3 overflow-hidden px-4 text-center text-sm font-medium', promo ? 'bg-amber-400 text-amber-950' : 'bg-primary text-primary-foreground')}>
+          <span className="truncate">{announcement.text}</span>
+          {announcement.linkLabel && (
+            <Link href={safeHref(announcement.linkHref)} className="shrink-0 underline underline-offset-4">
+              {announcement.linkLabel}
+            </Link>
+          )}
+        </p>
+      )}
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
         <Link href="/" className="flex shrink-0 items-center" aria-label="FIMA AUTO – accueil">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -105,5 +130,6 @@ export function SiteHeaderView({ overHero = false, links }: { overHero?: boolean
         </div>
       </div>
     </header>
+    </>
   );
 }
