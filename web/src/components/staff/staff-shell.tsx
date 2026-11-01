@@ -34,7 +34,7 @@ export async function StaffShell({ children }: { children: React.ReactNode }) {
       <AppSidebar user={user} unread={unread} />
       <SidebarInset>
         <StaffHeader unread={unread} showNotifications={showNotifications} />
-        <div className="flex-1 p-4 md:p-6">{children}</div>
+        <div className="min-w-0 flex-1 p-4 md:p-6">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

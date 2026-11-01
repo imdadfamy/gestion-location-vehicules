@@ -361,18 +361,19 @@ function Toolbar({
       <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
       <div className="ml-auto flex flex-wrap gap-2">
         <Button type="button" size="sm" variant="ghost" onClick={onHistory}>
-          <History /> Historique
+          <History /> <span className="sr-only sm:not-sr-only">Historique</span>
         </Button>
         <Button type="button" size="sm" variant="outline" disabled={busy} onClick={onPreview}>
-          <Eye /> Aperçu
+          <Eye /> <span className="sr-only sm:not-sr-only">Aperçu</span>
         </Button>
         {canEdit && (
           <>
             <Button type="button" size="sm" variant="ghost" disabled={busy || status === 'published'} onClick={onDiscard}>
-              <Undo2 /> Abandonner
+              <Undo2 /> <span className="sr-only sm:not-sr-only">Abandonner</span>
             </Button>
             <Button type="button" size="sm" variant="outline" disabled={busy || status !== 'unsaved'} onClick={onSave}>
-              Enregistrer le brouillon
+              <span className="sm:hidden">Enregistrer</span>
+              <span className="hidden sm:inline">Enregistrer le brouillon</span>
             </Button>
             <Button type="button" size="sm" disabled={busy || status === 'published'} onClick={onPublish}>
               {busy && <Loader2 className="animate-spin" />} Publier
@@ -889,9 +890,9 @@ function SettingsTab({ canEdit }: { canEdit: boolean }) {
 
 export function WebsiteEditor({ canEdit, canDelete }: { canEdit: boolean; canDelete: boolean }) {
   return (
-    <div className="mx-auto grid max-w-4xl gap-4">
+    <div className="mx-auto grid w-full max-w-4xl grid-cols-[minmax(0,1fr)] gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight">Site web</h1>
           <p className="text-sm text-muted-foreground">Composez la page d’accueil, le menu et le pied de page : ajoutez, déplacez et masquez des sections, prévisualisez, puis publiez.</p>
         </div>
@@ -902,8 +903,8 @@ export function WebsiteEditor({ canEdit, canDelete }: { canEdit: boolean; canDel
         </Button>
       </div>
       {!canEdit && <FormMessage error="Vous pouvez consulter cet écran, mais vous n’avez pas le droit de modifier le site." />}
-      <Tabs defaultValue="home">
-        <TabsList>
+      <Tabs defaultValue="home" className="min-w-0">
+        <TabsList className="max-w-full justify-start overflow-x-auto">
           <TabsTrigger value="home">Page d’accueil</TabsTrigger>
           <TabsTrigger value="pages">Pages</TabsTrigger>
           <TabsTrigger value="menu">Menu</TabsTrigger>

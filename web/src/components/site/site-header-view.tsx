@@ -69,7 +69,7 @@ export function SiteHeaderView({ overHero = false, links, announcement }: { over
             <img src="/logo-horizontal-white.png" alt="" className="hidden h-8 w-auto dark:block" />
           )}
         </Link>
-        <nav className="ml-6 hidden items-center gap-1 md:flex" aria-label={t('Navigation principale')}>
+        <nav className="ml-6 hidden items-center gap-1 xl:flex" aria-label={t('Navigation principale')}>
           {links.map((link, index) => (
             <Button
               key={index}
@@ -103,7 +103,7 @@ export function SiteHeaderView({ overHero = false, links, announcement }: { over
               <Button
                 variant="ghost"
                 size="icon"
-                className={cn('md:hidden', light && 'text-white hover:bg-white/10 hover:text-white')}
+                className={cn('xl:hidden', light && 'text-white hover:bg-white/10 hover:text-white')}
                 aria-label={t('Ouvrir le menu')}
               >
                 <Menu className="size-5" />

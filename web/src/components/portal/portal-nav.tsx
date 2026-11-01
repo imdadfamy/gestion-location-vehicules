@@ -74,7 +74,7 @@ export function PortalNav({ space, userId, contact }: { space: Space; userId?: s
       return (
         <Button key={link.href} asChild variant={active ? 'secondary' : 'ghost'} size="sm" className={cn('justify-start', active && 'font-semibold')}>
           <Link href={link.href} onClick={onNavigate} aria-current={active ? 'page' : undefined} title={link.label} aria-label={badge ? `${link.label} (${badge} à traiter)` : link.label}>
-            <link.icon /> <span className={space === 'partner' && !inSheet ? (ICON_ONLY.includes(link.href) ? 'sr-only' : 'sr-only lg:not-sr-only') : undefined}>{link.label}</span>
+            <link.icon /> <span className={!inSheet ? (ICON_ONLY.includes(link.href) ? 'sr-only' : 'sr-only 2xl:not-sr-only') : undefined}>{link.label}</span>
             {badge > 0 && <span className="ml-0.5 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">{badge}</span>}
           </Link>
         </Button>
@@ -83,7 +83,7 @@ export function PortalNav({ space, userId, contact }: { space: Space; userId?: s
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 2xl:max-w-7xl">
         <Link href={links[0].href} className="flex shrink-0 items-center gap-2" aria-label={`FIMA AUTO – ${title}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-horizontal-color.png" alt="FIMA AUTO" className="h-8 w-auto dark:hidden" />
@@ -91,18 +91,18 @@ export function PortalNav({ space, userId, contact }: { space: Space; userId?: s
           <img src="/logo-horizontal-white.png" alt="" className="hidden h-8 w-auto dark:block" />
           <span className="hidden text-xs font-medium tracking-wide text-muted-foreground uppercase lg:inline">{title}</span>
         </Link>
-        <nav className="ml-4 hidden items-center gap-1 md:flex" aria-label={title}>
+        <nav className="ml-4 hidden items-center gap-1 xl:flex" aria-label={title}>
           {items()}
         </nav>
         <div className="ml-auto flex items-center gap-1">
           {space === 'client' && contact && <ContactAgency contact={contact} />}
           <ThemeToggle />
-          <Button variant="ghost" size="sm" onClick={logout} className="hidden md:inline-flex">
-            <LogOut /> Déconnexion
+          <Button variant="ghost" size="sm" onClick={logout} className="hidden xl:inline-flex">
+            <LogOut /> <span className="sr-only 2xl:not-sr-only">Déconnexion</span>
           </Button>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Ouvrir le menu">
+              <Button variant="ghost" size="icon" className="xl:hidden" aria-label="Ouvrir le menu">
                 <Menu />
               </Button>
             </SheetTrigger>
