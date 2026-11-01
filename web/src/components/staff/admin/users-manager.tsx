@@ -52,6 +52,7 @@ const MODULES: Record<string, string> = {
   contract_templates: 'Modèles de contrat',
   activity_logs: 'Journal',
   partners: 'Partenaires',
+  website: 'Site web',
 };
 const actionKeys = Object.keys(ACTIONS);
 const moduleKeys = Object.keys(MODULES);

@@ -1,55 +1,113 @@
 import Link from 'next/link';
+import { Clock, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { CurrentYear } from './current-year';
-import type { CompanyContact } from '@/lib/data/public-catalog';
+import { getFooterContent } from '@/lib/data/site-content-server';
+import { safeHref } from '@/lib/data/site-content';
+import { whatsappLink, type CompanyContact } from '@/lib/data/public-catalog';
 
-export function SiteFooter({ company }: { company: CompanyContact | null }) {
+const SPACES = [
+  { label: 'Espace client', href: '/client/login' },
+  { label: 'Espace partenaire', href: '/partner/login' },
+  { label: 'Espace professionnel', href: '/login' },
+];
+
+function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const className = 'text-white/65 transition-colors hover:text-white';
+  return /^(https?:|mailto:|tel:)/i.test(href) ? (
+    <a href={href} className={className} {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+      {children}
+    </a>
+  ) : (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  );
+}
+
+/** Pied de page : liens, réseaux et mention modifiables depuis « Site web », coordonnées depuis « Paramètres ». */
+export async function SiteFooter({ company }: { company: CompanyContact | null }) {
+  const content = await getFooterContent();
+  const whatsapp = whatsappLink(company?.whatsapp_phone);
+  const phone = company?.phone?.replace(/[^\d+]/g, '');
   return (
-    <footer id="contact" className="border-t bg-muted/40">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:grid-cols-3">
+    <footer id="contact" className="relative overflow-hidden bg-[#06232b] text-white">
+      <div aria-hidden className="pointer-events-none absolute -top-40 -right-40 size-96 rounded-full bg-primary/20 blur-3xl" />
+      <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.3fr]">
         <div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-horizontal-color.png" alt="FIMA AUTO" className="h-8 w-auto dark:hidden" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-horizontal-white.png" alt="" className="hidden h-8 w-auto dark:block" />
-          <p className="mt-3 text-sm text-muted-foreground">Location de véhicules, mobilités premium.</p>
+          <img src="/logo-horizontal-white.png" alt="FIMA AUTO" className="h-9 w-auto" />
+          <p className="mt-4 max-w-xs text-sm text-white/65">{content.tagline}</p>
+          {content.socials.length > 0 && (
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {content.socials.map((social, index) => (
+                <li key={index}>
+                  <a
+                    href={safeHref(social.href)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full border border-white/20 px-3 py-1 text-xs text-white/80 transition-colors hover:border-white/50 hover:bg-white/10 hover:text-white"
+                  >
+                    {social.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        <div>
-          <h2 className="text-sm font-semibold">Liens</h2>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>
-              <Link href="/vehicules" className="hover:text-foreground">
-                Véhicules
-              </Link>
-            </li>
-            <li>
-              <Link href="/#faq" className="hover:text-foreground">
-                FAQ
-              </Link>
-            </li>
-            <li>
-              <Link href="/partner/login" className="hover:text-foreground">
-                Espace partenaire
-              </Link>
-            </li>
-            <li>
-              <Link href="/login" className="hover:text-foreground">
-                Espace professionnel
-              </Link>
-            </li>
+
+        <nav aria-label="Liens du site">
+          <h2 className="text-sm font-semibold tracking-widest text-[#5fd3df] uppercase">Découvrir</h2>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            {content.links.map((link, index) => (
+              <li key={index}>
+                <FooterLink href={safeHref(link.href)}>{link.label}</FooterLink>
+              </li>
+            ))}
           </ul>
-        </div>
+        </nav>
+
+        <nav aria-label="Espaces de connexion">
+          <h2 className="text-sm font-semibold tracking-widest text-[#5fd3df] uppercase">Mon espace</h2>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            {SPACES.map((space) => (
+              <li key={space.href}>
+                <FooterLink href={space.href}>{space.label}</FooterLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
         <address className="not-italic">
-          <h2 className="text-sm font-semibold">Contact</h2>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>Téléphone : {company?.phone || 'Non renseigné'}</li>
-            <li>WhatsApp : {company?.whatsapp_phone || 'Non renseigné'}</li>
-            <li>{company?.address || 'Adresse à configurer'}</li>
-            <li>Horaires : {company?.business_hours || 'À préciser'}</li>
+          <h2 className="text-sm font-semibold tracking-widest text-[#5fd3df] uppercase">Contact</h2>
+          <ul className="mt-4 space-y-3 text-sm text-white/65 [&_svg]:mt-0.5 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-[#5fd3df]">
+            <li className="flex gap-2.5">
+              <Phone aria-hidden />
+              {company?.phone ? <FooterLink href={`tel:${phone}`}>{company.phone}</FooterLink> : 'Téléphone non renseigné'}
+            </li>
+            {(whatsapp || !company?.whatsapp_phone) && (
+              <li className="flex gap-2.5">
+                <MessageCircle aria-hidden />
+                {whatsapp ? <FooterLink href={whatsapp}>WhatsApp : {company?.whatsapp_phone}</FooterLink> : 'WhatsApp non renseigné'}
+              </li>
+            )}
+            <li className="flex gap-2.5">
+              <MapPin aria-hidden />
+              {company?.address || 'Adresse à configurer'}
+            </li>
+            <li className="flex gap-2.5">
+              <Clock aria-hidden />
+              {company?.business_hours || 'Horaires à préciser'}
+            </li>
           </ul>
         </address>
       </div>
-      <div className="border-t py-4 text-center text-xs text-muted-foreground">
-        © <CurrentYear /> {company?.company_name || 'FIMA AUTO'} — Tous droits réservés
+      <div className="relative border-t border-white/10">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-white/50 sm:flex-row">
+          <p>
+            © <CurrentYear /> {company?.company_name || 'FIMA AUTO'} — Tous droits réservés
+          </p>
+          {content.note && <p>{content.note}</p>}
+        </div>
       </div>
     </footer>
   );

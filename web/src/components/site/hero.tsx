@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 import BlurText from '@/components/BlurText';
 import RotatingText from '@/components/RotatingText';
 import { Button } from '@/components/ui/button';
+import type { HomeContent } from '@/lib/data/site-content';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -18,7 +19,6 @@ import {
 
 export const CATEGORIES = ['Citadine', 'Berline', 'SUV'];
 
-const ROTATING_WORDS = ['entretenus', 'contrôlés', 'prêts à partir'];
 const noopSubscribe = () => () => {};
 
 /** Vrai seulement dans le navigateur, après hydratation. */
@@ -27,7 +27,8 @@ function useMounted() {
 }
 
 /** Bannière d'accueil : fond animé, titre et recherche de disponibilité. */
-export function Hero() {
+export function Hero({ content }: { content: HomeContent['hero'] }) {
+  const words = content.words;
   const router = useRouter();
   const [departure, setDeparture] = useState('');
   const [returnDate, setReturnDate] = useState('');
@@ -50,7 +51,7 @@ export function Hero() {
       {/* Photo de marque assombrie par un dégradé aux couleurs FIMA AUTO */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/hero-banner.jpg"
+        src={content.image}
         alt=""
         className="absolute inset-0 -z-20 h-full w-full object-cover opacity-40"
       />
@@ -61,28 +62,31 @@ export function Hero() {
           Location de véhicules
         </span>
         <BlurText
-          text="Louez votre véhicule en quelques clics"
+          key={content.title}
+          text={content.title}
           animateBy="words"
           direction="top"
           delay={80}
           className="mt-6 max-w-3xl justify-center text-4xl font-semibold tracking-tight text-balance sm:text-5xl md:text-6xl"
         />
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-lg text-white/80">
-          <span>Véhicules</span>
-          {mounted ? (
-            <RotatingText
-              texts={ROTATING_WORDS}
-              mainClassName="overflow-hidden rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground"
-              rotationInterval={2600}
-            />
-          ) : (
-            <span className="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground">
-              {ROTATING_WORDS[0]}
-            </span>
-          )}
-        </div>
+        {words.length > 0 && (
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-lg text-white/80">
+            <span>Véhicules</span>
+            {mounted && words.length > 1 ? (
+              <RotatingText
+                texts={words}
+                mainClassName="overflow-hidden rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground"
+                rotationInterval={2600}
+              />
+            ) : (
+              <span className="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground">
+                {words[0]}
+              </span>
+            )}
+          </div>
+        )}
 
-        <p className="mt-3 text-white/70">Contrat signé à l’écran, sans frais cachés.</p>
+        <p className="mt-3 text-white/70">{content.subtitle}</p>
 
         <form
           onSubmit={search}

@@ -1486,6 +1486,41 @@ export type Database = {
           },
         ];
       };
+      site_content: {
+        Row: {
+          content: Json;
+          created_at: string;
+          id: string;
+          key: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          content?: Json;
+          created_at?: string;
+          id?: string;
+          key: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          content?: Json;
+          created_at?: string;
+          id?: string;
+          key?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'site_content_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       vehicles: {
         Row: {
           approval_status: string;

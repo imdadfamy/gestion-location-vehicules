@@ -6,6 +6,7 @@ import {
   CreditCard,
   FileSignature,
   FileText,
+  Globe,
   Handshake,
   History,
   KeyRound,
@@ -46,6 +47,7 @@ export const MENU: { label: string; items: MenuItem[] }[] = [
       { title: 'Maintenance', href: '/app/maintenance', icon: Wrench, module: 'maintenance' },
       { title: 'Incidents', href: '/app/incidents', icon: ShieldAlert, module: 'incidents' },
       { title: 'Partenaires', href: '/app/partners', icon: Handshake, module: 'partners' },
+      { title: 'Site web', href: '/app/website', icon: Globe, module: 'website' },
     ],
   },
   {
