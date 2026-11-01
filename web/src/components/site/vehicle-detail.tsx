@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Calendar, Car, Cog, DoorOpen, Fuel, Gauge, MessageCircle, Palette, Share2, ShieldCheck, Snowflake, Users } from 'lucide-react';
+import { Calendar, Car, Cog, DoorOpen, Fuel, Gauge, MessageCircle, Palette, Plane, Share2, ShieldCheck, Snowflake, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ export function VehicleDetail({
   onDriverChange,
   onReserve,
   onSelect,
+  onTransfer,
 }: {
   vehicle: CatalogVehicle;
   all: CatalogVehicle[];
@@ -52,6 +53,8 @@ export function VehicleDetail({
   onDriverChange: (value: boolean) => void;
   onReserve: (vehicle: CatalogVehicle) => void;
   onSelect: (vehicle: CatalogVehicle) => void;
+  /** Renvoie vers la section transfert de la page (absent : pas de lien). */
+  onTransfer?: () => void;
 }) {
   const { lang, t, plural, locale, href } = useLang();
   const money = (value: unknown) => formatMoney(value, locale);
@@ -213,6 +216,16 @@ export function VehicleDetail({
           )}
         </div>
       </section>
+
+      {onTransfer && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-muted px-3 py-2 text-sm">
+          <Plane className="size-4 shrink-0 text-primary" />
+          <span className="text-muted-foreground">{t('Besoin juste d’un chauffeur plutôt que de conduire vous-même ?')}</span>
+          <button type="button" onClick={onTransfer} className="font-medium text-primary underline underline-offset-4">
+            {t('Découvrir le transfert aéroport')}
+          </button>
+        </p>
+      )}
 
       {similar.length > 0 && (
         <section aria-label={t('Véhicules similaires')}>

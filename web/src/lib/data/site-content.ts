@@ -61,7 +61,7 @@ export type BlockData = {
   hero: { title: string; subtitle: string; words: string[]; image: string };
   strengths: { eyebrow: string; title: string; items: Item[] };
   catalog: { eyebrow: string; title: string; text: string; count: number };
-  transfer: { eyebrow: string; title: string; text: string; steps: Item[]; routes: TransferRoute[]; button: string };
+  transfer: { eyebrow: string; title: string; text: string; steps: Item[]; routes: TransferRoute[]; button: string; faq: Faq[] };
   steps: { eyebrow: string; title: string; items: Item[] };
   faq: { eyebrow: string; title: string; items: Faq[] };
   partner: {
@@ -165,6 +165,11 @@ export const DEFAULT_DATA: BlockData = {
       { from: 'Aéroport de Cotonou', to: 'Porto-Novo', price: '20 000 – 40 000', prices: { Citadine: '20 000 – 25 000', Berline: '25 000 – 30 000', SUV: '30 000 – 40 000' } },
     ],
     button: 'Prévenir l’agence sur WhatsApp',
+    faq: [
+      { q: 'Que se passe-t-il si mon vol est retardé ?', a: 'Indiquez votre numéro de vol dans la demande : l’agence suit l’heure d’arrivée réelle et adapte la prise en charge. En cas de changement important, prévenez-nous sur WhatsApp avec votre référence.' },
+      { q: 'Comment annuler ou modifier mon transfert ?', a: 'Contactez l’agence sur WhatsApp dès que possible en indiquant votre référence. Vous pouvez suivre l’état de votre demande à tout moment avec votre référence et votre téléphone.' },
+      { q: 'Comment reconnaître mon chauffeur ?', a: 'Votre chauffeur vous attend à l’arrivée avec une pancarte à votre nom. Son nom et le véhicule vous sont communiqués dans la confirmation de l’agence.' },
+    ],
   },
   steps: {
     eyebrow: 'Simplicité',

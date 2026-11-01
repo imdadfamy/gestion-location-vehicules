@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Car, CheckCircle2, Loader2, MessageCircle, Plane, Users } from 'lucide-react';
 import AnimatedContent from '@/components/AnimatedContent';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FormMessage } from '@/components/auth/form-message';
 import { SiteIcon } from '@/components/site/site-icon';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,7 @@ const field = 'border-white/20 bg-white/90 text-foreground';
  * trajet et l'heure via `?trajet=` et `?quand=`.
  */
 export function TransferSection({ content, whatsappPhone, anchor = true }: { content: BlockData['transfer']; whatsappPhone?: string | null; anchor?: boolean }) {
-  const { eyebrow, title, text, steps, routes, button } = content;
+  const { eyebrow, title, text, steps, routes, button, faq } = content;
   const params = useSearchParams();
   const { lang, t, locale, href } = useLang();
   const [route, setRoute] = useState(routes.length ? '0' : OTHER);
@@ -358,6 +359,20 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
             )}
           </div>
         </div>
+
+        {faq.length > 0 && (
+          <div className="mx-auto mt-14 max-w-3xl">
+            <h3 className="text-center text-xl font-semibold">{t('Questions fréquentes sur le transfert')}</h3>
+            <Accordion type="single" collapsible className="mt-5 rounded-2xl border border-white/15 bg-white/5 px-5">
+              {faq.map(({ q, a }, index) => (
+                <AccordionItem key={index} value={`transfer-faq-${index}`} className="border-white/15 last:border-b-0">
+                  <AccordionTrigger className="hover:no-underline">{q}</AccordionTrigger>
+                  <AccordionContent className="text-white/70">{a}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        )}
       </div>
     </section>
   );

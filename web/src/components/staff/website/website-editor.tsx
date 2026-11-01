@@ -108,6 +108,7 @@ function cleanBlock(block: Block): Block {
         data: {
           ...block.data,
           steps: block.data.steps.filter((item) => nonEmpty(item.title) || nonEmpty(item.text)),
+          faq: block.data.faq.filter((item) => nonEmpty(item.q) && nonEmpty(item.a)),
           routes: block.data.routes
             .map((route) => ({
               from: route.from.trim(),

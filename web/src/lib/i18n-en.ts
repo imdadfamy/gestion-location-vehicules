@@ -200,6 +200,10 @@ export const EN: Record<string, string> = {
   'Votre demande n’a pas pu être envoyée. Réessayez ou contactez l’agence.': 'Your request could not be sent. Try again or contact the agency.',
   'Bonjour FIMA AUTO, je viens de faire une demande de transfert aéroport (référence {ref}).': 'Hello FIMA AUTO, I have just made an airport transfer request (reference {ref}).',
 
+  'Questions fréquentes sur le transfert': 'Frequently asked questions about the transfer',
+  'Besoin juste d’un chauffeur plutôt que de conduire vous-même ?': 'Just need a driver rather than driving yourself?',
+  'Découvrir le transfert aéroport': 'Discover the airport transfer',
+
   // Suivi
   'Saisissez la référence reçue à l’envoi de votre demande et le téléphone utilisé.': 'Enter the reference you received when sending your request and the phone number you used.',
   Référence: 'Reference',

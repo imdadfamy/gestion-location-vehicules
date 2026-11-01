@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { CalendarClock, SearchX, X } from 'lucide-react';
 import { toast } from 'sonner';
 import AnimatedContent from '@/components/AnimatedContent';
@@ -34,6 +34,7 @@ function toIso(local: string) {
 }
 
 const PRICE_STEP = 1000;
+const noopSubscribe = () => () => {};
 
 /** Ce que l'adresse retient du catalogue (lien partageable, retour arrière, recherche de l'accueil). */
 function serialize(state: { departure: string; returnDate: string; category: string; selectedId: string | null }) {
@@ -50,6 +51,8 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
   const router = useRouter();
   const { t, plural, locale } = useLang();
   const money = (value: unknown) => formatMoney(value, locale);
+  // Le lien vers le transfert n'est proposé que si la page a une section Transfert.
+  const hasTransfer = useSyncExternalStore(noopSubscribe, () => !!document.getElementById('transfert'), () => false);
   const pathname = usePathname();
   const params = useSearchParams();
   const paramsText = params.toString();
@@ -160,6 +163,12 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
   }
 
   const selected = vehicles.find((v) => v.id === selectedId) ?? null;
+
+  /** Ferme la fiche puis fait défiler jusqu'à la section transfert. */
+  function goToTransfer() {
+    setSelectedId(null);
+    setTimeout(() => document.getElementById('transfert')?.scrollIntoView({ behavior: 'smooth' }), 150);
+  }
   const availableCount = visible.filter((v) => v.is_available).length;
 
   function reserve(vehicle: CatalogVehicle) {
@@ -194,6 +203,7 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
       onDriverChange={setWithDriver}
       onReserve={reserve}
       onSelect={(vehicle) => setSelectedId(vehicle.id)}
+      onTransfer={hasTransfer ? goToTransfer : undefined}
     />
   );
   const title = selected ? `${selected.make} ${selected.model}${selected.year ? ` · ${selected.year}` : ''}` : '';

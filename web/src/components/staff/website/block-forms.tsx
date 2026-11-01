@@ -177,6 +177,10 @@ export function BlockForm({ block, onChange, disabled }: Props & { block: Block;
             <ItemsList scope={`${id}-steps`} items={d.steps} onChange={(steps) => set({ steps })} disabled={disabled} addLabel="Ajouter une étape" />
           </div>
           <div className="grid gap-2">
+            <p className="text-sm font-medium">Questions fréquentes sur le transfert</p>
+            <FaqList scope={`${id}-faq`} items={d.faq} onChange={(faq) => set({ faq })} disabled={disabled} />
+          </div>
+          <div className="grid gap-2">
             <p className="text-sm font-medium">Trajets et prix fixes</p>
             <ListEditor
               items={d.routes}

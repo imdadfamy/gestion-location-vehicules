@@ -53,6 +53,11 @@ export const DEFAULT_DATA_EN: BlockData = {
       { from: 'Cotonou Airport', to: 'Porto-Novo', price: '20 000 – 40 000', prices: { Citadine: '20 000 – 25 000', Berline: '25 000 – 30 000', SUV: '30 000 – 40 000' } },
     ],
     button: 'Notify the agency on WhatsApp',
+    faq: [
+      { q: 'What happens if my flight is delayed?', a: 'Enter your flight number in the request: the agency follows the actual arrival time and adjusts the pick-up. In case of a major change, let us know on WhatsApp with your reference.' },
+      { q: 'How do I cancel or change my transfer?', a: 'Contact the agency on WhatsApp as soon as possible, quoting your reference. You can follow the status of your request at any time with your reference and phone number.' },
+      { q: 'How will I recognise my driver?', a: 'Your driver waits for you on arrival with a sign bearing your name. Their name and the vehicle are given in the agency’s confirmation.' },
+    ],
   },
   steps: {
     eyebrow: 'Simplicity',
