@@ -18,6 +18,7 @@ import {
   UserCircle,
   Users,
   CalendarRange,
+  Plane,
   Wrench,
 } from 'lucide-react';
 
@@ -40,6 +41,7 @@ export const MENU: { label: string; items: MenuItem[] }[] = [
       { title: 'Véhicules', href: '/app/vehicles', icon: Car, module: 'vehicles' },
       { title: 'Clients', href: '/app/clients', icon: Users, module: 'clients' },
       { title: 'Réservations', href: '/app/reservations', icon: CalendarRange, module: 'reservations' },
+      { title: 'Transferts', href: '/app/transfers', icon: Plane, module: 'reservations' },
       { title: 'Locations', href: '/app/rentals', icon: KeyRound, module: 'rentals' },
       { title: 'Contrats', href: '/app/contracts', icon: FileSignature, module: 'contracts' },
       { title: 'Paiements', href: '/app/payments', icon: CreditCard, module: 'payments' },

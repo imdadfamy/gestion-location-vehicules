@@ -1553,6 +1553,20 @@ export type Database = {
           },
         ];
       };
+      transfer_requests: {
+        Row: { id: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number: string | null; passengers: number; luggage: number | null; vehicle_id: string | null; vehicle_label: string | null; quoted_price: number | null; final_price: number | null; customer_name: string; customer_phone: string; notes: string | null; status: string; staff_notes: string | null; created_at: string; updated_at: string; };
+        Insert: { id?: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name: string; customer_phone: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
+        Update: { id?: string; reference?: string; route_from?: string; route_to?: string; pickup_at?: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name?: string; customer_phone?: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
+        Relationships: [
+          {
+            foreignKeyName: 'transfer_requests_vehicle_id_fkey';
+            columns: ['vehicle_id'];
+            isOneToOne: false;
+            referencedRelation: 'vehicles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       vehicles: {
         Row: {
           driver_daily_price: number;
@@ -2039,6 +2053,34 @@ export type Database = {
           transmission: string;
           year: number;
           driver_daily_price: number;
+        }[];
+      };
+      public_create_transfer_request: {
+        Args: {
+          target_customer_name: string;
+          target_customer_phone: string;
+          target_flight_number?: string;
+          target_luggage?: number;
+          target_notes?: string;
+          target_passengers: number;
+          target_pickup_at: string;
+          target_quoted_price?: number;
+          target_route_from: string;
+          target_route_to: string;
+          target_vehicle_id?: string;
+        };
+        Returns: string;
+      };
+      public_transfer_status: {
+        Args: { target_phone: string; target_reference: string };
+        Returns: {
+          pickup_at: string;
+          price: number | null;
+          reference: string;
+          route_from: string;
+          route_to: string;
+          status: string;
+          vehicle_label: string | null;
         }[];
       };
       public_company_contact: {

@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import {
   DEFAULT_DATA,
+  TRANSFER_CATEGORIES,
   type Block,
   type Faq,
   type GalleryImage,
@@ -25,7 +26,7 @@ const blankFaq = (): Faq => ({ q: '', a: '' });
 const blankLink = (): Link => ({ label: '', href: '/' });
 const blankImage = (): GalleryImage => ({ url: '', caption: '' });
 const blankTestimonial = (): Testimonial => ({ name: '', role: '', quote: '' });
-const blankRoute = (): TransferRoute => ({ from: 'Aéroport de Cotonou', to: '', price: '' });
+const blankRoute = (): TransferRoute => ({ from: 'Aéroport de Cotonou', to: '', price: '', prices: {} });
 const blankStat = (): Stat => ({ value: '', label: '' });
 
 function Area({ id, label, value, onChange, disabled, rows = 3 }: { id: string; label: string; value: string; onChange: (value: string) => void; disabled?: boolean; rows?: number }) {
@@ -170,7 +171,7 @@ export function BlockForm({ block, onChange, disabled }: Props & { block: Block;
             <TextRow id={`${id}-title`} label="Titre" value={d.title} onChange={(title) => set({ title })} disabled={disabled} />
           </Pair>
           <Area id={`${id}-text`} label="Présentation" rows={2} value={d.text} onChange={(text) => set({ text })} disabled={disabled} />
-          <TextRow id={`${id}-button`} label="Texte du bouton" value={d.button} onChange={(button) => set({ button })} disabled={disabled} />
+          <TextRow id={`${id}-button`} label="Texte du bouton WhatsApp (après l’envoi de la demande)" value={d.button} onChange={(button) => set({ button })} disabled={disabled} />
           <div className="grid gap-2">
             <p className="text-sm font-medium">Étapes</p>
             <ItemsList scope={`${id}-steps`} items={d.steps} onChange={(steps) => set({ steps })} disabled={disabled} addLabel="Ajouter une étape" />
@@ -184,14 +185,28 @@ export function BlockForm({ block, onChange, disabled }: Props & { block: Block;
               addLabel="Ajouter un trajet"
               disabled={disabled}
               render={(item, patch, index) => (
-                <div className="grid gap-3 sm:grid-cols-[1fr_1fr_10rem]">
-                  <TextRow id={`${id}-from-${index}`} label="Départ" value={item.from} onChange={(from) => patch({ from })} disabled={disabled} />
-                  <TextRow id={`${id}-to-${index}`} label="Arrivée" value={item.to} onChange={(to) => patch({ to })} disabled={disabled} />
-                  <TextRow id={`${id}-price-${index}`} label="Prix (FCFA)" value={item.price} onChange={(price) => patch({ price })} disabled={disabled} />
-                </div>
+                <>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <TextRow id={`${id}-from-${index}`} label="Départ" value={item.from} onChange={(from) => patch({ from })} disabled={disabled} />
+                    <TextRow id={`${id}-to-${index}`} label="Arrivée" value={item.to} onChange={(to) => patch({ to })} disabled={disabled} />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-4">
+                    <TextRow id={`${id}-price-${index}`} label="Prix de base (FCFA)" value={item.price} onChange={(price) => patch({ price })} disabled={disabled} />
+                    {TRANSFER_CATEGORIES.map((category) => (
+                      <TextRow
+                        key={category}
+                        id={`${id}-price-${category}-${index}`}
+                        label={`${category} (si différent)`}
+                        value={item.prices?.[category] ?? ''}
+                        onChange={(value) => patch({ prices: { ...item.prices, [category]: value } })}
+                        disabled={disabled}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             />
-            <p className="text-xs text-muted-foreground">Un prix vide s’affiche « Sur devis ». Les demandes arrivent sur le WhatsApp de l’agence.</p>
+            <p className="text-xs text-muted-foreground">Le prix de base s’applique à tous les véhicules ; remplissez une catégorie seulement si son prix diffère. Sans prix, le trajet s’affiche « Sur devis ». Les demandes arrivent dans l’écran Transferts.</p>
           </div>
         </div>
       );
@@ -232,7 +247,7 @@ export function BlockForm({ block, onChange, disabled }: Props & { block: Block;
             <TextRow id={`${id}-title`} label="Titre" value={d.title} onChange={(title) => set({ title })} disabled={disabled} />
           </Pair>
           <Area id={`${id}-text`} label="Présentation" value={d.text} onChange={(text) => set({ text })} disabled={disabled} />
-          <TextRow id={`${id}-button`} label="Texte du bouton" value={d.button} onChange={(button) => set({ button })} disabled={disabled} />
+          <TextRow id={`${id}-button`} label="Texte du bouton WhatsApp (après l’envoi de la demande)" value={d.button} onChange={(button) => set({ button })} disabled={disabled} />
           <ImageField label="Image" value={d.image} fallback={DEFAULT_DATA.partner.image} folder="partners" onChange={(image) => set({ image })} disabled={disabled} />
           <h4 className="text-sm font-medium">Étapes</h4>
           <ListEditor

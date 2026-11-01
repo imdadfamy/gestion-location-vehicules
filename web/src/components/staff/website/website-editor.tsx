@@ -109,7 +109,12 @@ function cleanBlock(block: Block): Block {
           ...block.data,
           steps: block.data.steps.filter((item) => nonEmpty(item.title) || nonEmpty(item.text)),
           routes: block.data.routes
-            .map((route) => ({ from: route.from.trim(), to: route.to.trim(), price: route.price.trim() }))
+            .map((route) => ({
+              from: route.from.trim(),
+              to: route.to.trim(),
+              price: route.price.trim(),
+              prices: Object.fromEntries(Object.entries(route.prices ?? {}).map(([key, value]) => [key, value.trim()]).filter(([, value]) => value)),
+            }))
             .filter((route) => route.from && route.to),
         },
       };

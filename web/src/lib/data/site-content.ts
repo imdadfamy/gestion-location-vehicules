@@ -49,8 +49,13 @@ export type Link = { label: string; href: string };
 export type Testimonial = { name: string; role: string; quote: string };
 export type Stat = { value: string; label: string };
 export type GalleryImage = { url: string; caption: string };
-/** Trajet de transfert aéroport ; `price` vide = tarif donné sur demande. */
-export type TransferRoute = { from: string; to: string; price: string };
+/** Catégories de véhicule pour lesquelles un trajet peut avoir un prix propre. */
+export const TRANSFER_CATEGORIES = ['Citadine', 'Berline', 'SUV'] as const;
+/**
+ * Trajet de transfert aéroport. `price` est le prix de base (toute catégorie) ; `prices`
+ * donne, si besoin, un prix par catégorie. Aucun prix = tarif donné sur devis.
+ */
+export type TransferRoute = { from: string; to: string; price: string; prices?: Record<string, string> };
 
 export type BlockData = {
   hero: { title: string; subtitle: string; words: string[]; image: string };
@@ -159,7 +164,7 @@ export const DEFAULT_DATA: BlockData = {
       { from: 'Aéroport de Cotonou', to: 'Abomey-Calavi', price: '' },
       { from: 'Aéroport de Cotonou', to: 'Porto-Novo', price: '' },
     ],
-    button: 'Demander sur WhatsApp',
+    button: 'Prévenir l’agence sur WhatsApp',
   },
   steps: {
     eyebrow: 'Simplicité',
@@ -302,7 +307,7 @@ export const DEFAULT_SETTINGS: SettingsContent = {
 };
 
 /** Adresses réservées : une page ne peut pas les prendre. */
-const RESERVED_SLUGS = ['admin', 'api', 'app', 'apercu', 'client', 'invite', 'login', 'partner', 'p', 'vehicules'];
+const RESERVED_SLUGS = ['admin', 'api', 'app', 'apercu', 'client', 'invite', 'login', 'partner', 'p', 'suivi-transfert', 'vehicules'];
 export const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 export const isValidSlug = (slug: string) => SLUG_PATTERN.test(slug) && slug.length <= 60 && !RESERVED_SLUGS.includes(slug);
 export const pageKey = (slug: string) => `page:${slug}`;
