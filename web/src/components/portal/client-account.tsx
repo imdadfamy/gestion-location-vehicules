@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Camera, Check, CircleAlert, FileText, Loader2, RefreshCw, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
+import { PushAlerts } from '@/components/staff/push-alerts';
 import { PageHeading } from '@/components/portal/page-heading';
 import { Field } from '@/components/staff/form-field';
 import {
@@ -268,6 +269,7 @@ export function ClientAccount({
         Remplissez votre dossier pas à pas : il est enregistré automatiquement et complètera votre contrat.
       </PageHeading>
       <FormMessage error={error} />
+      <PushAlerts kind="client" />
 
       {!form ? (
         !error && <Skeleton className="h-96 rounded-xl" />

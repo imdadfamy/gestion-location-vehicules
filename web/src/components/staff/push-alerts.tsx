@@ -15,8 +15,29 @@ const MESSAGES: Record<Exclude<PushState, 'off' | 'on'>, string> = {
   denied: 'Les notifications sont bloquées pour ce site. Autorisez-les dans les réglages du navigateur, puis rechargez la page.',
 };
 
-/** Activer / désactiver les alertes de nouvelle réservation ou demande de transfert sur CET appareil. */
-export function PushAlerts() {
+type Kind = 'staff' | 'client' | 'partner';
+
+const COPY: Record<Kind, { off: string; on: string }> = {
+  staff: {
+    off: 'Recevez une notification à chaque nouvelle réservation ou demande de transfert, même application fermée.',
+    on: 'Actives : cet appareil reçoit une notification à chaque nouvelle réservation ou demande de transfert, même application fermée.',
+  },
+  client: {
+    off: 'Soyez prévenu dès que votre réservation avance, que votre dossier est prêt à signer ou que l’agence vous écrit, même application fermée.',
+    on: 'Actives : ce téléphone vous prévient à chaque nouveauté sur votre réservation, votre contrat ou un message de l’agence.',
+  },
+  partner: {
+    off: 'Soyez prévenu dès que votre véhicule est validé ou refusé, ou qu’il est loué, même application fermée.',
+    on: 'Actives : ce téléphone vous prévient quand l’agence décide sur un véhicule ou que l’un d’eux est loué.',
+  },
+};
+
+/**
+ * Activer / désactiver les alertes sur CET appareil : chaque notification du compte est aussi envoyée
+ * sur le téléphone. `hideWhenDone` masque la carte quand elle n'a plus rien à proposer (déjà active,
+ * ou appareil incompatible), pour ne la montrer qu'aux endroits où elle invite à l'activer.
+ */
+export function PushAlerts({ kind = 'staff', hideWhenDone = false }: { kind?: Kind; hideWhenDone?: boolean }) {
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -30,11 +51,11 @@ export function PushAlerts() {
     const result = state === 'on' ? await disablePush(db) : await enablePush(db);
     setBusy(false);
     if (result.error) toast.error(result.error);
-    else toast.success(state === 'on' ? 'Alertes désactivées sur cet appareil.' : 'Alertes activées : vous serez prévenu à chaque nouvelle demande.');
+    else toast.success(state === 'on' ? 'Alertes désactivées sur cet appareil.' : 'Alertes activées : vous serez prévenu à chaque notification.');
     setState(await pushState());
   }
 
-  if (!state) return null;
+  if (!state || (hideWhenDone && (state === 'on' || state === 'unsupported' || state === 'not-configured'))) return null;
   const actionable = state === 'on' || state === 'off';
   return (
     <Card>
@@ -47,8 +68,8 @@ export function PushAlerts() {
           <p className="text-sm text-muted-foreground">
             {actionable
               ? state === 'on'
-                ? 'Actives : cet appareil reçoit une notification à chaque nouvelle réservation ou demande de transfert, même application fermée.'
-                : 'Recevez une notification à chaque nouvelle réservation ou demande de transfert, même application fermée.'
+                ? COPY[kind].on
+                : COPY[kind].off
               : MESSAGES[state]}
           </p>
         </div>

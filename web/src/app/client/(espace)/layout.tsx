@@ -3,6 +3,8 @@ import { RequireRole } from '@/components/auth/require-role';
 import { PortalShell } from '@/components/portal/portal-shell';
 import { Skeleton } from '@/components/ui/skeleton';
 
+export const metadata = { manifest: '/manifests/client.webmanifest' };
+
 /** Espace client : rôle vérifié côté serveur (lecture de la session sous Suspense). */
 export default function ClientSpaceLayout({ children }: { children: React.ReactNode }) {
   return (

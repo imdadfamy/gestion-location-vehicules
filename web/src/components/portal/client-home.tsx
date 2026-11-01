@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Bell, CircleAlert, Clock, Sparkles } from 'lucide-react';
 import { FormMessage } from '@/components/auth/form-message';
+import { PushAlerts } from '@/components/staff/push-alerts';
 import { ContactButtons, type AgencyContact } from '@/components/portal/contact-agency';
 import { PageHeading } from '@/components/portal/page-heading';
 import { ReservationTimeline } from '@/components/portal/reservation-timeline';
@@ -68,6 +69,7 @@ export function ClientHome({ profileId, contact, fallbackName }: { profileId: st
         Voici où vous en êtes et ce qu’il reste à faire.
       </PageHeading>
       <FormMessage error={error} />
+      <PushAlerts kind="client" hideWhenDone />
 
       {alerts.length > 0 && (
         <ul className="grid gap-2" aria-label="Rappels">

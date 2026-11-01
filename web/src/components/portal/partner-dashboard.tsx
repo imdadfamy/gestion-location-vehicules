@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ArrowRight, Bell, CalendarClock, CarFront, CircleAlert, Hourglass, Plus, Wallet } from 'lucide-react';
 import { FormMessage } from '@/components/auth/form-message';
 import { PageHeading } from '@/components/portal/page-heading';
+import { PushAlerts } from '@/components/staff/push-alerts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -76,6 +77,8 @@ export function PartnerDashboard({ profileId }: { profileId: string }) {
           </Link>
         </Button>
       </div>
+
+      <PushAlerts kind="partner" hideWhenDone />
 
       {noVehicle && (
         <Card className="border-dashed">

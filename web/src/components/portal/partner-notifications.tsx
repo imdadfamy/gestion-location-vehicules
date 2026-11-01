@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Bell, CarFront, CheckCheck, CircleCheck, CircleX } from 'lucide-react';
 import { FormMessage } from '@/components/auth/form-message';
 import { PageHeading } from '@/components/portal/page-heading';
+import { PushAlerts } from '@/components/staff/push-alerts';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -54,6 +55,7 @@ export function PartnerNotifications({ profileId }: { profileId: string }) {
         </Button>
       </div>
       <FormMessage error={error} />
+      <PushAlerts kind="partner" />
       {!items ? (
         !error && <Skeleton className="h-64 rounded-xl" />
       ) : !items.length ? (

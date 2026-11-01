@@ -7,7 +7,14 @@ import webpush from 'npm:web-push@3.6.7';
  *  - `notification_id` : notification d'un membre de l'équipe → ses appareils.
  *  - `event_id`        : étape d'un transfert → les téléphones des clients qui suivent ce transfert.
  */
-const pageFor = (type: string | null) => {
+const pageFor = (role: string | null, type: string | null) => {
+  if (role === 'client') {
+    if (type === 'reservation') return '/client/reservations';
+    if (type === 'contract') return '/client/contracts';
+    if (type === 'inspection') return '/client/inspections';
+    return '/client';
+  }
+  if (role === 'partner') return type === 'vehicle' ? '/partner/vehicles' : '/partner/notifications';
   if (type === 'reservation') return '/app/reservations';
   if (type === 'transfer') return '/app/transfers';
   return '/app/notifications';
@@ -97,7 +104,8 @@ Deno.serve(async request => {
       .maybeSingle();
     if (!notification) return Response.json({ skipped: 'Déjà envoyée ou expirée.' });
     const { data: devices } = await admin.from('push_subscriptions').select('id,endpoint,p256dh,auth').eq('user_id', notification.user_id);
-    const payload = JSON.stringify({ title: notification.title, body: notification.message, url: pageFor(notification.entity_type) });
+    const { data: owner } = await admin.from('profiles').select('role').eq('id', notification.user_id).maybeSingle();
+    const payload = JSON.stringify({ title: notification.title, body: notification.message, url: pageFor(owner?.role ?? null, notification.entity_type) });
     return Response.json({ sent: await deliver((devices ?? []) as Device[], 'push_subscriptions', () => payload) });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : 'Erreur serveur.' }, { status: 500 });
