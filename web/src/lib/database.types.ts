@@ -865,6 +865,30 @@ export type Database = {
           },
         ];
       };
+      analytics_metrics: {
+        Row: {
+          additivity: string;
+          aggregate: string;
+          base_where: string | null;
+          date_column: string | null;
+          depends_on: string[];
+          description: string;
+          dimensions: string[];
+          exclusions: string | null;
+          filters: string[];
+          formula: string | null;
+          id: string;
+          label: string;
+          permission: string | null;
+          sort: number;
+          source: string | null;
+          unit: string;
+          value_expr: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       notifications: {
         Row: {
           created_at: string;
@@ -2209,6 +2233,10 @@ export type Database = {
       register_push_subscription: {
         Args: { target_auth: string; target_endpoint: string; target_p256dh: string; target_user_agent?: string };
         Returns: undefined;
+      };
+      analytics_metric: {
+        Args: { date_from: string; date_to: string; filters?: Json; group_by: string; metric_id: string };
+        Returns: { group_key: string; group_label: string; value: number }[];
       };
       public_company_contact: {
         Args: never;
