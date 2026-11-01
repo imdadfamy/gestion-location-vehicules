@@ -69,6 +69,8 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
     };
   }, [when]);
 
+  // Le titre ne promet des prix fixes que si au moins un trajet en a un.
+  const hasPrices = routes.some((item) => lowestPrice(item) !== null);
   const chosenRoute = route === OTHER ? null : routes[Number(route)];
   const seatsNeeded = (Number(passengers) || 1) + 1; // passagers + le chauffeur
   const fits = (vehicle: CatalogVehicle) => vehicle.is_available && (vehicle.seats == null || vehicle.seats >= seatsNeeded);
@@ -149,7 +151,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
 
             {routes.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium tracking-widest text-[#5fd3df] uppercase">Prix fixes par trajet</h3>
+                <h3 className="text-sm font-medium tracking-widest text-[#5fd3df] uppercase">{hasPrices ? 'Prix fixes par trajet' : 'Trajets les plus demandés'}</h3>
                 <ul className="mt-3 grid gap-2">
                   {routes.map((item, i) => {
                     const from = lowestPrice(item);
@@ -173,7 +175,9 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                     );
                   })}
                 </ul>
-                <p className="mt-2 text-xs text-white/60">Le prix dépend de la catégorie du véhicule que vous choisissez.</p>
+                <p className="mt-2 text-xs text-white/60">
+                  {hasPrices ? 'Le prix dépend de la catégorie du véhicule que vous choisissez.' : 'Le prix est confirmé par l’agence avant le transfert.'}
+                </p>
               </div>
             )}
           </div>

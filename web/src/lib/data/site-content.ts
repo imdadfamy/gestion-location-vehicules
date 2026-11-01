@@ -153,7 +153,7 @@ export const DEFAULT_DATA: BlockData = {
   transfer: {
     eyebrow: 'Transfert aéroport',
     title: 'Un chauffeur vous attend à l’arrivée',
-    text: 'Arrivée ou départ, pas de recherche de véhicule, pas de stress : un prix fixe par trajet, annoncé avant de réserver.',
+    text: 'Arrivée ou départ, pas de recherche de véhicule, pas de stress : choisissez votre trajet et votre véhicule, l’agence vous confirme le chauffeur.',
     steps: [
       { icon: 'calendar-check', title: 'Réservez votre créneau', text: 'Indiquez le trajet, la date et l’heure de votre vol.' },
       { icon: 'badge-check', title: 'Recevez la confirmation', text: 'Chauffeur, véhicule et numéro de vol pris en compte.' },
