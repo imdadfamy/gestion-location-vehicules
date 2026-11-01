@@ -75,11 +75,11 @@ export function Hero({ content }: { content: BlockData['hero'] }) {
             {mounted && words.length > 1 ? (
               <RotatingText
                 texts={words}
-                mainClassName="overflow-hidden rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground"
+                mainClassName="min-w-[9.5rem] justify-center overflow-hidden rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground"
                 rotationInterval={2600}
               />
             ) : (
-              <span className="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground">
+              <span className="inline-block min-w-[9.5rem] rounded-md bg-primary px-2 py-0.5 text-center font-medium text-primary-foreground">
                 {words[0]}
               </span>
             )}

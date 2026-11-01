@@ -203,7 +203,7 @@ function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
       const { eyebrow, title, items } = block.data;
       if (!items.length) return null;
       return (
-        <section id={anchor ? 'etapes' : undefined} className="scroll-mt-20 border-y bg-muted/40 py-20">
+        <section id={anchor ? 'etapes' : undefined} className="scroll-mt-20 overflow-x-clip border-y bg-muted/40 py-20">
           <div className="mx-auto max-w-6xl px-4">
             <SectionTitle eyebrow={eyebrow} title={title} />
             <ol className="relative mt-14 grid gap-10 md:grid-flow-col md:auto-cols-fr md:gap-6">
@@ -242,7 +242,7 @@ function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
     case 'partner': {
       const partner = block.data;
       return (
-        <section id={anchor ? 'partenaires' : undefined} className="scroll-mt-20 border-t bg-muted/40 py-20">
+        <section id={anchor ? 'partenaires' : undefined} className="scroll-mt-20 overflow-x-clip border-t bg-muted/40 py-20">
           <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 lg:grid-cols-2">
             <AnimatedContent direction="horizontal" distance={40} reverse>
               {/* eslint-disable-next-line @next/next/no-img-element */}

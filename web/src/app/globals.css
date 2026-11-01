@@ -130,6 +130,21 @@
   }
   html {
     @apply font-sans;
+    /* Page stable : pas de glissement latéral, pas d'effet élastique aux bords, pas de saut quand la barre de défilement apparaît. */
+    overflow-x: clip;
+    overscroll-behavior: none;
+    scrollbar-gutter: stable;
+    touch-action: pan-y pinch-zoom;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    overflow-x: clip;
+    max-width: 100vw;
+  }
+  img,
+  video,
+  iframe {
+    max-width: 100%;
   }
 }
 /* FullCalendar aux couleurs du thème (clair et sombre) ; ses variables sont posées sur `.fc`. */
