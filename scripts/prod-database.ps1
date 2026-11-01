@@ -30,15 +30,26 @@ if ($SansSauvegarde) {
   Write-Host 'Sauvegarde terminee. Les fichiers photos/documents (Storage) ne sont pas modifies par les migrations.' -ForegroundColor Green
 }
 
+# Une commande native qui echoue ne declenche pas 'Stop' : on controle le code de sortie.
+function Assert-Ok($what) {
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "`nECHEC ($what) : le mot de passe est probablement incorrect. Rien n'a ete applique. Script arrete." -ForegroundColor Red
+    exit 1
+  }
+}
+
 Write-Host "`n2/4  Migrations deja appliquees en ligne" -ForegroundColor Cyan
 npx supabase migration list --db-url $db
+Assert-Ok 'liste des migrations'
 
 Write-Host "`n3/4  Simulation des migrations a appliquer (rien n'est ecrit)" -ForegroundColor Cyan
 npx supabase db push --db-url $db --dry-run
+Assert-Ok 'simulation'
 
 $answer = Read-Host "`n4/4  Appliquer ces migrations sur la base EN LIGNE ? Tapez oui pour confirmer"
 if ($answer.Trim().ToLower() -eq 'oui') {
   npx supabase db push --db-url $db
+  Assert-Ok 'application'
   Write-Host "`nMigrations appliquees. Verification :" -ForegroundColor Green
   npx supabase migration list --db-url $db
 } else {

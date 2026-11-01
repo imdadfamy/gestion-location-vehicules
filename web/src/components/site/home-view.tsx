@@ -8,11 +8,12 @@ import { SiteFooter } from '@/components/site/site-footer';
 import { SiteHeader } from '@/components/site/site-header';
 import { SiteIcon } from '@/components/site/site-icon';
 import { CatalogView } from '@/components/site/catalog-view';
+import { TransferSection } from '@/components/site/transfer-section';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { companyContact, whatsappLink } from '@/lib/data/public-catalog';
-import { safeHref, youtubeEmbed, type Block, type Faq, type FooterContent, type Link as MenuLink, type Announcement } from '@/lib/data/site-content';
+import { safeHref, youtubeEmbed, type Block, type BlockData, type Faq, type FooterContent, type Link as MenuLink, type Announcement } from '@/lib/data/site-content';
 import { createClient } from '@/lib/supabase/server';
 import { cn } from '@/lib/utils';
 
@@ -46,6 +47,12 @@ const getCompany = cache(async () => companyContact(await createClient()));
 async function Catalog({ count }: { count: number }) {
   const company = await getCompany();
   return <CatalogView whatsappPhone={company?.whatsapp_phone} pageSize={Math.max(1, count)} />;
+}
+
+/** Transfert aéroport, avec le numéro WhatsApp de l'agence pour envoyer la demande. */
+async function Transfer({ content, anchor }: { content: BlockData['transfer']; anchor: boolean }) {
+  const company = await getCompany();
+  return <TransferSection content={content} whatsappPhone={company?.whatsapp_phone} anchor={anchor} />;
 }
 
 function CatalogSkeleton() {
@@ -126,10 +133,17 @@ function VideoEmbed({ url }: { url: string }) {
 }
 
 /** Une section de l'accueil ; `anchor` pose l'ancre de navigation (#etapes, #faq, #partenaires). */
-function BlockView({ block, anchor }: { block: Block; anchor: boolean }) {
+function BlockView({ block, anchor, transfer }: { block: Block; anchor: boolean; transfer?: BlockData['transfer'] }) {
   switch (block.type) {
     case 'hero':
-      return <Hero content={block.data} />;
+      return <Hero content={block.data} transfer={transfer} />;
+
+    case 'transfer':
+      return (
+        <Suspense fallback={<section id={anchor ? 'transfert' : undefined} className="scroll-mt-20 bg-[#06232b] py-20"><div className="h-[36rem]" /></section>}>
+          <Transfer content={block.data} anchor={anchor} />
+        </Suspense>
+      );
 
     case 'strengths': {
       const { eyebrow, title, items } = block.data;
@@ -436,6 +450,7 @@ export function HomeView({ blocks, footer, menu, announcement, lead }: { blocks:
   const visible = blocks.filter((block) => block.show);
   const seen = new Set<string>();
   const overHero = !lead && visible[0]?.type === 'hero';
+  const transfer = visible.find((block) => block.type === 'transfer')?.data as BlockData['transfer'] | undefined;
   return (
     <>
       <SiteHeader overHero={overHero} links={menu} announcement={announcement} />
@@ -444,7 +459,7 @@ export function HomeView({ blocks, footer, menu, announcement, lead }: { blocks:
         {visible.map((block) => {
           const anchor = !seen.has(block.type);
           seen.add(block.type);
-          return <BlockView key={block.id} block={block} anchor={anchor} />;
+          return <BlockView key={block.id} block={block} anchor={anchor} transfer={transfer} />;
         })}
       </main>
       <Suspense fallback={null}>

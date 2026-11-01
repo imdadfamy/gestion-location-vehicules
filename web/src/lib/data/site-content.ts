@@ -49,11 +49,14 @@ export type Link = { label: string; href: string };
 export type Testimonial = { name: string; role: string; quote: string };
 export type Stat = { value: string; label: string };
 export type GalleryImage = { url: string; caption: string };
+/** Trajet de transfert aéroport ; `price` vide = tarif donné sur demande. */
+export type TransferRoute = { from: string; to: string; price: string };
 
 export type BlockData = {
   hero: { title: string; subtitle: string; words: string[]; image: string };
   strengths: { eyebrow: string; title: string; items: Item[] };
   catalog: { eyebrow: string; title: string; text: string; count: number };
+  transfer: { eyebrow: string; title: string; text: string; steps: Item[]; routes: TransferRoute[]; button: string };
   steps: { eyebrow: string; title: string; items: Item[] };
   faq: { eyebrow: string; title: string; items: Faq[] };
   partner: {
@@ -91,6 +94,7 @@ export const BLOCK_TYPES = [
   'hero',
   'strengths',
   'catalog',
+  'transfer',
   'steps',
   'faq',
   'partner',
@@ -109,6 +113,7 @@ export const BLOCK_META: Record<BlockType, { label: string; description: string;
   hero: { label: 'Bannière d’accueil', description: 'Grand titre, image de fond et recherche de véhicule.', unique: true },
   strengths: { label: 'Atouts', description: 'Quatre arguments sur fond sombre, avec pictogrammes.' },
   catalog: { label: 'Catalogue de véhicules', description: 'Le catalogue complet : dates, filtres, fiche du véhicule.', unique: true },
+  transfer: { label: 'Transfert aéroport', description: 'Le service de transfert : trajets à prix fixe, étapes et demande par WhatsApp.', unique: true },
   steps: { label: 'Étapes', description: 'Une procédure en étapes numérotées.' },
   faq: { label: 'Questions fréquentes', description: 'Liste de questions et réponses dépliables.' },
   partner: { label: 'Bloc partenaires', description: 'Présentation du programme partenaire.', unique: true },
@@ -140,6 +145,22 @@ export const DEFAULT_DATA: BlockData = {
     ],
   },
   catalog: { eyebrow: 'Catalogue', title: 'Nos véhicules', text: 'Choisissez vos dates pour voir les véhicules réellement disponibles. La connexion n’est demandée qu’au moment de réserver.', count: 6 },
+  transfer: {
+    eyebrow: 'Transfert aéroport',
+    title: 'Un chauffeur vous attend à l’arrivée',
+    text: 'Arrivée ou départ, pas de recherche de véhicule, pas de stress : un prix fixe par trajet, annoncé avant de réserver.',
+    steps: [
+      { icon: 'calendar-check', title: 'Réservez votre créneau', text: 'Indiquez le trajet, la date et l’heure de votre vol.' },
+      { icon: 'badge-check', title: 'Recevez la confirmation', text: 'Chauffeur, véhicule et numéro de vol pris en compte.' },
+      { icon: 'car', title: 'Votre chauffeur vous attend', text: 'À l’arrivée, avec une pancarte à votre nom.' },
+    ],
+    routes: [
+      { from: 'Aéroport de Cotonou', to: 'Cotonou centre', price: '' },
+      { from: 'Aéroport de Cotonou', to: 'Abomey-Calavi', price: '' },
+      { from: 'Aéroport de Cotonou', to: 'Porto-Novo', price: '' },
+    ],
+    button: 'Demander sur WhatsApp',
+  },
   steps: {
     eyebrow: 'Simplicité',
     title: 'Comment ça marche',
@@ -222,7 +243,7 @@ export function newBlock<T extends BlockType>(type: T): Block<T> {
 }
 
 /** Sections de l'accueil d'origine, avec des identifiants fixes. */
-export const DEFAULT_HOME_BLOCKS: Block[] = (['hero', 'strengths', 'catalog', 'steps', 'faq', 'partner', 'cta'] as const).map(
+export const DEFAULT_HOME_BLOCKS: Block[] = (['hero', 'strengths', 'catalog', 'transfer', 'steps', 'faq', 'partner', 'cta'] as const).map(
   (type) => ({ id: type, type, show: true, data: defaultData(type) }) as Block,
 );
 
@@ -252,6 +273,7 @@ export type MenuContent = { links: Link[] };
 export const DEFAULT_MENU: MenuContent = {
   links: [
     { label: 'Véhicules', href: '/#vehicules' },
+    { label: 'Transfert aéroport', href: '/#transfert' },
     { label: 'Comment ça marche', href: '/#etapes' },
     { label: 'Partenaires', href: '/#partenaires' },
     { label: 'Contact', href: '/#contact' },

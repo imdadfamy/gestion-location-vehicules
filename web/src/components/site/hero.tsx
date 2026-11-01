@@ -2,11 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useSyncExternalStore } from 'react';
-import { Search } from 'lucide-react';
+import { Plane, Search } from 'lucide-react';
 import BlurText from '@/components/BlurText';
 import RotatingText from '@/components/RotatingText';
 import { Button } from '@/components/ui/button';
 import type { BlockData } from '@/lib/data/site-content';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -27,12 +28,16 @@ function useMounted() {
 }
 
 /** Bannière d'accueil : fond animé, titre et recherche de disponibilité. */
-export function Hero({ content }: { content: BlockData['hero'] }) {
+export function Hero({ content, transfer }: { content: BlockData['hero']; transfer?: BlockData['transfer'] }) {
   const words = content.words;
   const router = useRouter();
   const [departure, setDeparture] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [category, setCategory] = useState('all');
+  // Onglet « Transfert aéroport » : seulement si la page a une section Transfert.
+  const [mode, setMode] = useState<'rental' | 'transfer'>('rental');
+  const [route, setRoute] = useState('0');
+  const [transferWhen, setTransferWhen] = useState('');
   // RotatingText tire un ordre aléatoire au rendu : il ne peut pas figurer dans la
   // coquille statique. Le premier mot s'affiche jusqu'à l'hydratation.
   const mounted = useMounted();
@@ -45,6 +50,14 @@ export function Hero({ content }: { content: BlockData['hero'] }) {
     if (category !== 'all') params.set('categorie', category);
     // Le catalogue est sur l'accueil : la recherche le filtre puis fait défiler jusqu'à lui.
     router.push(`/${params.size ? `?${params}` : ''}#vehicules`);
+  }
+
+  function searchTransfer(event: React.FormEvent) {
+    event.preventDefault();
+    const params = new URLSearchParams();
+    if (transfer?.routes[Number(route)]) params.set('trajet', route);
+    if (transferWhen) params.set('quand', transferWhen);
+    router.push(`/${params.size ? `?${params}` : ''}#transfert`);
   }
 
   return (
@@ -89,9 +102,72 @@ export function Hero({ content }: { content: BlockData['hero'] }) {
 
         <p className="mt-3 text-white/70">{content.subtitle}</p>
 
+        {transfer && (
+          <div role="tablist" aria-label="Type de recherche" className="mt-10 inline-flex rounded-full border border-white/15 bg-white/10 p-1 backdrop-blur">
+            {(
+              [
+                ['rental', 'Location', Search],
+                ['transfer', 'Transfert aéroport', Plane],
+              ] as const
+            ).map(([value, label, Icon]) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={mode === value}
+                onClick={() => setMode(value)}
+                className={cn(
+                  'flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
+                  mode === value ? 'bg-primary text-primary-foreground' : 'text-white/80 hover:text-white',
+                )}
+              >
+                <Icon className="size-4" /> {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {transfer && mode === 'transfer' ? (
+          <form
+            onSubmit={searchTransfer}
+            className="mt-4 grid w-full max-w-4xl gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 text-left backdrop-blur-md sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_auto] lg:items-end"
+          >
+            <div className="grid gap-1.5">
+              <Label className="text-white/80">Trajet</Label>
+              <Select value={route} onValueChange={setRoute}>
+                <SelectTrigger className="w-full border-white/20 bg-white/90 text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {transfer.routes.map((item, i) => (
+                    <SelectItem key={i} value={String(i)}>
+                      {item.from} → {item.to}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="other">Autre trajet</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="hero-transfer-when" className="text-white/80">
+                Date et heure d’arrivée
+              </Label>
+              <Input
+                id="hero-transfer-when"
+                type="datetime-local"
+                value={transferWhen}
+                onChange={(e) => setTransferWhen(e.target.value)}
+                className="border-white/20 bg-white/90 text-foreground"
+              />
+            </div>
+            <Button type="submit" size="lg" className="sm:col-span-2 lg:col-span-1">
+              <Plane /> Demander ce transfert
+            </Button>
+          </form>
+        ) : (
         <form
           onSubmit={search}
-          className="mt-10 grid w-full max-w-4xl gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 text-left backdrop-blur-md sm:grid-cols-2 lg:grid-cols-[1fr_1fr_0.8fr_auto] lg:items-end"
+          className="mt-4 grid w-full max-w-4xl gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 text-left backdrop-blur-md sm:grid-cols-2 lg:grid-cols-[1fr_1fr_0.8fr_auto] lg:items-end"
         >
           <div className="grid gap-1.5">
             <Label htmlFor="hero-depart" className="text-white/80">
@@ -138,6 +214,7 @@ export function Hero({ content }: { content: BlockData['hero'] }) {
             <Search /> Voir les véhicules
           </Button>
         </form>
+        )}
       </div>
     </section>
   );

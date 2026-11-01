@@ -13,6 +13,7 @@ import {
   type Stat,
   type Step,
   type Testimonial,
+  type TransferRoute,
 } from '@/lib/data/site-content';
 import { IconSelect, ImageField, ListEditor, TextRow } from './list-editor';
 
@@ -24,6 +25,7 @@ const blankFaq = (): Faq => ({ q: '', a: '' });
 const blankLink = (): Link => ({ label: '', href: '/' });
 const blankImage = (): GalleryImage => ({ url: '', caption: '' });
 const blankTestimonial = (): Testimonial => ({ name: '', role: '', quote: '' });
+const blankRoute = (): TransferRoute => ({ from: 'Aéroport de Cotonou', to: '', price: '' });
 const blankStat = (): Stat => ({ value: '', label: '' });
 
 function Area({ id, label, value, onChange, disabled, rows = 3 }: { id: string; label: string; value: string; onChange: (value: string) => void; disabled?: boolean; rows?: number }) {
@@ -155,6 +157,42 @@ export function BlockForm({ block, onChange, disabled }: Props & { block: Block;
             </Select>
           </Field>
           <p className="text-xs text-muted-foreground">Cette section affiche le catalogue complet (dates, filtres, fiche du véhicule). Les véhicules viennent de l’écran Véhicules (statut « disponible »).</p>
+        </div>
+      );
+    }
+    case 'transfer': {
+      const d = block.data;
+      const set = (patch: Partial<typeof d>) => onChange({ ...block, data: { ...d, ...patch } });
+      return (
+        <div className="grid gap-4">
+          <Pair>
+            <TextRow id={`${id}-eyebrow`} label="Sur-titre" value={d.eyebrow} onChange={(eyebrow) => set({ eyebrow })} disabled={disabled} />
+            <TextRow id={`${id}-title`} label="Titre" value={d.title} onChange={(title) => set({ title })} disabled={disabled} />
+          </Pair>
+          <Area id={`${id}-text`} label="Présentation" rows={2} value={d.text} onChange={(text) => set({ text })} disabled={disabled} />
+          <TextRow id={`${id}-button`} label="Texte du bouton" value={d.button} onChange={(button) => set({ button })} disabled={disabled} />
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">Étapes</p>
+            <ItemsList scope={`${id}-steps`} items={d.steps} onChange={(steps) => set({ steps })} disabled={disabled} addLabel="Ajouter une étape" />
+          </div>
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">Trajets et prix fixes</p>
+            <ListEditor
+              items={d.routes}
+              onChange={(routes) => set({ routes })}
+              blank={blankRoute}
+              addLabel="Ajouter un trajet"
+              disabled={disabled}
+              render={(item, patch, index) => (
+                <div className="grid gap-3 sm:grid-cols-[1fr_1fr_10rem]">
+                  <TextRow id={`${id}-from-${index}`} label="Départ" value={item.from} onChange={(from) => patch({ from })} disabled={disabled} />
+                  <TextRow id={`${id}-to-${index}`} label="Arrivée" value={item.to} onChange={(to) => patch({ to })} disabled={disabled} />
+                  <TextRow id={`${id}-price-${index}`} label="Prix (FCFA)" value={item.price} onChange={(price) => patch({ price })} disabled={disabled} />
+                </div>
+              )}
+            />
+            <p className="text-xs text-muted-foreground">Un prix vide s’affiche « Sur devis ». Les demandes arrivent sur le WhatsApp de l’agence.</p>
+          </div>
         </div>
       );
     }

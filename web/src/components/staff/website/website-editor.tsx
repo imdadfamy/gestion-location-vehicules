@@ -102,6 +102,17 @@ function cleanBlock(block: Block): Block {
           faq: block.data.faq.filter((item) => nonEmpty(item.q) && nonEmpty(item.a)),
         },
       };
+    case 'transfer':
+      return {
+        ...block,
+        data: {
+          ...block.data,
+          steps: block.data.steps.filter((item) => nonEmpty(item.title) || nonEmpty(item.text)),
+          routes: block.data.routes
+            .map((route) => ({ from: route.from.trim(), to: route.to.trim(), price: route.price.trim() }))
+            .filter((route) => route.from && route.to),
+        },
+      };
     case 'gallery':
       return { ...block, data: { ...block.data, images: block.data.images.filter((image) => nonEmpty(image.url)) } };
     case 'testimonials':
