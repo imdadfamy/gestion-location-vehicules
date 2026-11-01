@@ -65,7 +65,7 @@ export function PartnerAuthForm({ mode }: { mode: 'login' | 'register' }) {
         setLoading(false);
         return setError(frenchError(created.error));
       }
-      router.replace('/partner/vehicles');
+      router.replace('/partner');
       router.refresh();
       return;
     }
@@ -88,7 +88,7 @@ export function PartnerAuthForm({ mode }: { mode: 'login' | 'register' }) {
           : 'Ce compte n’est pas un compte partenaire.',
       );
     }
-    router.replace('/partner/vehicles');
+    router.replace('/partner');
     router.refresh();
   }
 

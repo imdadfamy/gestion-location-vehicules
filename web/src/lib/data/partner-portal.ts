@@ -7,6 +7,7 @@ type Db = SupabaseClient<Database>;
 export type PartnerRecord = Database['public']['Tables']['partners']['Row'];
 export type MyVehicle = Database['public']['Tables']['vehicles']['Row'];
 export type Earning = Database['public']['Functions']['partner_rental_earnings']['Returns'][number];
+export type Booking = Database['public']['Functions']['partner_vehicle_bookings']['Returns'][number];
 
 /**
  * Accès aux données depuis l'espace partenaire. La RLS limite le partenaire à ses
@@ -42,6 +43,17 @@ export function earnings(db: Db) {
   return db.rpc('partner_rental_earnings');
 }
 
+/** Périodes occupées de ses véhicules (locations et réservations), sans donnée client. */
+export function bookings(db: Db) {
+  return db.rpc('partner_vehicle_bookings');
+}
+
+/** Nombre de notifications non lues. */
+export async function unreadCount(db: Db, userId: string) {
+  const { count } = await db.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('is_read', false);
+  return count ?? 0;
+}
+
 /** Total des parts sur les locations terminées. */
 export const totalEarned = (rows: Earning[]) =>
   rows.filter((row) => row.status === 'completed').reduce((sum, row) => sum + Number(row.payout ?? 0), 0);
@@ -72,6 +84,12 @@ export type SubmissionForm = {
   fuel_type: string;
   transmission: string;
   category: string;
+  seats: string;
+  doors: string;
+  /** '' (non renseignée), 'yes' ou 'no'. */
+  air_conditioning: string;
+  /** Équipements séparés par des virgules. */
+  features: string;
   partner_requested_price: string;
   deposit_amount: string;
   notes: string;
@@ -86,6 +104,10 @@ export const EMPTY_SUBMISSION: SubmissionForm = {
   fuel_type: '',
   transmission: '',
   category: '',
+  seats: '',
+  doors: '',
+  air_conditioning: '',
+  features: '',
   partner_requested_price: '0',
   deposit_amount: '0',
   notes: '',
@@ -103,6 +125,10 @@ export function toSubmission(vehicle: MyVehicle): SubmissionForm {
     fuel_type: text(vehicle.fuel_type),
     transmission: text(vehicle.transmission),
     category: text(vehicle.category),
+    seats: text(vehicle.seats),
+    doors: text(vehicle.doors),
+    air_conditioning: vehicle.air_conditioning === null ? '' : vehicle.air_conditioning ? 'yes' : 'no',
+    features: (vehicle.features ?? []).join(', '),
     partner_requested_price: text(vehicle.partner_requested_price),
     deposit_amount: text(vehicle.deposit_amount),
     notes: text(vehicle.notes),
@@ -121,11 +147,17 @@ export function submitVehicle(db: Db, form: SubmissionForm) {
     fuel_type: blank(form.fuel_type),
     transmission: blank(form.transmission),
     category: blank(form.category),
+    seats: form.seats.trim() === '' ? null : Number(form.seats),
+    doors: form.doors.trim() === '' ? null : Number(form.doors),
+    air_conditioning: form.air_conditioning === '' ? null : form.air_conditioning === 'yes',
+    features: form.features.split(',').map((item) => item.trim()).filter(Boolean),
     partner_requested_price: Number(form.partner_requested_price),
     deposit_amount: Number(form.deposit_amount || 0),
     notes: blank(form.notes),
   };
-  return form.id ? db.from('vehicles').update(values).eq('id', form.id) : db.from('vehicles').insert(values);
+  return form.id
+    ? db.from('vehicles').update(values).eq('id', form.id).select('id').single()
+    : db.from('vehicles').insert(values).select('id').single();
 }
 
 /** Photos du véhicule avec un lien de 10 minutes. */

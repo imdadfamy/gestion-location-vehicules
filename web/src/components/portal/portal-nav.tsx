@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { CalendarCheck, CarFront, ClipboardCheck, FileSignature, LogOut, Menu, UserCircle, Wallet, Wrench } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Bell, CalendarCheck, CalendarDays, CarFront, ClipboardCheck, FileSignature, LayoutDashboard, LogOut, Menu, UserCircle, Wallet, Wrench } from 'lucide-react';
 import { ThemeToggle } from '@/components/site/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { unreadCount } from '@/lib/data/partner-portal';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -21,21 +22,34 @@ const LINKS = {
     { href: '/client/account', label: 'Mon profil', icon: UserCircle },
   ],
   partner: [
+    { href: '/partner', label: 'Accueil', icon: LayoutDashboard },
     { href: '/partner/vehicles', label: 'Mes véhicules', icon: CarFront },
+    { href: '/partner/calendar', label: 'Calendrier', icon: CalendarDays },
+    { href: '/partner/earnings', label: 'Mes revenus', icon: Wallet },
     { href: '/partner/maintenance', label: 'Maintenance', icon: Wrench },
     { href: '/partner/inspections', label: 'Inspections', icon: ClipboardCheck },
-    { href: '/partner/earnings', label: 'Mes revenus', icon: Wallet },
+    { href: '/partner/notifications', label: 'Notifications', icon: Bell },
     { href: '/partner/account', label: 'Mon profil', icon: UserCircle },
   ],
 };
 
-/** Barre de navigation des espaces client et partenaire (menu latéral sur téléphone). */
-export function PortalNav({ space }: { space: Space }) {
+/** Liens du partenaire affichés en pictogramme seul dans la barre (leur nom reste en infobulle). */
+const ICON_ONLY = ['/partner/maintenance', '/partner/inspections', '/partner/notifications', '/partner/account'];
+
+/** Barre de navigation des espaces client et partenaire (menu latéral sur téléphone ; pastille de notifications pour le partenaire). */
+export function PortalNav({ space, userId }: { space: Space; userId?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
   const links = LINKS[space];
   const title = space === 'client' ? 'Espace client' : 'Espace partenaire';
+
+  // Pastille de notifications non lues (espace partenaire), rafraîchie à chaque changement d'écran.
+  useEffect(() => {
+    if (space !== 'partner' || !userId) return;
+    unreadCount(createClient(), userId).then(setUnread);
+  }, [space, userId, pathname]);
 
   async function logout() {
     await createClient().auth.signOut();
@@ -43,13 +57,15 @@ export function PortalNav({ space }: { space: Space }) {
     router.refresh();
   }
 
-  const items = (onNavigate?: () => void) =>
+  const items = (onNavigate?: () => void, inSheet = false) =>
     links.map((link) => {
-      const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+      const active = link.href === '/partner' ? pathname === link.href : pathname === link.href || pathname.startsWith(`${link.href}/`);
+      const badge = link.href === '/partner/notifications' && unread > 0 ? unread : 0;
       return (
         <Button key={link.href} asChild variant={active ? 'secondary' : 'ghost'} size="sm" className={cn('justify-start', active && 'font-semibold')}>
-          <Link href={link.href} onClick={onNavigate} aria-current={active ? 'page' : undefined}>
-            <link.icon /> {link.label}
+          <Link href={link.href} onClick={onNavigate} aria-current={active ? 'page' : undefined} title={link.label} aria-label={badge ? `${link.label} (${badge} non lues)` : link.label}>
+            <link.icon /> <span className={space === 'partner' && !inSheet ? (ICON_ONLY.includes(link.href) ? 'sr-only' : 'sr-only lg:not-sr-only') : undefined}>{link.label}</span>
+            {badge > 0 && <span className="ml-0.5 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">{badge}</span>}
           </Link>
         </Button>
       );
@@ -84,7 +100,7 @@ export function PortalNav({ space }: { space: Space }) {
                 <SheetTitle>{title}</SheetTitle>
               </SheetHeader>
               <nav className="grid gap-1 px-4" aria-label={title}>
-                {items(() => setOpen(false))}
+                {items(() => setOpen(false), true)}
                 <Button variant="ghost" size="sm" className="justify-start" onClick={logout}>
                   <LogOut /> Déconnexion
                 </Button>

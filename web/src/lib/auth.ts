@@ -17,7 +17,7 @@ export async function currentProfile(db: Db) {
 /** Page d'accueil de chaque type de compte. */
 export function homeFor(role: string | null | undefined) {
   if (role === 'client') return '/client/vehicles';
-  if (role === 'partner') return '/partner/vehicles';
+  if (role === 'partner') return '/partner';
   return '/app';
 }
 

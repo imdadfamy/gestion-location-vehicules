@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Car, ImagePlus, Loader2, Pencil, Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,7 +16,6 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  EMPTY_SUBMISSION,
   myVehicles,
   submitVehicle,
   toSubmission,
@@ -32,7 +32,7 @@ import { createClient } from '@/lib/supabase/client';
 
 const NONE = '__none';
 
-function Choice({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Record<string, string> }) {
+export function Choice({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Record<string, string> }) {
   return (
     <Select value={value || NONE} onValueChange={(next) => onChange(next === NONE ? '' : next)}>
       <SelectTrigger className="w-full" aria-label={label}>
@@ -128,13 +128,10 @@ export function PartnerVehicles() {
         <PageHeading eyebrow="Mes véhicules" title="Mes véhicules">
           Proposez vos véhicules à la location ; chaque ajout est évalué avant publication.
         </PageHeading>
-        <Button
-          onClick={() => {
-            setForm({ ...EMPTY_SUBMISSION });
-            setFormError('');
-          }}
-        >
-          <Plus /> Proposer un véhicule
+        <Button asChild>
+          <Link href="/partner/vehicles/new">
+            <Plus /> Proposer un véhicule
+          </Link>
         </Button>
       </div>
       <FormMessage error={error} />

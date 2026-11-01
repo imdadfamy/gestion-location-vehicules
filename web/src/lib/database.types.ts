@@ -1962,6 +1962,8 @@ export type Database = {
       partner_rental_earnings: {
         Args: never;
         Returns: {
+          client_price: number;
+          days: number;
           departure_date: string;
           id: string;
           make: string;
@@ -1970,6 +1972,17 @@ export type Database = {
           registration_number: string;
           return_date: string;
           status: string;
+          vehicle_id: string;
+        }[];
+      };
+      partner_vehicle_bookings: {
+        Args: never;
+        Returns: {
+          ends_at: string;
+          kind: string;
+          starts_at: string;
+          status: string;
+          vehicle_id: string;
         }[];
       };
       public_available_vehicles: {
