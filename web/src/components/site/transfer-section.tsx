@@ -7,11 +7,13 @@ import { Car, CheckCircle2, Loader2, MessageCircle, Plane, Users } from 'lucide-
 import AnimatedContent from '@/components/AnimatedContent';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FormMessage } from '@/components/auth/form-message';
+import { PhoneField } from '@/components/site/phone-field';
 import { SiteIcon } from '@/components/site/site-icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DEFAULT_COUNTRY, findCountry, localDigits, toInternational } from '@/lib/countries';
 import { catalogVehicles, whatsappLink, type CatalogVehicle } from '@/lib/data/public-catalog';
 import type { BlockData } from '@/lib/data/site-content';
 import { categoryPrice, createTransfer, hasPriceRange, lowestPrice, numericPrice, showPrice, TRANSFER_HOURS } from '@/lib/data/transfers';
@@ -43,6 +45,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
   const [vehicleId, setVehicleId] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
   const [vehicles, setVehicles] = useState<CatalogVehicle[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -89,7 +92,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
     if (!routeText) return setError(t('Indiquez le trajet souhaité.'));
     if (!isFuture(when)) return setError(t('Choisissez une date et une heure à venir.'));
     if (name.trim().length < 2) return setError(t('Indiquez votre nom.'));
-    if (phone.replace(/\D/g, '').length < 6) return setError(t('Indiquez un numéro de téléphone valide.'));
+    if (localDigits(phone) < 6) return setError(t('Indiquez un numéro de téléphone valide.'));
     const [from, to] = chosenRoute ? [chosenRoute.from, chosenRoute.to] : [other.trim(), t('À préciser')];
     setSending(true);
     const { data, error: failure } = await createTransfer(createClient(), {
@@ -103,7 +106,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
       quotedPrice: numericPrice(priceText),
       notes: priceText && numericPrice(priceText) === null ? `Prix annoncé : ${showPrice(priceText, lang)}` : undefined,
       name: name.trim(),
-      phone: phone.trim(),
+      phone: toInternational(findCountry(country).dial, phone),
     });
     setSending(false);
     if (failure || !data) return setError(failure ? frenchError(failure) : t('Votre demande n’a pas pu être envoyée. Réessayez ou contactez l’agence.'));
@@ -341,7 +344,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                     <Label htmlFor="transfer-phone" className="text-white/80">
                       {t('Téléphone (WhatsApp)')}
                     </Label>
-                    <Input id="transfer-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="+229 …" className={field} maxLength={30} />
+                    <PhoneField id="transfer-phone" country={country} onCountryChange={setCountry} value={phone} onChange={setPhone} className={field} />
                   </div>
                 </div>
 

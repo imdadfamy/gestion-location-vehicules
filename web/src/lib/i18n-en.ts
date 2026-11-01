@@ -204,6 +204,9 @@ export const EN: Record<string, string> = {
   'Besoin juste d’un chauffeur plutôt que de conduire vous-même ?': 'Just need a driver rather than driving yourself?',
   'Découvrir le transfert aéroport': 'Discover the airport transfer',
 
+  Pays: 'Country',
+  Numéro: 'Number',
+
   // Suivi
   'Saisissez la référence reçue à l’envoi de votre demande et le téléphone utilisé.': 'Enter the reference you received when sending your request and the phone number you used.',
   Référence: 'Reference',
