@@ -304,3 +304,88 @@ export function reportCsv(def: ReportDef, result: ReportResult, catalog: Catalog
   const period = `Période : ${result.range.from} au ${result.range.to}${result.compareRange ? ` ; comparaison : ${result.compareRange.from} au ${result.compareRange.to}` : ''}`;
   return [def.title, period, '', head.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
 }
+
+// ── En ce moment ──
+export type LiveData = {
+  as_of: string;
+  today: string;
+  vehicles_out: number;
+  overdue: number;
+  returns_24h: number;
+  departures_24h: number;
+  reservations_pending: number;
+  reservations_validated: number;
+  contracts_to_sign: number;
+  transfers_new: number;
+  transfers_last_hour: number;
+  transfers_today: Record<string, number>;
+  revenue_today: number;
+  upcoming: { kind: 'return' | 'departure' | 'transfer'; label: string; detail: string; at: string }[];
+};
+
+export async function loadLive(db: Db) {
+  const { data, error } = await db.rpc('analytics_live');
+  return { data: (data as LiveData | null) ?? null, error };
+}
+
+/** Tables dont un changement déclenche la relecture de l'écran « En ce moment ». */
+export const LIVE_TABLES = ['reservations', 'rentals', 'transfer_requests', 'payments'] as const;
+
+// ── Cartes du tableau de bord ──
+export type Card = { id: string; metric_id: string; period: string; compare: Compare; position: number };
+export const DEFAULT_CARDS: Omit<Card, 'id' | 'position'>[] = [
+  { metric_id: 'revenue_total', period: 'this_month', compare: 'previous_period' },
+  { metric_id: 'net_result', period: 'this_month', compare: 'previous_period' },
+  { metric_id: 'rentals_count', period: 'this_month', compare: 'previous_period' },
+  { metric_id: 'occupancy_rate', period: 'this_month', compare: 'previous_period' },
+  { metric_id: 'transfers_requested', period: 'this_month', compare: 'previous_period' },
+  { metric_id: 'new_clients', period: 'this_month', compare: 'previous_period' },
+];
+
+export async function loadCards(db: Db) {
+  const { data, error } = await db.from('analytics_dashboard_cards').select('id,metric_id,period,compare,position').order('position');
+  return { cards: (data ?? []) as Card[], error };
+}
+
+export function addCards(db: Db, userId: string, cards: Omit<Card, 'id'>[]) {
+  return db.from('analytics_dashboard_cards').insert(cards.map((card) => ({ ...card, user_id: userId }))).select('id,metric_id,period,compare,position');
+}
+
+export const removeCard = (db: Db, id: string) => db.from('analytics_dashboard_cards').delete().eq('id', id);
+export const moveCard = (db: Db, id: string, position: number) => db.from('analytics_dashboard_cards').update({ position }).eq('id', id);
+
+/** Valeur d'une mesure sur une période (et sa comparaison), pour une carte. */
+export async function cardValue(db: Db, catalog: Catalog, card: Pick<Card, 'metric_id' | 'period' | 'compare'>) {
+  const range = presetRange(card.period);
+  const def: ReportDef = { id: 'card', group: '', title: '', description: '', metrics: [card.metric_id], groupBy: 'none', period: card.period, chart: 'none' };
+  const result = await runReport(db, catalog, def, range, compareRange(range, card.period, card.compare), {});
+  return { value: result.totals[card.metric_id] ?? null, previous: result.compareTotals?.[card.metric_id] ?? null, range, compared: result.compareRange };
+}
+
+/** Rapport qui détaille une mesure : celui qui la met en première colonne, à défaut celui où elle apparaît. */
+export const reportForMetric = (metricId: string) =>
+  REPORTS.find((report) => report.metrics[0] === metricId) ?? REPORTS.find((report) => report.metrics.includes(metricId)) ?? REPORTS[0];
+
+// ── Rapports enregistrés ──
+export type SavedDefinition = {
+  report_id: string;
+  metrics: string[];
+  preset: string;
+  from?: string;
+  to?: string;
+  compare: Compare;
+  owner: string;
+  category: string;
+};
+export type SavedReport = { id: string; owner_id: string; title: string; definition: SavedDefinition; shared: boolean };
+
+export async function listSaved(db: Db) {
+  const { data, error } = await db.from('analytics_saved_reports').select('id,owner_id,title,definition,shared').order('created_at', { ascending: false });
+  return { saved: ((data ?? []) as unknown as SavedReport[]), error };
+}
+
+export function saveReport(db: Db, ownerId: string, title: string, definition: SavedDefinition, shared: boolean) {
+  return db.from('analytics_saved_reports').insert({ owner_id: ownerId, title: title.trim(), definition: definition as unknown as Database['public']['Tables']['analytics_saved_reports']['Insert']['definition'], shared }).select().single();
+}
+
+export const deleteSaved = (db: Db, id: string) => db.from('analytics_saved_reports').delete().eq('id', id);

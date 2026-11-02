@@ -8,7 +8,7 @@ export const metadata = { title: 'Analyses' };
 
 async function Analytics() {
   const profile = await requireModule({ module: 'reports' });
-  return <AnalyticsView canMarketing={can(profile, 'marketing', 'view')} />;
+  return <AnalyticsView canMarketing={can(profile, 'marketing', 'view')} userId={profile?.id ?? ''} />;
 }
 
 export default function AnalyticsPage() {

@@ -865,6 +865,18 @@ export type Database = {
           },
         ];
       };
+      analytics_dashboard_cards: {
+        Row: { compare: string; created_at: string; id: string; metric_id: string; period: string; position: number; user_id: string };
+        Insert: { compare?: string; created_at?: string; id?: string; metric_id: string; period: string; position?: number; user_id: string };
+        Update: { compare?: string; created_at?: string; id?: string; metric_id?: string; period?: string; position?: number; user_id?: string };
+        Relationships: [];
+      };
+      analytics_saved_reports: {
+        Row: { created_at: string; definition: Json; id: string; owner_id: string; shared: boolean; title: string; updated_at: string };
+        Insert: { created_at?: string; definition: Json; id?: string; owner_id: string; shared?: boolean; title: string; updated_at?: string };
+        Update: { created_at?: string; definition?: Json; id?: string; owner_id?: string; shared?: boolean; title?: string; updated_at?: string };
+        Relationships: [];
+      };
       analytics_metrics: {
         Row: {
           additivity: string;
@@ -2234,6 +2246,7 @@ export type Database = {
         Args: { target_auth: string; target_endpoint: string; target_p256dh: string; target_user_agent?: string };
         Returns: undefined;
       };
+      analytics_live: { Args: never; Returns: Json };
       analytics_metric: {
         Args: { date_from: string; date_to: string; filters?: Json; group_by: string; metric_id: string };
         Returns: { group_key: string; group_label: string; value: number }[];
