@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Field } from '@/components/staff/form-field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,6 +21,8 @@ export const resolveRange = (preset: string, custom: Range): Range => (PICKED.in
  * intervalle de dates. À placer dans une grille : rend le sélecteur puis, au besoin, ses champs.
  */
 export function PeriodPicker({ preset, custom, onChange, idPrefix = 'period' }: { preset: string; custom: Range; onChange: (preset: string, custom: Range) => void; idPrefix?: string }) {
+  // Les dates saisies ne s'appliquent qu'au clic sur « Appliquer la période ».
+  const [draft, setDraft] = useState(custom);
   const thisYear = Number(todayKey().slice(0, 4));
   const years = Array.from({ length: thisYear - FIRST_YEAR + 1 }, (_, index) => thisYear - index);
   const year = Number(custom.from.slice(0, 4));
@@ -28,7 +32,10 @@ export function PeriodPicker({ preset, custom, onChange, idPrefix = 'period' }: 
   function choose(next: string) {
     if (next === 'pick_month') onChange(next, PICKED.includes(preset) ? monthRange(year, month) : presetRange('this_month'));
     else if (next === 'pick_year') onChange(next, yearRange(year));
-    else onChange(next, custom);
+    else {
+      setDraft(custom);
+      onChange(next, custom);
+    }
   }
 
   const yearSelect = (value: string, onValue: (year: number) => void, label: string) => (
@@ -85,11 +92,14 @@ export function PeriodPicker({ preset, custom, onChange, idPrefix = 'period' }: 
       {preset === 'custom' && (
         <>
           <Field label="Du" htmlFor={`${idPrefix}-from`}>
-            <Input id={`${idPrefix}-from`} type="date" value={custom.from} max={custom.to} onChange={(event) => onChange(preset, { ...custom, from: event.target.value || custom.from })} />
+            <Input id={`${idPrefix}-from`} type="date" value={draft.from} max={draft.to} onChange={(event) => setDraft({ ...draft, from: event.target.value || draft.from })} />
           </Field>
           <Field label="Au" htmlFor={`${idPrefix}-to`}>
-            <Input id={`${idPrefix}-to`} type="date" value={custom.to} min={custom.from} onChange={(event) => onChange(preset, { ...custom, to: event.target.value || custom.to })} />
+            <Input id={`${idPrefix}-to`} type="date" value={draft.to} min={draft.from} onChange={(event) => setDraft({ ...draft, to: event.target.value || draft.to })} />
           </Field>
+          <Button type="button" className="col-span-full w-full" disabled={draft.from > draft.to || (draft.from === custom.from && draft.to === custom.to)} onClick={() => onChange(preset, draft)}>
+            Appliquer la période
+          </Button>
         </>
       )}
     </>
