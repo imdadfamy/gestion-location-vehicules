@@ -59,7 +59,7 @@ export function AnalyticsView({ canMarketing, userId }: { canMarketing: boolean;
               userId={userId}
               canMarketing={canMarketing}
               onOpen={(metricId, period) => {
-                setRequest({ reportId: reportForMetric(metricId).id, preset: period, nonce: Date.now() });
+                setRequest({ reportId: reportForMetric(catalog, metricId).id, preset: period, metric: metricId, nonce: Date.now() });
                 setTab('reports');
               }}
             />

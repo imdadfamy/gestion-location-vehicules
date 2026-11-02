@@ -136,44 +136,136 @@ function baseMetrics(catalog: Catalog, ids: string[]) {
 // ── Rapports ──
 export type ReportDef = {
   id: string;
-  group: string;
+  /** Nom court dans la bibliothèque. */
   title: string;
+  /** La question à laquelle le rapport répond. */
+  question: string;
   description: string;
+  /** Colonnes proposées à l'ouverture (d'autres s'ajoutent depuis « Colonnes »). */
   metrics: string[];
+  /** Regroupement proposé à l'ouverture et regroupements possibles. */
   groupBy: string;
+  groupOptions: string[];
   /** Période proposée à l'ouverture. */
   period: string;
-  chart: 'bar' | 'barH' | 'none';
-  /** Nombre de lignes affichées au maximum (classements). */
-  top?: number;
-  /** Tri des lignes : par clé (chronologique) ou décroissant sur la première mesure. */
-  sort?: 'key' | 'value';
   /** Filtres proposés (colonnes du catalogue). */
   filters?: ('owner_type' | 'category')[];
+  /** Réservé aux personnes ayant la permission Marketing. */
+  marketing?: boolean;
 };
 
+export const DIMENSIONS: Record<string, string> = {
+  none: 'Total de la période',
+  day: 'Jour',
+  week: 'Semaine',
+  month: 'Mois',
+  quarter: 'Trimestre',
+  year: 'Année',
+  weekday: 'Jour de la semaine',
+  vehicle: 'Véhicule',
+  category: 'Catégorie',
+  owner: 'Propriétaire (agence ou partenaire)',
+  partner: 'Partenaire',
+  driver_mode: 'Avec ou sans chauffeur',
+  route: 'Trajet',
+  status: 'Statut',
+  channel: 'Canal',
+  campaign: 'Campagne',
+};
+export const TIME_DIMENSIONS = ['day', 'week', 'month', 'quarter', 'year'];
+export const isTimeDimension = (dimension: string) => TIME_DIMENSIONS.includes(dimension);
+/** Nombre maximal de lignes affichées ; les totaux portent toujours sur toutes les lignes. */
+export const MAX_ROWS = 1000;
+
 export const REPORTS: ReportDef[] = [
-  { id: 'net-result', group: 'Finances', title: 'Résultat net par mois', description: 'Du revenu au résultat net, mois par mois.', metrics: ['revenue_total', 'partner_share', 'maintenance_cost', 'marketing_spend', 'net_result'], groupBy: 'month', period: 'this_year', chart: 'bar', sort: 'key' },
-  { id: 'net-total', group: 'Finances', title: 'Résultat net de la période', description: 'La cascade complète sur la période choisie.', metrics: ['revenue_rental', 'revenue_transfer', 'revenue_total', 'partner_share', 'maintenance_cost', 'marketing_spend', 'net_result'], groupBy: 'none', period: 'this_month', chart: 'none' },
-  { id: 'revenue-month', group: 'Finances', title: 'Revenu par mois', description: 'Location et transferts, avec comparaison à l’an passé.', metrics: ['revenue_rental', 'revenue_transfer', 'revenue_total'], groupBy: 'month', period: 'this_year', chart: 'bar', sort: 'key' },
-  { id: 'revenue-vehicle', group: 'Finances', title: 'Revenu par véhicule', description: 'Quels véhicules rapportent le plus.', metrics: ['revenue_rental', 'rentals_count', 'rental_days', 'avg_revenue_per_rental'], groupBy: 'vehicle', period: 'this_year', chart: 'barH', top: 12, sort: 'value', filters: ['owner_type', 'category'] },
-  { id: 'revenue-category', group: 'Finances', title: 'Revenu par catégorie', description: 'Citadine, berline, SUV…', metrics: ['revenue_rental', 'rentals_count', 'rental_days'], groupBy: 'category', period: 'this_year', chart: 'bar', sort: 'value', filters: ['owner_type'] },
-  { id: 'partner-share', group: 'Finances', title: 'Part des partenaires', description: 'Ce qui revient à chaque partenaire.', metrics: ['partner_share', 'rentals_count', 'rental_days'], groupBy: 'partner', period: 'this_month', chart: 'barH', sort: 'value' },
-  { id: 'rentals-weekday', group: 'Locations', title: 'Locations par jour de la semaine', description: 'Les jours de départ les plus chargés.', metrics: ['rentals_count', 'rental_days', 'revenue_rental'], groupBy: 'weekday', period: 'this_year', chart: 'bar', sort: 'key', filters: ['owner_type', 'category'] },
-  { id: 'rentals-month', group: 'Locations', title: 'Locations par mois', description: 'Selon la date de départ.', metrics: ['rentals_count', 'rental_days', 'active_clients'], groupBy: 'month', period: 'this_year', chart: 'bar', sort: 'key', filters: ['owner_type', 'category'] },
-  { id: 'occupancy', group: 'Locations', title: 'Taux d’occupation par véhicule', description: 'Jours loués sur jours disponibles.', metrics: ['occupancy_rate', 'occupied_days', 'available_days'], groupBy: 'vehicle', period: 'this_month', chart: 'barH', top: 12, sort: 'value', filters: ['owner_type', 'category'] },
-  { id: 'driver-mode', group: 'Locations', title: 'Avec ou sans chauffeur', description: 'Revenu et nombre de locations selon le mode.', metrics: ['rentals_count', 'rental_days'], groupBy: 'driver_mode', period: 'this_year', chart: 'bar', sort: 'value', filters: ['owner_type', 'category'] },
-  { id: 'clients', group: 'Clients', title: 'Nouveaux clients par mois', description: 'Premières locations, et clients actifs.', metrics: ['new_clients', 'active_clients', 'rentals_count'], groupBy: 'month', period: 'this_year', chart: 'bar', sort: 'key' },
-  { id: 'transfers-month', group: 'Transferts', title: 'Transferts par mois', description: 'Demandes, confirmations et annulations.', metrics: ['transfers_requested', 'transfers_confirmed', 'transfers_done', 'transfers_cancelled', 'transfer_confirmation_rate', 'transfer_cancellation_rate'], groupBy: 'month', period: 'this_year', chart: 'bar', sort: 'key' },
-  { id: 'transfers-route', group: 'Transferts', title: 'Transferts par trajet', description: 'Demandes, revenu et délai de confirmation par trajet.', metrics: ['transfers_requested', 'transfers_done', 'revenue_transfer', 'avg_confirmation_hours'], groupBy: 'route', period: 'this_year', chart: 'barH', sort: 'value' },
-  { id: 'acquisition', group: 'Marketing', title: 'Acquisition par canal', description: 'D’où viennent les clients, ce que chaque canal coûte et ce qu’il rapporte.', metrics: ['new_clients', 'marketing_spend', 'acquisition_cost', 'revenue_rental', 'revenue_transfer', 'channel_net'], groupBy: 'channel', period: 'this_year', chart: 'barH', sort: 'value' },
-  { id: 'maintenance', group: 'Coûts', title: 'Maintenance par véhicule', description: 'Ce que chaque véhicule a coûté en entretien.', metrics: ['maintenance_cost'], groupBy: 'vehicle', period: 'this_year', chart: 'barH', top: 12, sort: 'value', filters: ['owner_type', 'category'] },
-  { id: 'marketing-channel', group: 'Marketing', title: 'Dépenses marketing par canal', description: 'Où va l’argent, dont les véhicules prêtés.', metrics: ['marketing_spend', 'marketing_in_kind'], groupBy: 'channel', period: 'this_year', chart: 'barH', sort: 'value' },
-  { id: 'marketing-campaign', group: 'Marketing', title: 'Dépenses marketing par campagne', description: 'Ce que chaque campagne a coûté.', metrics: ['marketing_spend', 'marketing_in_kind'], groupBy: 'campaign', period: 'this_year', chart: 'barH', sort: 'value' },
+  {
+    id: 'revenue',
+    title: 'Revenus',
+    question: 'Combien ai-je encaissé ?',
+    description: 'Location et transferts, par mois, semaine, véhicule…',
+    metrics: ['revenue_total', 'revenue_rental', 'revenue_transfer'],
+    groupBy: 'month',
+    groupOptions: ['month', 'week', 'day', 'quarter', 'weekday', 'vehicle', 'category', 'owner', 'channel'],
+    period: 'this_year',
+    filters: ['owner_type', 'category'],
+  },
+  {
+    id: 'net',
+    title: 'Résultat net',
+    question: 'Combien me reste-t-il vraiment ?',
+    description: 'Revenus moins la part des partenaires, la maintenance et le marketing.',
+    metrics: ['revenue_total', 'partner_share', 'maintenance_cost', 'marketing_spend', 'net_result'],
+    groupBy: 'month',
+    groupOptions: ['none', 'month', 'quarter', 'year', 'week', 'day'],
+    period: 'this_year',
+  },
+  {
+    id: 'vehicles',
+    title: 'Véhicules',
+    question: 'Mes véhicules travaillent-ils ?',
+    description: 'Ce que chaque véhicule rapporte, combien de jours il est loué, ce qu’il coûte en entretien.',
+    metrics: ['revenue_rental', 'rentals_count', 'rental_days', 'occupancy_rate'],
+    groupBy: 'vehicle',
+    groupOptions: ['vehicle', 'category', 'owner', 'driver_mode', 'month'],
+    period: 'this_month',
+    filters: ['owner_type', 'category'],
+  },
+  {
+    id: 'partners',
+    title: 'Partenaires',
+    question: 'Combien dois-je à mes partenaires ?',
+    description: 'La part qui revient à chaque partenaire sur la période.',
+    metrics: ['partner_share', 'rentals_count', 'rental_days'],
+    groupBy: 'partner',
+    groupOptions: ['partner', 'month', 'vehicle'],
+    period: 'this_month',
+  },
+  {
+    id: 'transfers',
+    title: 'Transferts',
+    question: 'Où en sont mes transferts ?',
+    description: 'Demandes, confirmations, annulations et revenus des transferts.',
+    metrics: ['transfers_requested', 'transfers_confirmed', 'transfers_done', 'transfers_cancelled', 'revenue_transfer'],
+    groupBy: 'month',
+    groupOptions: ['month', 'week', 'day', 'route', 'weekday', 'status'],
+    period: 'this_year',
+  },
+  {
+    id: 'customers',
+    title: 'Clients',
+    question: 'Combien de clients, nouveaux ou fidèles ?',
+    description: 'Premières locations, clients actifs et locations.',
+    metrics: ['new_clients', 'active_clients', 'rentals_count'],
+    groupBy: 'month',
+    groupOptions: ['month', 'week', 'quarter', 'channel', 'category'],
+    period: 'this_year',
+  },
+  {
+    id: 'acquisition',
+    title: 'Marketing et canaux',
+    question: 'D’où viennent mes clients, et quel canal vaut son prix ?',
+    description: 'Dépenses, nouveaux clients, coût d’acquisition et revenu net de chaque canal.',
+    metrics: ['marketing_spend', 'new_clients', 'acquisition_cost', 'channel_net'],
+    groupBy: 'channel',
+    groupOptions: ['channel', 'campaign', 'month'],
+    period: 'this_year',
+    marketing: true,
+  },
+  {
+    id: 'costs',
+    title: 'Dépenses',
+    question: 'Où part mon argent ?',
+    description: 'Maintenance et marketing, par mois, véhicule ou canal.',
+    metrics: ['maintenance_cost', 'marketing_spend'],
+    groupBy: 'month',
+    groupOptions: ['month', 'week', 'vehicle', 'category', 'channel', 'campaign'],
+    period: 'this_year',
+    filters: ['owner_type', 'category'],
+  },
 ];
 
 export type Row = { key: string; label: string; values: Record<string, number | null>; compare?: Record<string, number | null> };
-export type ReportResult = { rows: Row[]; totals: Record<string, number | null>; compareTotals?: Record<string, number | null>; metrics: string[]; groupBy: string; range: Range; compareRange: Range | null; at: Date };
+export type ReportResult = { rows: Row[]; rowCount: number; truncated: boolean; totals: Record<string, number | null>; compareTotals?: Record<string, number | null>; metrics: string[]; groupBy: string; range: Range; compareRange: Range | null; at: Date };
 
 type Fetched = Map<string, { label: string; value: number }>;
 
@@ -232,9 +324,10 @@ export async function runReport(db: Db, catalog: Catalog, def: ReportDef, range:
     });
   }
   const first = def.metrics[0];
-  if (def.sort === 'value') rows.sort((a, b) => Number(b.values[first] ?? 0) - Number(a.values[first] ?? 0));
-  else rows.sort((a, b) => a.key.localeCompare(b.key));
-  return { rows: def.top ? rows.slice(0, def.top) : rows, totals: current.totals, compareTotals: previous?.totals, metrics: def.metrics, groupBy: def.groupBy, range, compareRange: compare, at: new Date() };
+  // Une durée se lit dans l'ordre du temps ; un classement, du plus grand au plus petit.
+  if (isTimeDimension(def.groupBy) || def.groupBy === 'weekday') rows.sort((a, b) => a.key.localeCompare(b.key));
+  else rows.sort((a, b) => Number(b.values[first] ?? 0) - Number(a.values[first] ?? 0));
+  return { rows: rows.slice(0, MAX_ROWS), rowCount: rows.length, truncated: rows.length > MAX_ROWS, totals: current.totals, compareTotals: previous?.totals, metrics: def.metrics, groupBy: def.groupBy, range, compareRange: compare, at: new Date() };
 }
 
 // ── Affichage ──
@@ -293,7 +386,7 @@ export const variation = (current: number | null, previous: number | null | unde
 
 export function reportCsv(def: ReportDef, result: ReportResult, catalog: Catalog) {
   const metrics = result.metrics.map((id) => catalog.get(id)!);
-  const head = [def.groupBy === 'none' ? 'Période' : 'Groupe', ...metrics.flatMap((m) => (result.compareRange ? [m.label, `${m.label} (comparaison)`] : [m.label]))];
+  const head = [def.groupBy === 'none' ? 'Période' : (DIMENSIONS[def.groupBy] ?? 'Groupe'), ...metrics.flatMap((m) => (result.compareRange ? [m.label, `${m.label} (comparaison)`] : [m.label]))];
   const cell = (id: string, values: Record<string, number | null> | undefined) => {
     const m = catalog.get(id)!;
     const value = values?.[id];
@@ -360,14 +453,21 @@ export const moveCard = (db: Db, id: string, position: number) => db.from('analy
 /** Valeur d'une mesure sur une période (et sa comparaison), pour une carte. */
 export async function cardValue(db: Db, catalog: Catalog, card: Pick<Card, 'metric_id' | 'period' | 'compare'>) {
   const range = presetRange(card.period);
-  const def: ReportDef = { id: 'card', group: '', title: '', description: '', metrics: [card.metric_id], groupBy: 'none', period: card.period, chart: 'none' };
+  const def: ReportDef = { id: 'card', title: '', question: '', description: '', metrics: [card.metric_id], groupBy: 'none', groupOptions: [], period: card.period };
   const result = await runReport(db, catalog, def, range, compareRange(range, card.period, card.compare), {});
   return { value: result.totals[card.metric_id] ?? null, previous: result.compareTotals?.[card.metric_id] ?? null, range, compared: result.compareRange };
 }
 
-/** Rapport qui détaille une mesure : celui qui la met en première colonne, à défaut celui où elle apparaît. */
-export const reportForMetric = (metricId: string) =>
-  REPORTS.find((report) => report.metrics[0] === metricId) ?? REPORTS.find((report) => report.metrics.includes(metricId)) ?? REPORTS[0];
+/** Rapport qui détaille une mesure : celui qui la met en première colonne, sinon un rapport qui sait la découper. */
+export const reportForMetric = (catalog: Catalog, metricId: string) => {
+  const metric = catalog.get(metricId);
+  return (
+    REPORTS.find((report) => report.metrics[0] === metricId) ??
+    REPORTS.find((report) => report.metrics.includes(metricId)) ??
+    REPORTS.find((report) => report.groupBy === 'none' || metric?.dimensions.includes(report.groupBy)) ??
+    REPORTS[0]
+  );
+};
 
 // ── Rapports enregistrés ──
 export type SavedDefinition = {
@@ -379,6 +479,7 @@ export type SavedDefinition = {
   compare: Compare;
   owner: string;
   category: string;
+  group_by?: string;
 };
 export type SavedReport = { id: string; owner_id: string; title: string; definition: SavedDefinition; shared: boolean };
 
