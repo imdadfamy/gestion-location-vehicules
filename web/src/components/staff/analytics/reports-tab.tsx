@@ -34,15 +34,10 @@ import { Delta, ReportView, type ReportStart } from './report-view';
 /** Les chiffres du résumé : un par question que le propriétaire se pose le plus souvent. */
 const SUMMARY = ['revenue_total', 'net_result', 'rentals_count', 'occupancy_rate', 'transfers_requested', 'new_clients'];
 
-export type ReportRequest = { reportId: string; preset: string; metric?: string; nonce: number };
-
 type Open = { report: ReportDef; start: ReportStart; key: number };
 
-export function ReportsTab({ catalog, canMarketing, userId, request }: { catalog: Catalog; canMarketing: boolean; userId: string; request: ReportRequest | null }) {
-  const [open, setOpen] = useState<Open | null>(() => {
-    const report = request ? REPORTS.find((item) => item.id === request.reportId) : null;
-    return report && request ? { report, start: startFor(report, request.preset, request.metric), key: 0 } : null;
-  });
+export function ReportsTab({ catalog, canMarketing, userId }: { catalog: Catalog; canMarketing: boolean; userId: string }) {
+  const [open, setOpen] = useState<Open | null>(null);
   const [saved, setSaved] = useState<SavedReport[]>([]);
 
   const loadSaved = useCallback(async () => {

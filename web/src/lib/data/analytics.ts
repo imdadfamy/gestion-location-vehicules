@@ -408,63 +408,6 @@ export function reportCsv(def: ReportDef, result: ReportResult, catalog: Catalog
   return [def.title, period, '', head.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
 }
 
-// ── En ce moment ──
-export type LiveData = {
-  as_of: string;
-  today: string;
-  vehicles_out: number;
-  overdue: number;
-  returns_24h: number;
-  departures_24h: number;
-  reservations_pending: number;
-  reservations_validated: number;
-  contracts_to_sign: number;
-  transfers_new: number;
-  transfers_last_hour: number;
-  transfers_today: Record<string, number>;
-  revenue_today: number;
-  upcoming: { kind: 'return' | 'departure' | 'transfer'; label: string; detail: string; at: string }[];
-};
-
-export async function loadLive(db: Db) {
-  const { data, error } = await db.rpc('analytics_live');
-  return { data: (data as LiveData | null) ?? null, error };
-}
-
-/** Tables dont un changement déclenche la relecture de l'écran « En ce moment ». */
-export const LIVE_TABLES = ['reservations', 'rentals', 'transfer_requests', 'payments'] as const;
-
-// ── Cartes du tableau de bord ──
-export type Card = { id: string; metric_id: string; period: string; compare: Compare; position: number };
-export const DEFAULT_CARDS: Omit<Card, 'id' | 'position'>[] = [
-  { metric_id: 'revenue_total', period: 'this_month', compare: 'previous_period' },
-  { metric_id: 'net_result', period: 'this_month', compare: 'previous_period' },
-  { metric_id: 'rentals_count', period: 'this_month', compare: 'previous_period' },
-  { metric_id: 'occupancy_rate', period: 'this_month', compare: 'previous_period' },
-  { metric_id: 'transfers_requested', period: 'this_month', compare: 'previous_period' },
-  { metric_id: 'new_clients', period: 'this_month', compare: 'previous_period' },
-];
-
-export async function loadCards(db: Db) {
-  const { data, error } = await db.from('analytics_dashboard_cards').select('id,metric_id,period,compare,position').order('position');
-  return { cards: (data ?? []) as Card[], error };
-}
-
-export function addCards(db: Db, userId: string, cards: Omit<Card, 'id'>[]) {
-  return db.from('analytics_dashboard_cards').insert(cards.map((card) => ({ ...card, user_id: userId }))).select('id,metric_id,period,compare,position');
-}
-
-export const removeCard = (db: Db, id: string) => db.from('analytics_dashboard_cards').delete().eq('id', id);
-export const moveCard = (db: Db, id: string, position: number) => db.from('analytics_dashboard_cards').update({ position }).eq('id', id);
-
-/** Valeur d'une mesure sur une période (et sa comparaison), pour une carte. */
-export async function cardValue(db: Db, catalog: Catalog, card: Pick<Card, 'metric_id' | 'period' | 'compare'>) {
-  const range = presetRange(card.period);
-  const def: ReportDef = { id: 'card', title: '', question: '', description: '', metrics: [card.metric_id], groupBy: 'none', groupOptions: [], period: card.period };
-  const result = await runReport(db, catalog, def, range, compareRange(range, card.period, card.compare), {});
-  return { value: result.totals[card.metric_id] ?? null, previous: result.compareTotals?.[card.metric_id] ?? null, range, compared: result.compareRange };
-}
-
 /** Rapport qui détaille une mesure : celui qui la met en première colonne, sinon un rapport qui sait la découper. */
 export const reportForMetric = (catalog: Catalog, metricId: string) => {
   const metric = catalog.get(metricId);
