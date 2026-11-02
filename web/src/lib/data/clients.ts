@@ -20,6 +20,8 @@ export const CLIENT_FIELDS = [
   'driving_license_expiry_date',
   'emergency_contact_name',
   'emergency_contact_phone',
+  'acquisition_source',
+  'acquisition_detail',
 ] as const;
 export type ClientForm = { id?: string } & Record<(typeof CLIENT_FIELDS)[number], string>;
 

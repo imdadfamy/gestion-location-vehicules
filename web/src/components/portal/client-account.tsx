@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Camera, Check, CircleAlert, FileText, Loader2, R
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
 import { PushAlerts } from '@/components/staff/push-alerts';
+import { ClientAcquisition } from './client-acquisition';
 import { PageHeading } from '@/components/portal/page-heading';
 import { Field } from '@/components/staff/form-field';
 import {
@@ -270,6 +271,7 @@ export function ClientAccount({
       </PageHeading>
       <FormMessage error={error} />
       <PushAlerts kind="client" />
+      <ClientAcquisition profileId={profileId} />
 
       {!form ? (
         !error && <Skeleton className="h-96 rounded-xl" />

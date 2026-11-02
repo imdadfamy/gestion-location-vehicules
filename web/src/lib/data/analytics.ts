@@ -116,6 +116,8 @@ const DERIVED: Record<string, (read: Reader) => number | null> = {
   transfer_confirmation_rate: (v) => ratio(v('transfers_confirmed'), v('transfers_requested')),
   transfer_cancellation_rate: (v) => ratio(v('transfers_cancelled'), v('transfers_requested')),
   avg_confirmation_hours: (v) => ratio(v('confirmation_hours_sum'), v('transfers_confirmed')),
+  acquisition_cost: (v) => ratio(v('marketing_spend'), v('new_clients')),
+  channel_net: (v) => v('revenue_rental') + v('revenue_transfer') - v('marketing_spend'),
 };
 
 /** Mesures de base nécessaires pour calculer `ids` (les dérivées sont remplacées par leurs composants). */
@@ -164,6 +166,7 @@ export const REPORTS: ReportDef[] = [
   { id: 'clients', group: 'Clients', title: 'Nouveaux clients par mois', description: 'Premières locations, et clients actifs.', metrics: ['new_clients', 'active_clients', 'rentals_count'], groupBy: 'month', period: 'this_year', chart: 'bar', sort: 'key' },
   { id: 'transfers-month', group: 'Transferts', title: 'Transferts par mois', description: 'Demandes, confirmations et annulations.', metrics: ['transfers_requested', 'transfers_confirmed', 'transfers_done', 'transfers_cancelled', 'transfer_confirmation_rate', 'transfer_cancellation_rate'], groupBy: 'month', period: 'this_year', chart: 'bar', sort: 'key' },
   { id: 'transfers-route', group: 'Transferts', title: 'Transferts par trajet', description: 'Demandes, revenu et délai de confirmation par trajet.', metrics: ['transfers_requested', 'transfers_done', 'revenue_transfer', 'avg_confirmation_hours'], groupBy: 'route', period: 'this_year', chart: 'barH', sort: 'value' },
+  { id: 'acquisition', group: 'Marketing', title: 'Acquisition par canal', description: 'D’où viennent les clients, ce que chaque canal coûte et ce qu’il rapporte.', metrics: ['new_clients', 'marketing_spend', 'acquisition_cost', 'revenue_rental', 'revenue_transfer', 'channel_net'], groupBy: 'channel', period: 'this_year', chart: 'barH', sort: 'value' },
   { id: 'maintenance', group: 'Coûts', title: 'Maintenance par véhicule', description: 'Ce que chaque véhicule a coûté en entretien.', metrics: ['maintenance_cost'], groupBy: 'vehicle', period: 'this_year', chart: 'barH', top: 12, sort: 'value', filters: ['owner_type', 'category'] },
   { id: 'marketing-channel', group: 'Marketing', title: 'Dépenses marketing par canal', description: 'Où va l’argent, dont les véhicules prêtés.', metrics: ['marketing_spend', 'marketing_in_kind'], groupBy: 'channel', period: 'this_year', chart: 'barH', sort: 'value' },
   { id: 'marketing-campaign', group: 'Marketing', title: 'Dépenses marketing par campagne', description: 'Ce que chaque campagne a coûté.', metrics: ['marketing_spend', 'marketing_in_kind'], groupBy: 'campaign', period: 'this_year', chart: 'barH', sort: 'value' },
@@ -239,7 +242,7 @@ const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'aoû
 const WEEKDAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 const DRIVER = { true: 'Avec chauffeur', false: 'Sans chauffeur' } as Record<string, string>;
 const OWNER = { agency: 'Agence', partner: 'Partenaires' } as Record<string, string>;
-const CHANNEL: Record<string, string> = { ads: 'Publicité en ligne', influencer: 'Influenceur', print: 'Affiches, flyers, imprimés', event: 'Événement', sponsoring: 'Sponsoring, partenariat', other: 'Autre' };
+const CHANNEL: Record<string, string> = { ads: 'Publicité en ligne', influencer: 'Influenceur', print: 'Affiches, flyers, imprimés', event: 'Événement', sponsoring: 'Sponsoring, partenariat', word_of_mouth: 'Bouche-à-oreille', search: 'Recherche Internet', walk_in: 'Passage devant l’agence', partner: 'Partenaire', other: 'Autre', unknown: 'Non renseigné' };
 const STATUS: Record<string, string> = { new: 'Nouvelle', confirmed: 'Confirmée', assigned: 'Chauffeur assigné', en_route: 'En route', arrived: 'Arrivé', done: 'Terminée', cancelled: 'Annulée' };
 
 /** Libellé lisible d'une ligne selon la dimension de regroupement. */

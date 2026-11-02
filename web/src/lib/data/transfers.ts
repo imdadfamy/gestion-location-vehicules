@@ -65,6 +65,8 @@ export type NewTransfer = {
   name: string;
   phone: string;
   notes?: string;
+  acquisitionSource?: string;
+  acquisitionDetail?: string;
 };
 
 /** Demande publique (sans compte) : renvoie le numéro de référence. */
@@ -81,6 +83,8 @@ export function createTransfer(db: Db, input: NewTransfer) {
     target_vehicle_id: input.vehicleId,
     target_quoted_price: input.quotedPrice ?? undefined,
     target_notes: input.notes || undefined,
+    target_acquisition_source: input.acquisitionSource || undefined,
+    target_acquisition_detail: input.acquisitionDetail || undefined,
   });
 }
 

@@ -7,6 +7,7 @@ import { Car, CheckCircle2, Loader2, MessageCircle, Plane, Users } from 'lucide-
 import AnimatedContent from '@/components/AnimatedContent';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FormMessage } from '@/components/auth/form-message';
+import { AcquisitionField } from '@/components/site/acquisition-field';
 import { PhoneField } from '@/components/site/phone-field';
 import { SiteIcon } from '@/components/site/site-icon';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState(DEFAULT_COUNTRY);
+  const [acquisition, setAcquisition] = useState({ source: '', detail: '' });
   const countryChosen = useRef(false);
 
   // Pays par défaut : celui du visiteur (adresse IP, via Vercel), à défaut la région de sa langue, à défaut le Bénin.
@@ -124,6 +126,8 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
       notes: priceText && numericPrice(priceText) === null ? `Prix annoncé : ${showPrice(priceText, lang)}` : undefined,
       name: name.trim(),
       phone: toInternational(findCountry(country).dial, phone),
+      acquisitionSource: acquisition.source,
+      acquisitionDetail: acquisition.detail,
     });
     setSending(false);
     if (failure || !data) return setError(failure ? frenchError(failure) : t('Votre demande n’a pas pu être envoyée. Réessayez ou contactez l’agence.'));
@@ -367,6 +371,15 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                       }} value={phone} onChange={setPhone} className={field} />
                   </div>
                 </div>
+
+                <AcquisitionField
+                  idPrefix="transfer"
+                  tone="dark"
+                  source={acquisition.source}
+                  detail={acquisition.detail}
+                  onSourceChange={(source) => setAcquisition((current) => ({ ...current, source }))}
+                  onDetailChange={(detail) => setAcquisition((current) => ({ ...current, detail }))}
+                />
 
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/5 px-4 py-3">
                   <span className="text-sm text-white/70">{t('Prix du transfert')}</span>

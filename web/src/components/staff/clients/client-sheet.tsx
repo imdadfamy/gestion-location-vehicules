@@ -8,6 +8,8 @@ import { Field } from '@/components/staff/form-field';
 import { StatusBadge } from '@/components/staff/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ACQUISITION_SOURCES } from '@/lib/acquisition';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -252,6 +254,26 @@ export function ClientSheet({
             <Field label="Téléphone urgence" htmlFor="client-emergency_contact_phone" className="sm:col-span-3">
               <Input type="tel" inputMode="numeric" {...field('emergency_contact_phone', true)} />
             </Field>
+            <Field label="Comment il nous a connus" className="sm:col-span-3">
+              <Select value={form.acquisition_source || 'none'} onValueChange={(value) => setForm({ ...form, acquisition_source: value === 'none' ? '' : value })} disabled={!editable}>
+                <SelectTrigger className="w-full" aria-label="Comment il nous a connus">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Non renseigné</SelectItem>
+                  {ACQUISITION_SOURCES.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            {form.acquisition_source === 'influencer' && (
+              <Field label="Influenceur ou code" htmlFor="client-acquisition_detail" className="sm:col-span-3">
+                <Input {...field('acquisition_detail')} />
+              </Field>
+            )}
           </div>
 
           {form.id && (

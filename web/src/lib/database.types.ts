@@ -125,6 +125,8 @@ export type Database = {
       };
       clients: {
         Row: {
+          acquisition_detail: string | null;
+          acquisition_source: string | null;
           address: string | null;
           created_at: string;
           created_by: string | null;
@@ -147,6 +149,8 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          acquisition_detail?: string | null;
+          acquisition_source?: string | null;
           address?: string | null;
           created_at?: string;
           created_by?: string | null;
@@ -169,6 +173,8 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          acquisition_detail?: string | null;
+          acquisition_source?: string | null;
           address?: string | null;
           created_at?: string;
           created_by?: string | null;
@@ -1702,9 +1708,15 @@ export type Database = {
         ];
       };
       transfer_requests: {
-        Row: { driver_id: string | null; meeting_point: string | null; id: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number: string | null; passengers: number; luggage: number | null; vehicle_id: string | null; vehicle_label: string | null; quoted_price: number | null; final_price: number | null; customer_name: string; customer_phone: string; notes: string | null; status: string; staff_notes: string | null; created_at: string; updated_at: string; };
-        Insert: { driver_id?: string | null; meeting_point?: string | null; id?: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name: string; customer_phone: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
-        Update: { driver_id?: string | null; meeting_point?: string | null; id?: string; reference?: string; route_from?: string; route_to?: string; pickup_at?: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name?: string; customer_phone?: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
+        Row: {
+          acquisition_detail: string | null;
+          acquisition_source: string | null; driver_id: string | null; meeting_point: string | null; id: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number: string | null; passengers: number; luggage: number | null; vehicle_id: string | null; vehicle_label: string | null; quoted_price: number | null; final_price: number | null; customer_name: string; customer_phone: string; notes: string | null; status: string; staff_notes: string | null; created_at: string; updated_at: string; };
+        Insert: {
+          acquisition_detail?: string | null;
+          acquisition_source?: string | null; driver_id?: string | null; meeting_point?: string | null; id?: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name: string; customer_phone: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
+        Update: {
+          acquisition_detail?: string | null;
+          acquisition_source?: string | null; driver_id?: string | null; meeting_point?: string | null; id?: string; reference?: string; route_from?: string; route_to?: string; pickup_at?: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name?: string; customer_phone?: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
         Relationships: [
           {
             foreignKeyName: 'transfer_requests_driver_id_fkey';
@@ -2212,6 +2224,8 @@ export type Database = {
       };
       public_create_transfer_request: {
         Args: {
+          target_acquisition_detail?: string;
+          target_acquisition_source?: string;
           target_customer_name: string;
           target_customer_phone: string;
           target_flight_number?: string;
@@ -2250,6 +2264,10 @@ export type Database = {
       analytics_metric: {
         Args: { date_from: string; date_to: string; filters?: Json; group_by: string; metric_id: string };
         Returns: { group_key: string; group_label: string; value: number }[];
+      };
+      set_my_acquisition: {
+        Args: { target_detail?: string; target_source?: string };
+        Returns: undefined;
       };
       public_company_contact: {
         Args: never;

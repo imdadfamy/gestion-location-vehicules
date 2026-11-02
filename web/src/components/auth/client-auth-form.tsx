@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { currentProfile } from '@/lib/auth';
 import { signUpError } from '@/lib/auth-errors';
+import { AcquisitionField } from '@/components/site/acquisition-field';
 import { frenchError } from '@/lib/errors';
 import { createClient } from '@/lib/supabase/client';
 import { FormMessage } from './form-message';
@@ -31,6 +32,7 @@ export function ClientAuthForm({ mode }: { mode: 'login' | 'register' }) {
   // Avec une réservation en cours de choix, on reprend le catalogue ; sinon l'accueil « Où en suis-je ? ».
   const destination = query ? `/client/vehicles${query}` : '/client';
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', email: '', password: '' });
+  const [acquisition, setAcquisition] = useState({ source: '', detail: '' });
   // (la destination dépend de la réservation en cours de choix, cf. plus haut)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -67,6 +69,7 @@ export function ClientAuthForm({ mode }: { mode: 'login' | 'register' }) {
             first_name: form.firstName.trim(),
             last_name: form.lastName.trim(),
             phone: form.phone.trim(),
+            ...(acquisition.source ? { acquisition_source: acquisition.source, acquisition_detail: acquisition.detail.trim() } : {}),
           },
         },
       });
@@ -146,6 +149,13 @@ export function ClientAuthForm({ mode }: { mode: 'login' | 'register' }) {
             <Label htmlFor="phone">Téléphone</Label>
             <Input id="phone" type="tel" autoComplete="tel" value={form.phone} onChange={set('phone')} />
           </div>
+          <AcquisitionField
+            idPrefix="register"
+            source={acquisition.source}
+            detail={acquisition.detail}
+            onSourceChange={(source) => setAcquisition((current) => ({ ...current, source }))}
+            onDetailChange={(detail) => setAcquisition((current) => ({ ...current, detail }))}
+          />
         </>
       )}
       <div className="grid gap-2">
