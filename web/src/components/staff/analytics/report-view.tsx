@@ -25,7 +25,6 @@ import {
   groupLabel,
   isTimeDimension,
   MAX_ROWS,
-  PRESETS,
   presetRange,
   REPORTS,
   reportCsv,
@@ -41,6 +40,7 @@ import {
 import { frenchError } from '@/lib/errors';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { PeriodPicker, PICKED, resolveRange } from './period-picker';
 
 const compact = (value: number) => (value >= 1_000_000 ? `${Math.round(value / 100_000) / 10} M` : value >= 1000 ? `${Math.round(value / 1000)} k` : `${Math.round(value * 10) / 10}`);
 const MARKETING = ['marketing_spend', 'marketing_in_kind', 'acquisition_cost', 'channel_net'];
@@ -105,7 +105,7 @@ export function ReportView({
     return chosen.length ? chosen : available.slice(0, 3).map((metric) => metric.id);
   }, [available, columns, report.metrics]);
 
-  const range = useMemo(() => (preset === 'custom' ? custom : presetRange(preset)), [preset, custom]);
+  const range = useMemo(() => resolveRange(preset, custom), [preset, custom]);
   const compared = useMemo(() => compareRange(range, preset, compare), [range, preset, compare]);
 
   const run = useCallback(async () => {
@@ -193,20 +193,7 @@ export function ReportView({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Field label="Période">
-          <Select value={preset} onValueChange={setPreset}>
-            <SelectTrigger className="w-full" aria-label="Période">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(PRESETS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
+        <PeriodPicker preset={preset} custom={custom} onChange={(next, range) => { setPreset(next); setCustom(range); }} />
         <Field label="Comparer à">
           <Select value={compare} onValueChange={(value) => setCompare(value as Compare)}>
             <SelectTrigger className="w-full" aria-label="Comparaison">
@@ -273,17 +260,6 @@ export function ReportView({
           </Field>
         )}
       </div>
-      {preset === 'custom' && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Du" htmlFor="an-from">
-            <Input id="an-from" type="date" value={custom.from} max={custom.to} onChange={(event) => setCustom({ ...custom, from: event.target.value || custom.from })} />
-          </Field>
-          <Field label="Au" htmlFor="an-to">
-            <Input id="an-to" type="date" value={custom.to} min={custom.from} onChange={(event) => setCustom({ ...custom, to: event.target.value || custom.to })} />
-          </Field>
-        </div>
-      )}
-
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>
           {range.from.split('-').reverse().join('/')} → {range.to.split('-').reverse().join('/')}
@@ -488,7 +464,7 @@ export function ReportView({
             createClient(),
             userId,
             title,
-            { report_id: report.id, metrics, preset, ...(preset === 'custom' ? { from: custom.from, to: custom.to } : {}), compare, owner, category, group_by: group },
+            { report_id: report.id, metrics, preset, ...(PICKED.includes(preset) ? { from: custom.from, to: custom.to } : {}), compare, owner, category, group_by: group },
             shared,
           );
           if (failure) return frenchError(failure);

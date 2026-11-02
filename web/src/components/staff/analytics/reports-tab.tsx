@@ -15,7 +15,6 @@ import {
   deleteSaved,
   formatValue,
   listSaved,
-  PRESETS,
   presetRange,
   REPORTS,
   reportForMetric,
@@ -29,6 +28,7 @@ import {
 } from '@/lib/data/analytics';
 import { frenchError } from '@/lib/errors';
 import { createClient } from '@/lib/supabase/client';
+import { PeriodPicker, resolveRange } from './period-picker';
 import { Delta, ReportView, type ReportStart } from './report-view';
 
 /** Les chiffres du résumé : un par question que le propriétaire se pose le plus souvent. */
@@ -162,12 +162,13 @@ function startFor(report: ReportDef, preset: string, metric?: string): ReportSta
 /** Résumé en un tableau : les chiffres essentiels de la période, comparés à la précédente. Un clic ouvre le rapport. */
 function Summary({ catalog, canMarketing, onOpen }: { catalog: Catalog; canMarketing: boolean; onOpen: (metricId: string, preset: string) => void }) {
   const [preset, setPreset] = useState('this_month');
+  const [custom, setCustom] = useState(() => presetRange('this_month'));
   const [compare, setCompare] = useState<Compare>('previous_period');
   const [result, setResult] = useState<ReportResult | null>(null);
   const [error, setError] = useState('');
 
   const ids = useMemo(() => SUMMARY.filter((id) => catalog.has(id) && (canMarketing || !catalog.get(id)?.permission)), [catalog, canMarketing]);
-  const range = useMemo(() => presetRange(preset), [preset]);
+  const range = useMemo(() => resolveRange(preset, custom), [preset, custom]);
   const compared = useMemo(() => compareRange(range, preset, compare), [range, preset, compare]);
 
   useEffect(() => {
@@ -192,23 +193,8 @@ function Summary({ catalog, canMarketing, onOpen }: { catalog: Catalog; canMarke
           <h3 className="text-lg font-semibold">L’essentiel</h3>
           <p className="text-sm text-muted-foreground">Les chiffres à connaître, comparés à la période d’avant. Cliquez une ligne pour le détail.</p>
         </div>
-        <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2">
-          <Field label="Période">
-            <Select value={preset} onValueChange={setPreset}>
-              <SelectTrigger className="w-full sm:w-44" aria-label="Période du résumé">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(PRESETS)
-                  .filter(([value]) => value !== 'custom')
-                  .map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </Field>
+        <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]">
+          <PeriodPicker preset={preset} custom={custom} idPrefix="summary" onChange={(next, picked) => { setPreset(next); setCustom(picked); }} />
           <Field label="Comparer à">
             <Select value={compare} onValueChange={(value) => setCompare(value as Compare)}>
               <SelectTrigger className="w-full sm:w-52" aria-label="Comparaison du résumé">

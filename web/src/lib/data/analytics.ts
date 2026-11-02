@@ -82,6 +82,10 @@ export function presetRange(preset: string, today = todayKey()): Range {
   }
 }
 
+/** Un mois ou une année choisis au calendrier (month : 1 à 12). */
+export const monthRange = (year: number, month: number): Range => ({ from: format(new Date(Date.UTC(year, month - 1, 1, 12))), to: monthEnd(format(new Date(Date.UTC(year, month - 1, 1, 12)))) });
+export const yearRange = (year: number): Range => ({ from: `${year}-01-01`, to: `${year}-12-31` });
+
 export type Compare = 'none' | 'previous_period' | 'previous_year';
 export const COMPARES: Record<Compare, string> = { none: 'Pas de comparaison', previous_period: 'Période précédente', previous_year: 'Même période, an passé' };
 
@@ -95,6 +99,9 @@ export function compareRange(range: Range, preset: string, compare: Compare): Ra
     const shift = (key: string) => `${Number(key.slice(0, 4)) - 1}${key.slice(4)}`;
     return { from: shift(range.from), to: shift(range.to) };
   }
+  // Un mois entier ou une année entière choisis au calendrier se comparent au mois ou à l'année d'avant, entiers.
+  if (range.from.endsWith('-01') && range.to === monthEnd(range.from)) return { from: monthStart(range.from, -1), to: monthEnd(range.from, -1) };
+  if (range.from.endsWith('-01-01') && range.to === `${range.from.slice(0, 4)}-12-31`) return yearRange(Number(range.from.slice(0, 4)) - 1);
   const length = daysBetween(range.from, range.to);
   if (preset === 'this_month' || preset === 'this_quarter' || preset === 'this_year') {
     const start = preset === 'this_month' ? monthStart(range.from, -1) : preset === 'this_quarter' ? quarterStart(range.from, -1) : yearStart(range.from, -1);
