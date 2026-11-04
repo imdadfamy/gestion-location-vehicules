@@ -32,7 +32,7 @@ import { PeriodPicker, resolveRange } from './period-picker';
 import { Delta, ReportView, type ReportStart } from './report-view';
 
 /** Les chiffres du résumé : un par question que le propriétaire se pose le plus souvent. */
-const SUMMARY = ['revenue_total', 'net_result', 'rentals_count', 'occupancy_rate', 'transfers_requested', 'new_clients'];
+const SUMMARY = ['revenue_total', 'net_result', 'rentals_count', 'occupancy_rate', 'transfers_requested', 'new_clients', 'incidents_count'];
 
 type Open = { report: ReportDef; start: ReportStart; key: number };
 

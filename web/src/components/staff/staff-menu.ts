@@ -14,7 +14,6 @@ import {
   LineChart,
   Megaphone,
   type LucideIcon,
-  BarChart3,
   Settings,
   ShieldAlert,
   UserCircle,
@@ -59,7 +58,6 @@ export const MENU: { label: string; items: MenuItem[] }[] = [
     items: [
       { title: 'Mes informations', href: '/app/my-profile', icon: UserCircle },
       { title: 'Notifications', href: '/app/notifications', icon: Bell, module: 'notifications' },
-      { title: 'Rapports', href: '/app/reports', icon: BarChart3, module: 'reports' },
       { title: 'Analyses', href: '/app/analytics', icon: LineChart, module: 'reports' },
       { title: 'Marketing', href: '/app/marketing', icon: Megaphone, module: 'marketing' },
     ],
