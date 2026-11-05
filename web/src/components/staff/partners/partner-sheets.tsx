@@ -38,7 +38,7 @@ import { loadTiers, saveTiers } from '@/lib/data/price-tiers';
 import { frenchError } from '@/lib/errors';
 import { digitsOnly, frDateTime } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
-import { dailyPriceFor, DAYS_PER_MONTH, rowsFromTiers, tiersFromRows, tierTitle, validateTierRows, type TierRow } from '@/lib/pricing';
+import { dailyPriceFor, rowsFromTiers, tiersFromRows, tierTitle, validateTierRows, type TierRow } from '@/lib/pricing';
 
 /** Évaluation d'un véhicule soumis, ou réglages d'un véhicule déjà validé. */
 export function PartnerVehicleSheet({
@@ -157,9 +157,9 @@ export function PartnerVehicleSheet({
     const client = tiersFromRows(clientTiers);
     const partner = tiersFromRows(partnerTiers);
     if (!client.length && !partner.length) return [];
-    const months = [...new Set([0, ...client.map((tier) => tier.min_months), ...partner.map((tier) => tier.min_months)])].sort((a, b) => a - b);
-    return months.map((count) => {
-      const days = count === 0 ? 1 : count * DAYS_PER_MONTH;
+    const thresholds = [...new Set([0, ...client.map((tier) => tier.min_days), ...partner.map((tier) => tier.min_days)])].sort((a, b) => a - b);
+    return thresholds.map((count) => {
+      const days = count === 0 ? 1 : count;
       return {
         count,
         client: dailyPriceFor(price, client, days).price,
@@ -184,7 +184,7 @@ export function PartnerVehicleSheet({
             const gap = line.client - line.partner;
             return (
               <p key={line.count} className={gap < minMargin ? 'text-destructive' : 'text-muted-foreground'}>
-                {line.count === 0 ? 'Moins d’un mois' : tierTitle(line.count)} : {formatMoney(gap)} ({formatMoney(line.client)} − {formatMoney(line.partner)})
+                {line.count === 0 ? 'Durée courte (prix de base)' : tierTitle(line.count)} : {formatMoney(gap)} ({formatMoney(line.client)} − {formatMoney(line.partner)})
                 {gap < minMargin ? ' — sous le minimum' : ''}
               </p>
             );

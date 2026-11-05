@@ -166,6 +166,7 @@ export const EN: Record<string, string> = {
   'Sur devis': 'On request',
   'Tarifs longue durée': 'Long-term rates',
   'À partir de {n} mois': 'From {n} month(s)',
+  'À partir de {n} jours': 'From {n} days',
   'Comment nous avez-vous connus ? (facultatif)': 'How did you hear about us? (optional)',
   'Je préfère ne pas répondre': 'I’d rather not say',
   'Une publicité en ligne (Facebook, Instagram, TikTok…)': 'An online ad (Facebook, Instagram, TikTok…)',

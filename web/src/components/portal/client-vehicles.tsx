@@ -274,8 +274,8 @@ export function ClientVehicles() {
               {parseTiers(selected.price_tiers).length > 0 && (
                 <ul className="mt-2 grid gap-0.5 border-t pt-2 text-sm text-muted-foreground">
                   {parseTiers(selected.price_tiers).map((tier) => (
-                    <li key={tier.min_months} className="flex justify-between gap-3">
-                      <span>{tierTitle(tier.min_months)}</span>
+                    <li key={tier.min_days} className="flex justify-between gap-3">
+                      <span>{tierTitle(tier.min_days)}</span>
                       <span className="tabular-nums">{formatMoney(tier.daily_price)} / jour</span>
                     </li>
                   ))}

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import type { Translate } from '@/lib/i18n';
-import { dailyPriceFor, parseTiers } from '@/lib/pricing';
+import { dailyPriceFor, parseTiers, tierTitleKey } from '@/lib/pricing';
 import { formatMoney, fuelLabel, rentalDays, transmissionLabel, whatsappLink, type CatalogVehicle } from '@/lib/data/public-catalog';
 import { cn } from '@/lib/utils';
 import { useLang } from './lang-provider';
@@ -171,8 +171,8 @@ export function VehicleDetail({
             <p className="font-medium">{t('Tarifs longue durée')}</p>
             <ul className="grid gap-0.5 text-muted-foreground">
               {tiers.map((tier) => (
-                <li key={tier.min_months} className="flex justify-between gap-3">
-                  <span>{t('À partir de {n} mois', { n: tier.min_months })}</span>
+                <li key={tier.min_days} className="flex justify-between gap-3">
+                  <span>{t(tierTitleKey(tier.min_days).key, tierTitleKey(tier.min_days).vars)}</span>
                   <span className="tabular-nums">
                     {money(tier.daily_price)} {t('/ jour')}
                   </span>
@@ -186,7 +186,7 @@ export function VehicleDetail({
             <div className="flex justify-between gap-3 text-muted-foreground">
               <span>
                 {money(dayPrice)} × {days} {plural(days, 'jour', 'jours')}
-                {appliedTier && <span className="ml-1 text-xs">({t('À partir de {n} mois', { n: appliedTier.min_months })})</span>}
+                {appliedTier && <span className="ml-1 text-xs">({t(tierTitleKey(appliedTier.min_days).key, tierTitleKey(appliedTier.min_days).vars)})</span>}
               </span>
               <span className="tabular-nums">{money(rentalTotal)}</span>
             </div>

@@ -241,7 +241,7 @@ export function PartnerVehicles() {
                 <div className="grid gap-2 sm:col-span-6">
                   <p className="text-sm font-medium">Prix souhaité selon la durée</p>
                   <p className="text-xs text-muted-foreground">
-                    Facultatif. Pour les longues locations, indiquez le prix par jour que vous souhaitez toucher à partir de 1, 2, 3… mois (1 mois = 30 jours). Il remplace le prix ci-dessus pour tous les jours de la location.
+                    Facultatif. Pour les longues locations, indiquez le prix par jour que vous souhaitez toucher à partir d’une durée de votre choix, en jours ou en mois (1 mois = 30 jours). Exemple : à partir de 10 jours, 8 000 FCFA/jour. Il remplace le prix ci-dessus pour tous les jours de la location.
                   </p>
                   <PriceTiersEditor rows={tiers} onChange={setTiers} idPrefix="submission-tier" basePrice={form.partner_requested_price} />
                 </div>

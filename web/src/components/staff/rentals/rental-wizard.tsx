@@ -28,7 +28,7 @@ import { formatMoney } from '@/lib/data/public-catalog';
 import { frenchError } from '@/lib/errors';
 import { digitsOnly } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
-import { dailyPriceFor, type PriceTier } from '@/lib/pricing';
+import { dailyPriceFor, tierTitle, type PriceTier } from '@/lib/pricing';
 import { cn } from '@/lib/utils';
 import type { WizardTarget } from './rentals-manager';
 
@@ -357,7 +357,7 @@ export function RentalWizard({
                 {applied && (
                   <span className="text-xs text-muted-foreground">
                     {billed} jour{billed > 1 ? 's' : ''} × {formatMoney(applied.price)}/jour
-                    {applied.tier ? ` (tarif à partir de ${applied.tier.min_months} mois)` : ''}. Modifiable.
+                    {applied.tier ? ` (tarif ${tierTitle(applied.tier.min_days).toLowerCase()})` : ''}. Modifiable.
                   </span>
                 )}
               </Field>

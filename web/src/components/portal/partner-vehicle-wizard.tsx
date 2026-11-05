@@ -205,7 +205,7 @@ export function PartnerVehicleWizard() {
               <div className="grid gap-2 sm:col-span-2">
                 <p className="text-sm font-medium">Prix souhaité selon la durée</p>
                 <p className="text-xs text-muted-foreground">
-                  Facultatif. Pour les longues locations, indiquez le prix par jour que vous souhaitez toucher à partir de 1, 2, 3… mois (1 mois = 30 jours). Il remplace le prix ci-dessus pour tous les jours de la location.
+                  Facultatif. Pour les longues locations, indiquez le prix par jour que vous souhaitez toucher à partir d’une durée de votre choix, en jours ou en mois (1 mois = 30 jours). Exemple : à partir de 10 jours, 8 000 FCFA/jour. Il remplace le prix ci-dessus pour tous les jours de la location.
                 </p>
                 <PriceTiersEditor rows={tiers} onChange={setTiers} idPrefix="wizard-tier" basePrice={form.partner_requested_price} />
               </div>
@@ -292,7 +292,7 @@ export function PartnerVehicleWizard() {
                   ['Catégorie', form.category || 'Non renseignée'],
                   ['Carburant / boîte', `${FUEL_TYPES[form.fuel_type] ?? 'Non renseigné'} / ${TRANSMISSIONS[form.transmission] ?? 'non renseignée'}`],
                   ['Prix souhaité', `${formatMoney(form.partner_requested_price)} / jour`],
-                  ...tiersFromRows(tiers).map((tier): [string, string] => [tierTitle(tier.min_months), `${formatMoney(tier.daily_price)} / jour`]),
+                  ...tiersFromRows(tiers).map((tier): [string, string] => [tierTitle(tier.min_days), `${formatMoney(tier.daily_price)} / jour`]),
                   ['Caution suggérée', formatMoney(form.deposit_amount || 0)],
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-3 border-b py-1.5">

@@ -299,8 +299,7 @@ export function VehicleSheet({
             <div>
               <h3 className="text-sm font-medium">Tarifs selon la durée</h3>
               <p className="text-xs text-muted-foreground">
-                Prix client par jour à partir d’un certain nombre de mois (1 mois = 30 jours). Il remplace le prix de base pour tous les jours de la location. Exemple : à partir de 2 mois,
-                18 000 FCFA/jour.
+                Prix client par jour à partir d’une durée que vous choisissez, en jours ou en mois (1 mois = 30 jours). Il remplace le prix de base pour tous les jours de la location. Exemples : à partir de 10 jours, 22 000 FCFA/jour ; à partir de 2 mois, 18 000 FCFA/jour.
               </p>
             </div>
             <PriceTiersEditor rows={tiers} onChange={setTiers} disabled={!editable} idPrefix="vehicle-tier" basePrice={form.rental_price} />

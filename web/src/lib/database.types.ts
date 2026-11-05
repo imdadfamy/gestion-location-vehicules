@@ -1559,19 +1559,19 @@ export type Database = {
         Row: {
           daily_price: number;
           id: string;
-          min_months: number;
+          min_days: number;
           vehicle_id: string;
         };
         Insert: {
           daily_price: number;
           id?: string;
-          min_months: number;
+          min_days: number;
           vehicle_id: string;
         };
         Update: {
           daily_price?: number;
           id?: string;
-          min_months?: number;
+          min_days?: number;
           vehicle_id?: string;
         };
         Relationships: [
@@ -1588,19 +1588,19 @@ export type Database = {
         Row: {
           daily_price: number;
           id: string;
-          min_months: number;
+          min_days: number;
           vehicle_id: string;
         };
         Insert: {
           daily_price: number;
           id?: string;
-          min_months: number;
+          min_days: number;
           vehicle_id: string;
         };
         Update: {
           daily_price?: number;
           id?: string;
-          min_months?: number;
+          min_days?: number;
           vehicle_id?: string;
         };
         Relationships: [
