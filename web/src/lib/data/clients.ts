@@ -47,7 +47,13 @@ export function saveClient(db: Db, form: ClientForm) {
   const row = Object.fromEntries(
     CLIENT_FIELDS.map((key) => [key, form[key].trim() === '' ? null : form[key].trim()]),
   ) as Record<(typeof CLIENT_FIELDS)[number], string | null>;
-  const values = { ...row, first_name: form.first_name.trim(), last_name: form.last_name.trim() };
+  // Le détail (nom ou code) n'a de sens que pour un influenceur ; sans provenance, rien n'est conservé.
+  const values = {
+    ...row,
+    first_name: form.first_name.trim(),
+    last_name: form.last_name.trim(),
+    acquisition_detail: form.acquisition_source === 'influencer' ? row.acquisition_detail : null,
+  };
   return form.id
     ? db.from('clients').update(values).eq('id', form.id).select().single()
     : db.from('clients').insert(values).select().single();

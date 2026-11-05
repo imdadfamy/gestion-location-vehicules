@@ -69,7 +69,7 @@ export function ReservationRentalStep({ reservationId, clientId }: { reservation
       const days = rentalDays(reservation.planned_departure_date, reservation.planned_return_date);
       const applied = dailyPriceFor(vehicle.data.rental_price, tiers.data, days);
       const driverDaily = reservation.with_driver ? Number(reservation.driver_daily_price ?? 0) : 0;
-      setHint(`${days} jour${days > 1 ? 's' : ''} × ${formatMoney(applied.price + driverDaily)}/jour${applied.tier ? ` (tarif ${tierTitle(applied.tier.min_days).toLowerCase()})` : ''}${driverDaily ? `, chauffeur inclus (${formatMoney(driverDaily)}/jour)` : ''}`);
+      setHint(`${days} jour${days > 1 ? 's' : ''} × ${formatMoney(applied.price)}/jour${applied.tier ? ` (tarif ${tierTitle(applied.tier.min_days).toLowerCase()})` : ''}${driverDaily ? ` + chauffeur ${formatMoney(driverDaily)}/jour` : ''}`);
       setForm((current) => ({
         ...current,
         rental_price: String(days * (applied.price + driverDaily)),

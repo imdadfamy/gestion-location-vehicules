@@ -30,7 +30,7 @@ begin
     select raw_user_meta_data into meta from auth.users where id = new.profile_id;
     if meta ->> 'acquisition_source' in ('ads', 'influencer', 'print', 'event', 'sponsoring', 'word_of_mouth', 'search', 'walk_in', 'partner', 'other') then
       new.acquisition_source := meta ->> 'acquisition_source';
-      new.acquisition_detail := left(nullif(trim(meta ->> 'acquisition_detail'), ''), 120);
+      new.acquisition_detail := case when new.acquisition_source = 'influencer' then left(nullif(trim(meta ->> 'acquisition_detail'), ''), 120) end;
     end if;
   end if;
   return new;
@@ -57,7 +57,7 @@ begin
   end if;
   update public.clients
     set acquisition_source = target_source,
-        acquisition_detail = case when target_source is null then null else left(nullif(trim(target_detail), ''), 120) end
+        acquisition_detail = case when target_source = 'influencer' then left(nullif(trim(target_detail), ''), 120) end
     where profile_id = auth.uid();
 end;
 $$;
@@ -125,7 +125,7 @@ begin
     nullif(trim(target_flight_number), ''), greatest(coalesce(target_passengers, 1), 1), target_luggage,
     target_vehicle_id, vehicle_text, target_quoted_price, trim(target_customer_name), trim(target_customer_phone),
     nullif(trim(target_notes), ''),
-    source_value, case when source_value is null then null else left(nullif(trim(target_acquisition_detail), ''), 120) end
+    source_value, case when source_value = 'influencer' then left(nullif(trim(target_acquisition_detail), ''), 120) end
   ) returning id into new_id;
 
   insert into public.notifications (user_id, notification_type, title, message, entity_type, entity_id)
