@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
 import { PageHeading } from '@/components/portal/page-heading';
 import { Field } from '@/components/staff/form-field';
+import { PriceTiersEditor } from '@/components/staff/price-tiers-editor';
 import { StatusBadge } from '@/components/staff/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,7 +28,9 @@ import {
 import { formatMoney } from '@/lib/data/public-catalog';
 import { APPROVAL_STATUSES } from '@/lib/data/partners';
 import { FUEL_TYPES, TRANSMISSIONS, VEHICLE_CATEGORIES } from '@/lib/data/vehicles';
+import { loadTiers } from '@/lib/data/price-tiers';
 import { frenchError } from '@/lib/errors';
+import { rowsFromTiers, tiersFromRows, validateTierRows, type TierRow } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/client';
 
 const NONE = '__none';
@@ -54,6 +57,7 @@ export function PartnerVehicles() {
   const [vehicles, setVehicles] = useState<MyVehicle[] | null>(null);
   const [error, setError] = useState('');
   const [form, setForm] = useState<SubmissionForm | null>(null);
+  const [tiers, setTiers] = useState<TierRow[]>([]);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [photoVehicle, setPhotoVehicle] = useState<MyVehicle | null>(null);
@@ -107,8 +111,10 @@ export function PartnerVehicles() {
     setFormError('');
     if (!form.registration_number.trim() || !form.make.trim() || !form.model.trim() || !(Number(form.partner_requested_price) > 0))
       return setFormError('Immatriculation, marque, modèle et prix souhaité sont obligatoires.');
+    const tierError = validateTierRows(tiers);
+    if (tierError) return setFormError(tierError);
     setSaving(true);
-    const { error: failure } = await submitVehicle(createClient(), form);
+    const { error: failure } = await submitVehicle(createClient(), form, tiersFromRows(tiers));
     setSaving(false);
     if (failure) return setFormError(frenchError(failure));
     setForm(null);
@@ -177,6 +183,8 @@ export function PartnerVehicles() {
                         size="sm"
                         onClick={() => {
                           setForm(toSubmission(vehicle));
+                          setTiers([]);
+                          loadTiers(createClient(), 'vehicle_partner_price_tiers', vehicle.id).then((result) => !result.error && setTiers(rowsFromTiers(result.data)));
                           setFormError('');
                         }}
                       >
@@ -230,6 +238,13 @@ export function PartnerVehicles() {
                 <Field label="Prix souhaité (FCFA/jour)" required htmlFor="submission-partner_requested_price" className="sm:col-span-3">
                   <Input type="number" min={0} inputMode="numeric" {...input('partner_requested_price')} />
                 </Field>
+                <div className="grid gap-2 sm:col-span-6">
+                  <p className="text-sm font-medium">Prix souhaité selon la durée</p>
+                  <p className="text-xs text-muted-foreground">
+                    Facultatif. Pour les longues locations, indiquez le prix par jour que vous souhaitez toucher à partir de 1, 2, 3… mois (1 mois = 30 jours). Il remplace le prix ci-dessus pour tous les jours de la location.
+                  </p>
+                  <PriceTiersEditor rows={tiers} onChange={setTiers} idPrefix="submission-tier" basePrice={form.partner_requested_price} />
+                </div>
                 <Field label="Caution suggérée (FCFA)" htmlFor="submission-deposit_amount" className="sm:col-span-3">
                   <Input type="number" min={0} inputMode="numeric" {...input('deposit_amount')} />
                 </Field>

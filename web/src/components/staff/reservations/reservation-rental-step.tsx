@@ -1,5 +1,8 @@
 'use client';
 
+import { loadTiers } from '@/lib/data/price-tiers';
+import { formatMoney } from '@/lib/data/public-catalog';
+import { dailyPriceFor, rentalDays } from '@/lib/pricing';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -39,6 +42,7 @@ export function ReservationRentalStep({ reservationId, clientId }: { reservation
   const [loading, setLoading] = useState(!!reservationId && !!clientId);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [hint, setHint] = useState('');
 
   useEffect(() => {
     if (!reservationId || !clientId) return;
@@ -60,9 +64,15 @@ export function ReservationRentalStep({ reservationId, clientId }: { reservation
         return: reservation.planned_return_date,
         driver: reservation.with_driver ? Number(reservation.driver_daily_price ?? 0) : null,
       });
+      // Total = jours × prix par jour de la durée (+ supplément chauffeur par jour) ; modifiable ensuite.
+      const tiers = await loadTiers(db, 'vehicle_price_tiers', reservation.vehicle_id);
+      const days = rentalDays(reservation.planned_departure_date, reservation.planned_return_date);
+      const applied = dailyPriceFor(vehicle.data.rental_price, tiers.data, days);
+      const driverDaily = reservation.with_driver ? Number(reservation.driver_daily_price ?? 0) : 0;
+      setHint(`${days} jour${days > 1 ? 's' : ''} × ${formatMoney(applied.price + driverDaily)}/jour${applied.tier ? ` (tarif à partir de ${applied.tier.min_months} mois)` : ''}${driverDaily ? `, chauffeur inclus (${formatMoney(driverDaily)}/jour)` : ''}`);
       setForm((current) => ({
         ...current,
-        rental_price: String(vehicle.data.rental_price ?? 0),
+        rental_price: String(days * (applied.price + driverDaily)),
         deposit_amount: String(vehicle.data.deposit_amount ?? 0),
         notes: reservation.observation ?? '',
       }));
@@ -134,6 +144,7 @@ export function ReservationRentalStep({ reservationId, clientId }: { reservation
               </Field>
               <Field label="Prix total (FCFA)" required htmlFor="rental-rental_price" className="sm:col-span-2">
                 <Input type="number" min={0} inputMode="numeric" {...field('rental_price')} />
+                {hint && <span className="text-xs text-muted-foreground">{hint}. Modifiable.</span>}
               </Field>
               <Field label="Caution (FCFA)" htmlFor="rental-deposit_amount" className="sm:col-span-2">
                 <Input type="number" min={0} inputMode="numeric" {...field('deposit_amount')} />

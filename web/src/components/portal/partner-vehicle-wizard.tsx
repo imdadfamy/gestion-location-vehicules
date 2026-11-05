@@ -9,6 +9,7 @@ import { FormMessage } from '@/components/auth/form-message';
 import { Choice } from '@/components/portal/partner-vehicles';
 import { PageHeading } from '@/components/portal/page-heading';
 import { Field } from '@/components/staff/form-field';
+import { PriceTiersEditor } from '@/components/staff/price-tiers-editor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ import { EMPTY_SUBMISSION, submitVehicle, uploadPhoto, type SubmissionForm } fro
 import { formatMoney } from '@/lib/data/public-catalog';
 import { FUEL_TYPES, TRANSMISSIONS, VEHICLE_CATEGORIES } from '@/lib/data/vehicles';
 import { frenchError } from '@/lib/errors';
+import { tiersFromRows, tierTitle, validateTierRows, type TierRow } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -30,13 +32,14 @@ const SHOTS = ['Avant', 'Arrière', 'Côté', 'Intérieur', 'Tableau de bord'];
 type Photo = { file: File; url: string };
 
 /** Étapes de validation : message d'erreur, ou chaîne vide si l'étape est complète. */
-function problem(step: number, form: SubmissionForm, photos: Photo[]) {
+function problem(step: number, form: SubmissionForm, photos: Photo[], tiers: TierRow[]) {
   if (step === 0) {
     if (!form.registration_number.trim() || !form.make.trim() || !form.model.trim()) return 'Immatriculation, marque et modèle sont obligatoires.';
     const year = Number(form.year);
     if (form.year.trim() && (!Number.isInteger(year) || year < 1980 || year > new Date().getFullYear() + 1)) return 'Année invalide.';
   }
   if (step === 1 && !(Number(form.partner_requested_price) > 0)) return 'Indiquez le prix que vous souhaitez toucher par jour.';
+  if (step === 1) return validateTierRows(tiers);
   if (step === 2 && photos.length < MIN_PHOTOS) return `Ajoutez au moins ${MIN_PHOTOS} photos (il en manque ${MIN_PHOTOS - photos.length}).`;
   return '';
 }
@@ -46,6 +49,7 @@ export function PartnerVehicleWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<SubmissionForm>({ ...EMPTY_SUBMISSION });
+  const [tiers, setTiers] = useState<TierRow[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [error, setError] = useState('');
   const [sending, setSending] = useState<{ done: number; total: number } | null>(null);
@@ -89,7 +93,7 @@ export function PartnerVehicleWizard() {
   }
 
   function next() {
-    const message = problem(step, form, photos);
+    const message = problem(step, form, photos, tiers);
     if (message) return setError(message);
     setError('');
     setStep(step + 1);
@@ -97,7 +101,7 @@ export function PartnerVehicleWizard() {
 
   async function submit() {
     for (let i = 0; i < 3; i++) {
-      const message = problem(i, form, photos);
+      const message = problem(i, form, photos, tiers);
       if (message) {
         setStep(i);
         return setError(message);
@@ -106,7 +110,7 @@ export function PartnerVehicleWizard() {
     setError('');
     setSending({ done: 0, total: photos.length });
     const db = createClient();
-    const { data, error: failure } = await submitVehicle(db, form);
+    const { data, error: failure } = await submitVehicle(db, form, tiersFromRows(tiers));
     if (failure || !data) {
       setSending(null);
       return setError(frenchError(failure ?? new Error('Création impossible')));
@@ -198,6 +202,13 @@ export function PartnerVehicleWizard() {
               <Field label="Prix souhaité (FCFA par jour)" required htmlFor="wizard-partner_requested_price">
                 <Input type="number" min={0} inputMode="numeric" autoFocus {...input('partner_requested_price')} />
               </Field>
+              <div className="grid gap-2 sm:col-span-2">
+                <p className="text-sm font-medium">Prix souhaité selon la durée</p>
+                <p className="text-xs text-muted-foreground">
+                  Facultatif. Pour les longues locations, indiquez le prix par jour que vous souhaitez toucher à partir de 1, 2, 3… mois (1 mois = 30 jours). Il remplace le prix ci-dessus pour tous les jours de la location.
+                </p>
+                <PriceTiersEditor rows={tiers} onChange={setTiers} idPrefix="wizard-tier" basePrice={form.partner_requested_price} />
+              </div>
               <Field label="Caution suggérée (FCFA)" htmlFor="wizard-deposit_amount">
                 <Input type="number" min={0} inputMode="numeric" {...input('deposit_amount')} />
               </Field>
@@ -281,6 +292,7 @@ export function PartnerVehicleWizard() {
                   ['Catégorie', form.category || 'Non renseignée'],
                   ['Carburant / boîte', `${FUEL_TYPES[form.fuel_type] ?? 'Non renseigné'} / ${TRANSMISSIONS[form.transmission] ?? 'non renseignée'}`],
                   ['Prix souhaité', `${formatMoney(form.partner_requested_price)} / jour`],
+                  ...tiersFromRows(tiers).map((tier): [string, string] => [tierTitle(tier.min_months), `${formatMoney(tier.daily_price)} / jour`]),
                   ['Caution suggérée', formatMoney(form.deposit_amount || 0)],
                 ].map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-3 border-b py-1.5">

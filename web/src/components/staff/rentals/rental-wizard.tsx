@@ -23,9 +23,12 @@ import {
   type WizardClient,
   type WizardRental,
 } from '@/lib/data/rentals';
+import { loadTiers } from '@/lib/data/price-tiers';
+import { formatMoney } from '@/lib/data/public-catalog';
 import { frenchError } from '@/lib/errors';
 import { digitsOnly } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
+import { dailyPriceFor, type PriceTier } from '@/lib/pricing';
 import { cn } from '@/lib/utils';
 import type { WizardTarget } from './rentals-manager';
 
@@ -54,6 +57,9 @@ export function RentalWizard({
   const [step, setStep] = useState(1);
   const [client, setClient] = useState<WizardClient>(EMPTY_WIZARD_CLIENT);
   const [rental, setRental] = useState<WizardRental>(EMPTY_WIZARD_RENTAL);
+  // Tarifs de durée du véhicule choisi ; le prix total se calcule tant qu'on ne l'a pas saisi soi-même.
+  const [tiers, setTiers] = useState<PriceTier[]>([]);
+  const [priceTouched, setPriceTouched] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [matches, setMatches] = useState<Client[]>([]);
   const [files, setFiles] = useState<Record<string, File>>({});
@@ -97,6 +103,9 @@ export function RentalWizard({
 
   const editing = source?.mode === 'edit' ? source.rental : null;
   const days = durationDays(rental);
+  // Facturation : toute journée commencée compte.
+  const billedDays = (value: number) => (value > 0 ? Math.max(1, Math.ceil(value)) : 0);
+  const billed = billedDays(days);
 
   const clientField = (key: keyof Omit<WizardClient, 'id'>, phone = false) => ({
     id: `wizard-${key}`,
@@ -104,10 +113,22 @@ export function RentalWizard({
     onChange: (event: React.ChangeEvent<HTMLInputElement>) =>
       setClient({ ...client, [key]: phone ? digitsOnly(event.target.value) : event.target.value }),
   });
+  const pickedVehicle = vehicles.find((item) => item.id === rental.vehicle_id);
+  const applied = pickedVehicle && billed > 0 ? dailyPriceFor(pickedVehicle.rental_price, tiers, billed) : null;
+  const totalFor = (next: WizardRental, tierList: PriceTier[]) => {
+    const vehicle = vehicles.find((item) => item.id === next.vehicle_id);
+    const nextDays = billedDays(durationDays(next));
+    return vehicle && nextDays > 0 ? String(nextDays * dailyPriceFor(vehicle.rental_price, tierList, nextDays).price) : next.rental_price;
+  };
   const rentalField = (key: keyof Omit<WizardRental, 'payment_received' | 'vehicle_id'>) => ({
     id: `wizard-${key}`,
     value: rental[key],
-    onChange: (event: React.ChangeEvent<HTMLInputElement>) => setRental({ ...rental, [key]: event.target.value }),
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+      const next = { ...rental, [key]: event.target.value };
+      if (key === 'rental_price') setPriceTouched(true);
+      else if ((key === 'departure_date' || key === 'return_date') && !priceTouched) next.rental_price = totalFor(next, tiers);
+      setRental(next);
+    },
   });
 
   async function findMatches() {
@@ -298,13 +319,15 @@ export function RentalWizard({
                   value={rental.vehicle_id || undefined}
                   onValueChange={(id) => {
                     const vehicle = vehicles.find((item) => item.id === id);
-                    setRental({
-                      ...rental,
-                      vehicle_id: id,
-                      ...(vehicle && {
-                        rental_price: String(vehicle.rental_price ?? 0),
-                        deposit_amount: String(vehicle.deposit_amount ?? 0),
-                      }),
+                    setPriceTouched(false);
+                    setTiers([]);
+                    const base = { ...rental, vehicle_id: id, ...(vehicle && { deposit_amount: String(vehicle.deposit_amount ?? 0) }) };
+                    const baseDays = billedDays(durationDays(base));
+                    setRental({ ...base, rental_price: vehicle ? String(baseDays > 0 ? baseDays * Number(vehicle.rental_price ?? 0) : Number(vehicle.rental_price ?? 0)) : base.rental_price });
+                    loadTiers(createClient(), 'vehicle_price_tiers', id).then((result) => {
+                      if (result.error) return;
+                      setTiers(result.data);
+                      setRental((current) => (current.vehicle_id === id ? { ...current, rental_price: totalFor(current, result.data) } : current));
                     });
                   }}
                 >
@@ -331,6 +354,12 @@ export function RentalWizard({
               </Field>
               <Field label="Prix total (FCFA)" required htmlFor="wizard-rental_price" className="sm:col-span-2">
                 <Input type="number" min={0} inputMode="numeric" {...rentalField('rental_price')} />
+                {applied && (
+                  <span className="text-xs text-muted-foreground">
+                    {billed} jour{billed > 1 ? 's' : ''} × {formatMoney(applied.price)}/jour
+                    {applied.tier ? ` (tarif à partir de ${applied.tier.min_months} mois)` : ''}. Modifiable.
+                  </span>
+                )}
               </Field>
               <Field label="Caution (FCFA)" htmlFor="wizard-deposit_amount" className="sm:col-span-2">
                 <Input type="number" min={0} inputMode="numeric" {...rentalField('deposit_amount')} />

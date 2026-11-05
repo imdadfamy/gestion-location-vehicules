@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import type { Translate } from '@/lib/i18n';
+import { dailyPriceFor, parseTiers } from '@/lib/pricing';
 import { formatMoney, fuelLabel, rentalDays, transmissionLabel, whatsappLink, type CatalogVehicle } from '@/lib/data/public-catalog';
 import { cn } from '@/lib/utils';
 import { useLang } from './lang-provider';
@@ -62,7 +63,9 @@ export function VehicleDetail({
   const unavailable = vehicle.is_available === false;
   const name = `${vehicle.make} ${vehicle.model}`;
   const driverPrice = Number(vehicle.driver_daily_price ?? 0);
-  const rentalTotal = Number(vehicle.rental_price) * days;
+  const tiers = parseTiers(vehicle.price_tiers);
+  const { price: dayPrice, tier: appliedTier } = dailyPriceFor(vehicle.rental_price, tiers, days);
+  const rentalTotal = dayPrice * days;
   const driverTotal = withDriver ? driverPrice * days : 0;
   const total = rentalTotal + driverTotal;
 
@@ -163,11 +166,27 @@ export function VehicleDetail({
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
+        {tiers.length > 0 && (
+          <div className="grid gap-1 rounded-lg border bg-muted/30 p-3 text-sm">
+            <p className="font-medium">{t('Tarifs longue durée')}</p>
+            <ul className="grid gap-0.5 text-muted-foreground">
+              {tiers.map((tier) => (
+                <li key={tier.min_months} className="flex justify-between gap-3">
+                  <span>{t('À partir de {n} mois', { n: tier.min_months })}</span>
+                  <span className="tabular-nums">
+                    {money(tier.daily_price)} {t('/ jour')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {days > 0 ? (
           <div className="grid gap-1 text-sm">
             <div className="flex justify-between gap-3 text-muted-foreground">
               <span>
-                {money(vehicle.rental_price)} × {days} {plural(days, 'jour', 'jours')}
+                {money(dayPrice)} × {days} {plural(days, 'jour', 'jours')}
+                {appliedTier && <span className="ml-1 text-xs">({t('À partir de {n} mois', { n: appliedTier.min_months })})</span>}
               </span>
               <span className="tabular-nums">{money(rentalTotal)}</span>
             </div>

@@ -1555,6 +1555,64 @@ export type Database = {
           },
         ];
       };
+      vehicle_partner_price_tiers: {
+        Row: {
+          daily_price: number;
+          id: string;
+          min_months: number;
+          vehicle_id: string;
+        };
+        Insert: {
+          daily_price: number;
+          id?: string;
+          min_months: number;
+          vehicle_id: string;
+        };
+        Update: {
+          daily_price?: number;
+          id?: string;
+          min_months?: number;
+          vehicle_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'vehicle_partner_price_tiers_vehicle_id_fkey';
+            columns: ['vehicle_id'];
+            isOneToOne: false;
+            referencedRelation: 'vehicles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      vehicle_price_tiers: {
+        Row: {
+          daily_price: number;
+          id: string;
+          min_months: number;
+          vehicle_id: string;
+        };
+        Insert: {
+          daily_price: number;
+          id?: string;
+          min_months: number;
+          vehicle_id: string;
+        };
+        Update: {
+          daily_price?: number;
+          id?: string;
+          min_months?: number;
+          vehicle_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'vehicle_price_tiers_vehicle_id_fkey';
+            columns: ['vehicle_id'];
+            isOneToOne: false;
+            referencedRelation: 'vehicles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       vehicle_maintenance: {
         Row: {
           cost: number;
@@ -1903,6 +1961,7 @@ export type Database = {
           transmission: string;
           year: number;
           driver_daily_price: number;
+          price_tiers: Json;
         }[];
       };
       client_can_add_inspection_photo: {
@@ -2157,6 +2216,14 @@ export type Database = {
         Returns: boolean;
       };
       is_super_admin: { Args: never; Returns: boolean };
+      vehicle_client_daily_price: {
+        Args: { target_days: number; target_vehicle: string };
+        Returns: number;
+      };
+      vehicle_partner_daily_price: {
+        Args: { target_days: number; target_vehicle: string };
+        Returns: number;
+      };
       partner_rental_earnings: {
         Args: never;
         Returns: {
@@ -2220,6 +2287,7 @@ export type Database = {
           transmission: string;
           year: number;
           driver_daily_price: number;
+          price_tiers: Json;
         }[];
       };
       public_create_transfer_request: {

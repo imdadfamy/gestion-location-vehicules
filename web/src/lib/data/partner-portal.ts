@@ -1,3 +1,5 @@
+import { saveTiers } from '@/lib/data/price-tiers';
+import type { PriceTier } from '@/lib/pricing';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
 import { signedUrl } from './storage';
@@ -136,7 +138,7 @@ export function toSubmission(vehicle: MyVehicle): SubmissionForm {
 }
 
 /** Soumission ou modification ; le trigger remet le véhicule en évaluation si besoin. */
-export function submitVehicle(db: Db, form: SubmissionForm) {
+export async function submitVehicle(db: Db, form: SubmissionForm, tiers: PriceTier[] = []) {
   const blank = (value: string) => (value.trim() === '' ? null : value.trim());
   const values = {
     registration_number: form.registration_number.trim(),
@@ -155,9 +157,13 @@ export function submitVehicle(db: Db, form: SubmissionForm) {
     deposit_amount: Number(form.deposit_amount || 0),
     notes: blank(form.notes),
   };
-  return form.id
+  const result = await (form.id
     ? db.from('vehicles').update(values).eq('id', form.id).select('id').single()
-    : db.from('vehicles').insert(values).select('id').single();
+    : db.from('vehicles').insert(values).select('id').single());
+  if (result.error || !result.data) return result;
+  // Prix souhaités selon la durée : remplacés par la liste saisie.
+  const saved = await saveTiers(db, 'vehicle_partner_price_tiers', result.data.id, tiers);
+  return saved.error ? { data: null, error: saved.error } : result;
 }
 
 /** Photos du véhicule avec un lien de 10 minutes. */

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { FormMessage } from '@/components/auth/form-message';
 import { Field } from '@/components/staff/form-field';
+import { PriceTiersEditor } from '@/components/staff/price-tiers-editor';
 import { StatusBadge } from '@/components/staff/status-badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -33,9 +34,11 @@ import {
   type Photo,
 } from '@/lib/data/partners';
 import { formatMoney } from '@/lib/data/public-catalog';
+import { loadTiers, saveTiers } from '@/lib/data/price-tiers';
 import { frenchError } from '@/lib/errors';
 import { digitsOnly, frDateTime } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
+import { dailyPriceFor, DAYS_PER_MONTH, rowsFromTiers, tiersFromRows, tierTitle, validateTierRows, type TierRow } from '@/lib/pricing';
 
 /** Évaluation d'un véhicule soumis, ou réglages d'un véhicule déjà validé. */
 export function PartnerVehicleSheet({
@@ -63,6 +66,8 @@ export function PartnerVehicleSheet({
   const [confirmResend, setConfirmResend] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [clientTiers, setClientTiers] = useState<TierRow[]>([]);
+  const [partnerTiers, setPartnerTiers] = useState<TierRow[]>([]);
 
   // Prix proposé : prix déjà fixé, sinon prix demandé + marge minimale configurée.
   if (vehicle && vehicle.id !== source?.id) {
@@ -75,11 +80,27 @@ export function PartnerVehicleSheet({
       ),
     );
     setDeposit(String(Number(vehicle.deposit_amount || 0)));
+    setClientTiers([]);
+    setPartnerTiers([]);
     setRejecting(false);
     setReason('');
     setError('');
   }
   const current = vehicle ?? source;
+
+  // Prix selon la durée : ceux de l'équipe (clients) et ceux souhaités par le partenaire.
+  const vehicleId = vehicle?.id;
+  useEffect(() => {
+    if (!vehicleId) return;
+    let active = true;
+    const db = createClient();
+    loadTiers(db, 'vehicle_price_tiers', vehicleId).then((result) => active && !result.error && setClientTiers(rowsFromTiers(result.data)));
+    loadTiers(db, 'vehicle_partner_price_tiers', vehicleId).then((result) => active && !result.error && setPartnerTiers(rowsFromTiers(result.data)));
+    return () => {
+      active = false;
+    };
+  }, [vehicleId]);
+
   if (!current) return null;
   const margin = Number(price || 0) - Number(current.partner_requested_price || 0);
   const state = APPROVAL_STATUSES[current.approval_status];
@@ -93,12 +114,23 @@ export function PartnerVehicleSheet({
     onDone(message);
   }
 
+  /** Enregistre les deux listes de paliers (prix client et prix souhaité par le partenaire). */
+  async function saveBothTiers() {
+    const db = createClient();
+    const client = await saveTiers(db, 'vehicle_price_tiers', current!.id, tiersFromRows(clientTiers));
+    if (client.error) return client;
+    return saveTiers(db, 'vehicle_partner_price_tiers', current!.id, tiersFromRows(partnerTiers));
+  }
+  const tiersProblem = () => validateTierRows(clientTiers) || validateTierRows(partnerTiers);
+
   function approve() {
     if (!(Number(price) > 0)) return setError('Indiquez un prix client valide.');
-    run(
-      () => decideVehicle(createClient(), current!, reviewerId, { kind: 'approved', price: Number(price), deposit: Number(deposit || 0) }),
-      'Véhicule validé.',
-    );
+    const problem = tiersProblem();
+    if (problem) return setError(problem);
+    run(async () => {
+      const decided = await decideVehicle(createClient(), current!, reviewerId, { kind: 'approved', price: Number(price), deposit: Number(deposit || 0) });
+      return decided.error ? decided : saveBothTiers();
+    }, 'Véhicule validé.');
   }
 
   function reject() {
@@ -108,16 +140,59 @@ export function PartnerVehicleSheet({
 
   function savePrice() {
     if (!(Number(price) > 0)) return setError('Indiquez un prix client valide.');
-    run(
-      () =>
-        updatePartnerVehicle(createClient(), current!.id, {
-          rental_price: Number(price),
-          deposit_amount: Number(deposit || 0),
-          commission_amount: Number(price) - Number(current!.partner_requested_price),
-        }),
-      'Prix mis à jour.',
-    );
+    const problem = tiersProblem();
+    if (problem) return setError(problem);
+    run(async () => {
+      const updated = await updatePartnerVehicle(createClient(), current!.id, {
+        rental_price: Number(price),
+        deposit_amount: Number(deposit || 0),
+        commission_amount: Number(price) - Number(current!.partner_requested_price),
+      });
+      return updated.error ? updated : saveBothTiers();
+    }, 'Prix mis à jour.');
   }
+
+  // Marge à chaque palier : prix client moins prix du partenaire pour la même durée.
+  const tierMargins = (() => {
+    const client = tiersFromRows(clientTiers);
+    const partner = tiersFromRows(partnerTiers);
+    if (!client.length && !partner.length) return [];
+    const months = [...new Set([0, ...client.map((tier) => tier.min_months), ...partner.map((tier) => tier.min_months)])].sort((a, b) => a - b);
+    return months.map((count) => {
+      const days = count === 0 ? 1 : count * DAYS_PER_MONTH;
+      return {
+        count,
+        client: dailyPriceFor(price, client, days).price,
+        partner: dailyPriceFor(current.partner_requested_price, partner, days).price,
+      };
+    });
+  })();
+  const tierBlocks = (
+    <div className="grid gap-4 border-t pt-4">
+      <div className="grid gap-2">
+        <p className="text-sm font-medium">Prix souhaité par le partenaire selon la durée</p>
+        <PriceTiersEditor rows={partnerTiers} onChange={setPartnerTiers} idPrefix="partner-tier" basePrice={String(current.partner_requested_price ?? '')} />
+      </div>
+      <div className="grid gap-2">
+        <p className="text-sm font-medium">Prix client selon la durée</p>
+        <PriceTiersEditor rows={clientTiers} onChange={setClientTiers} idPrefix="client-tier" basePrice={price} />
+      </div>
+      {tierMargins.length > 0 && (
+        <div className="grid gap-1 text-xs">
+          <p className="font-medium">Votre marge par jour selon la durée</p>
+          {tierMargins.map((line) => {
+            const gap = line.client - line.partner;
+            return (
+              <p key={line.count} className={gap < minMargin ? 'text-destructive' : 'text-muted-foreground'}>
+                {line.count === 0 ? 'Moins d’un mois' : tierTitle(line.count)} : {formatMoney(gap)} ({formatMoney(line.client)} − {formatMoney(line.partner)})
+                {gap < minMargin ? ' — sous le minimum' : ''}
+              </p>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 
   const priceFields = (label: string) => (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -163,6 +238,7 @@ export function PartnerVehicleSheet({
           {current.approval_status === 'pending' && (
             <>
               {priceFields('Prix client final (FCFA/jour)')}
+              {tierBlocks}
               {margin < minMargin ? (
                 <Alert>
                   <AlertTriangle />
@@ -185,6 +261,7 @@ export function PartnerVehicleSheet({
           {current.approval_status === 'approved' && (
             <>
               {priceFields('Prix client (FCFA/jour)')}
+              {tierBlocks}
               <p className="text-xs text-muted-foreground">Marge actuelle : {formatMoney(margin)}</p>
             </>
           )}

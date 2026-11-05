@@ -20,6 +20,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { createReservation, portalVehicles, type PortalVehicle } from '@/lib/data/client-portal';
 import { companyContact, formatMoney, fuelLabel, transmissionLabel, whatsappLink } from '@/lib/data/public-catalog';
 import { frenchError } from '@/lib/errors';
+import { dailyPriceFor, parseTiers, tierTitle } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/client';
 
 const iso = (local: string) => {
@@ -270,6 +271,16 @@ export function ClientVehicles() {
                 <span className="text-base font-normal text-muted-foreground"> / jour</span>
               </p>
               <p className="text-sm text-muted-foreground">Caution : {formatMoney(selected.deposit_amount)}</p>
+              {parseTiers(selected.price_tiers).length > 0 && (
+                <ul className="mt-2 grid gap-0.5 border-t pt-2 text-sm text-muted-foreground">
+                  {parseTiers(selected.price_tiers).map((tier) => (
+                    <li key={tier.min_months} className="flex justify-between gap-3">
+                      <span>{tierTitle(tier.min_months)}</span>
+                      <span className="tabular-nums">{formatMoney(tier.daily_price)} / jour</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             <div className="grid gap-2">
               <p id="portal-mode-label" className="text-sm font-medium">
@@ -297,7 +308,7 @@ export function ClientVehicles() {
                     <span className="text-muted-foreground">
                       {days} jour{days > 1 ? 's' : ''} ·{' '}
                     </span>
-                    <strong>{formatMoney(days * (Number(selected.rental_price ?? 0) + (withDriver ? Number(selected.driver_daily_price ?? 0) : 0)))}</strong>
+                    <strong>{formatMoney(days * (dailyPriceFor(selected.rental_price, parseTiers(selected.price_tiers), days).price + (withDriver ? Number(selected.driver_daily_price ?? 0) : 0)))}</strong>
                   </>
                 ) : (
                   <span className="text-muted-foreground">Choisissez vos dates pour voir le total</span>

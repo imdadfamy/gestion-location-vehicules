@@ -43,6 +43,17 @@ Un véhicule en maintenance ne doit pas pouvoir être affecté à une nouvelle l
 
 Un véhicule marqué comme indisponible ne doit pas pouvoir être affecté à une nouvelle location.
 
+### Tarifs selon la durée
+
+Un véhicule a un prix de base par jour et, en option, des paliers « à partir de N mois, X FCFA par jour » (l'équipe peut en ajouter ou en retirer librement).
+
+* Un mois compte 30 jours ; toute journée commencée est comptée.
+* Le palier le plus élevé atteint s'applique à tous les jours de la location (45 jours : palier « 1 mois »). Sans palier atteint, le prix de base s'applique.
+* Le total d'une location = jours × prix par jour applicable (+ supplément chauffeur par jour s'il y en a un). Le total est proposé à la création de la location et reste modifiable par l'équipe.
+* Une location créée garde son total enregistré : modifier les paliers ensuite ne change jamais une location ou un contrat existant.
+* Véhicule de partenaire : le partenaire saisit ses propres paliers (prix qu'il souhaite toucher par jour) tant que le véhicule n'est pas validé ; ensuite seule l'équipe les modifie. La part du partenaire suit ses paliers (jours × son prix pour la durée). L'équipe fixe les paliers de prix client et vérifie la marge minimale à chaque palier.
+* Calcul unique : fonctions `vehicle_client_daily_price` et `vehicle_partner_daily_price` (base de données) et `web/src/lib/pricing.ts`.
+
 ---
 
 ## 5. Locations

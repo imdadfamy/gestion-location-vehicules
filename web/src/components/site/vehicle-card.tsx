@@ -2,6 +2,7 @@ import { Car, Fuel, Gauge, Images, Snowflake, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { formatMoney, fuelLabel, transmissionLabel, type CardVehicle } from '@/lib/data/public-catalog';
+import { dailyPriceFor, parseTiers } from '@/lib/pricing';
 import { cn } from '@/lib/utils';
 import { useLang } from './lang-provider';
 
@@ -13,6 +14,7 @@ export function VehicleCard({ vehicle, action, days = 0, onOpen }: { vehicle: Ca
   const { t, plural, locale } = useLang();
   const money = (value: unknown) => formatMoney(value, locale);
   const photo = vehicle.photos[0];
+  const dayPrice = dailyPriceFor(vehicle.rental_price, parseTiers((vehicle as { price_tiers?: unknown }).price_tiers), days).price;
   const unavailable = vehicle.is_available === false;
   const image = (
     <div className="relative aspect-[16/10] overflow-hidden bg-muted">
@@ -87,9 +89,9 @@ export function VehicleCard({ vehicle, action, days = 0, onOpen }: { vehicle: Ca
               <p className="text-xs text-muted-foreground">
                 {t('Total estimé')} · {days} {plural(days, 'jour', 'jours')}
               </p>
-              <p className="text-lg font-semibold">{money(Number(vehicle.rental_price) * days)}</p>
+              <p className="text-lg font-semibold">{money(dayPrice * days)}</p>
               <p className="text-xs text-muted-foreground">
-                {money(vehicle.rental_price)} {t('/ jour')} · {t('caution')} {money(vehicle.deposit_amount)}
+                {money(dayPrice)} {t('/ jour')} · {t('caution')} {money(vehicle.deposit_amount)}
               </p>
             </>
           ) : (

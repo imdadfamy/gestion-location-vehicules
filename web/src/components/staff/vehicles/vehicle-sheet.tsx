@@ -6,6 +6,7 @@ import { FileText, ImagePlus, Loader2, Paperclip, ShieldAlert, Trash2, Wrench } 
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
 import { Field } from '@/components/staff/form-field';
+import { PriceTiersEditor } from '@/components/staff/price-tiers-editor';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +37,9 @@ import {
   type VehicleDocument,
   type VehicleForm,
 } from '@/lib/data/vehicles';
+import { loadTiers, saveTiers } from '@/lib/data/price-tiers';
 import { frenchError } from '@/lib/errors';
+import { rowsFromTiers, tiersFromRows, validateTierRows, type TierRow } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/client';
 
 export type VehiclePermissions = {
@@ -95,6 +98,7 @@ export function VehicleSheet({
   const [source, setSource] = useState<VehicleForm | null>(null);
   const [form, setForm] = useState<VehicleForm | null>(null);
   const [files, setFiles] = useState<Files>(NO_FILES);
+  const [tiers, setTiers] = useState<TierRow[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -105,6 +109,7 @@ export function VehicleSheet({
     setSource(vehicle);
     setForm(vehicle);
     setFiles(NO_FILES);
+    setTiers([]);
     setError('');
   }
 
@@ -116,6 +121,9 @@ export function VehicleSheet({
       if (!current) return;
       if (result.error) setError(frenchError(result.error));
       else setFiles({ documents: result.documents, photos: result.photos });
+    });
+    loadTiers(createClient(), 'vehicle_price_tiers', vehicleId).then((result) => {
+      if (current && !result.error) setTiers(rowsFromTiers(result.data));
     });
     return () => {
       current = false;
@@ -137,10 +145,15 @@ export function VehicleSheet({
     setError('');
     if (!form.registration_number.trim() || !form.make.trim() || !form.model.trim())
       return setError('Immatriculation, marque et modèle sont obligatoires.');
+    const tierError = validateTierRows(tiers);
+    if (tierError) return setError(tierError);
     setSaving(true);
-    const { data, error: saveError } = await saveVehicle(createClient(), form);
+    const db = createClient();
+    const { data, error: saveError } = await saveVehicle(db, form);
+    const tiersError = !saveError && data ? (await saveTiers(db, 'vehicle_price_tiers', data.id, tiersFromRows(tiers))).error : null;
     setSaving(false);
     if (saveError) return setError(frenchError(saveError));
+    if (tiersError) return setError(frenchError(tiersError));
     toast.success(
       form.id
         ? 'Informations du véhicule mises à jour.'
@@ -280,6 +293,18 @@ export function VehicleSheet({
               <Input type="date" {...input('technical_inspection_expiry_date')} />
             </Field>
           </div>
+
+          <Separator />
+          <section className="grid gap-3">
+            <div>
+              <h3 className="text-sm font-medium">Tarifs selon la durée</h3>
+              <p className="text-xs text-muted-foreground">
+                Prix client par jour à partir d’un certain nombre de mois (1 mois = 30 jours). Il remplace le prix de base pour tous les jours de la location. Exemple : à partir de 2 mois,
+                18 000 FCFA/jour.
+              </p>
+            </div>
+            <PriceTiersEditor rows={tiers} onChange={setTiers} disabled={!editable} idPrefix="vehicle-tier" basePrice={form.rental_price} />
+          </section>
 
           {form.id && (
             <>

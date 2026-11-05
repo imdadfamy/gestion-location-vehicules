@@ -164,6 +164,8 @@ export const EN: Record<string, string> = {
   'Trajets les plus demandés': 'Most requested routes',
   'dès {price}': 'from {price}',
   'Sur devis': 'On request',
+  'Tarifs longue durée': 'Long-term rates',
+  'À partir de {n} mois': 'From {n} month(s)',
   'Comment nous avez-vous connus ? (facultatif)': 'How did you hear about us? (optional)',
   'Je préfère ne pas répondre': 'I’d rather not say',
   'Une publicité en ligne (Facebook, Instagram, TikTok…)': 'An online ad (Facebook, Instagram, TikTok…)',
