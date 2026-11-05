@@ -54,6 +54,7 @@ const MODULES: Record<string, string> = {
   partners: 'Partenaires',
   website: 'Site web',
   marketing: 'Marketing',
+  fleet_finance: 'Rentabilité du parc',
 };
 const actionKeys = Object.keys(ACTIONS);
 const moduleKeys = Object.keys(MODULES);

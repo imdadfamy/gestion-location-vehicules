@@ -1613,6 +1613,38 @@ export type Database = {
           },
         ];
       };
+      vehicle_purchases: {
+        Row: {
+          created_at: string;
+          purchase_date: string | null;
+          purchase_price: number;
+          updated_at: string;
+          vehicle_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          purchase_date?: string | null;
+          purchase_price: number;
+          updated_at?: string;
+          vehicle_id: string;
+        };
+        Update: {
+          created_at?: string;
+          purchase_date?: string | null;
+          purchase_price?: number;
+          updated_at?: string;
+          vehicle_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'vehicle_purchases_vehicle_id_fkey';
+            columns: ['vehicle_id'];
+            isOneToOne: true;
+            referencedRelation: 'vehicles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       vehicle_maintenance: {
         Row: {
           cost: number;
@@ -2223,6 +2255,21 @@ export type Database = {
       vehicle_partner_daily_price: {
         Args: { target_days: number; target_vehicle: string };
         Returns: number;
+      };
+      fleet_profitability: {
+        Args: never;
+        Returns: {
+          label: string;
+          maintenance_90: number;
+          maintenance_cost: number;
+          purchase_date: string | null;
+          purchase_price: number | null;
+          registration_number: string;
+          revenue: number;
+          revenue_90: number;
+          vehicle_id: string;
+          vehicle_status: string;
+        }[];
       };
       partner_rental_earnings: {
         Args: never;

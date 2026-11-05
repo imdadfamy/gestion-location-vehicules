@@ -54,6 +54,15 @@ Un véhicule a un prix de base par jour et, en option, des paliers « à partir 
 * Véhicule de partenaire : le partenaire saisit ses propres paliers (prix qu'il souhaite toucher par jour) tant que le véhicule n'est pas validé ; ensuite seule l'équipe les modifie. La part du partenaire suit ses paliers (jours × son prix pour la durée). L'équipe fixe les paliers de prix client et vérifie la marge minimale à chaque seuil.
 * Calcul unique : fonctions `vehicle_client_daily_price` et `vehicle_partner_daily_price` (base de données) et `web/src/lib/pricing.ts`.
 
+### Rentabilité du parc
+
+Chaque véhicule de l'agence peut avoir un prix d'achat (et une date d'achat facultative), saisi par une personne ayant la permission « Rentabilité du parc ». Les véhicules de partenaires n'ont pas de prix d'achat.
+
+* Un véhicule est rentabilisé quand ses encaissements de location, moins ses coûts de maintenance, atteignent son prix d'achat.
+* Seuls comptent les encaissements et les coûts postérieurs à la date d'achat ; sans date, tout l'historique est compté.
+* Les coûts d'incidents (remboursables par le client) et les transferts ne sont pas comptés.
+* La date de rentabilisation estimée suit le résultat moyen des 90 derniers jours ; sans activité récente, elle n'est pas estimable.
+
 ---
 
 ## 5. Locations

@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   LineChart,
   Megaphone,
+  PiggyBank,
   type LucideIcon,
   Settings,
   ShieldAlert,
@@ -60,6 +61,7 @@ export const MENU: { label: string; items: MenuItem[] }[] = [
       { title: 'Notifications', href: '/app/notifications', icon: Bell, module: 'notifications' },
       { title: 'Analyses', href: '/app/analytics', icon: LineChart, module: 'reports' },
       { title: 'Marketing', href: '/app/marketing', icon: Megaphone, module: 'marketing' },
+      { title: 'Rentabilité du parc', href: '/app/fleet', icon: PiggyBank, module: 'fleet_finance' },
     ],
   },
   {

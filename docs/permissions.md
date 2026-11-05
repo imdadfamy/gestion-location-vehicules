@@ -77,6 +77,7 @@ Les modules concernés sont :
 * documents ;
 * notifications ;
 * reports ;
+* fleet_finance (prix d'achat et rentabilité des véhicules de l'agence ; actions : voir, ajouter, modifier, supprimer) ;
 * users ;
 * permissions ;
 * settings ;
