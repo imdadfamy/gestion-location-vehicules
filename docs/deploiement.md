@@ -76,7 +76,9 @@ npx vercel deploy --prod --yes \
    écrit la clé publique dans `web/.vapid-public.txt`.
 2. Saisir les secrets `VAPID_*` dans Supabase (voir ci-dessus).
 3. L'adresse de la fonction appelée par le déclencheur SQL est dans la table `app_config` (clé `push_function_url`) :
-   la migration y met l'adresse de production ; en local, elle vaut `http://kong:8000/functions/v1/send-push`.
+   la migration y met l'adresse de production ; en local, elle doit valoir `http://kong:8000/functions/v1/send-push`.
+   **Après chaque `db reset` local**, la remettre, sinon la base locale appellerait la production :
+   `update app_config set value = 'http://kong:8000/functions/v1/send-push' where key = 'push_function_url';`
 
 ## Fonctions Edge en local
 
