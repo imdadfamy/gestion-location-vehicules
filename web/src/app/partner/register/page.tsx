@@ -1,3 +1,4 @@
+/** Page `/partner/register` — Devenir partenaire. */
 import type { Metadata } from 'next';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { PartnerAuthForm } from '@/components/auth/partner-auth-form';

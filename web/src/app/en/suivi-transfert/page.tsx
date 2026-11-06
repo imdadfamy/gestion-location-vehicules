@@ -1,3 +1,4 @@
+/** Page `/en/suivi-transfert` — Track my transfer. */
 import { Suspense } from 'react';
 import { HomeView } from '@/components/site/home-view';
 import { TransferTracker } from '@/components/site/transfer-tracker';

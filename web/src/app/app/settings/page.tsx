@@ -1,3 +1,4 @@
+/** Page `/app/settings` — Paramètres (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { requireModule } from '@/components/staff/require-module';
 import { SettingsForm } from '@/components/staff/admin/settings-form';

@@ -1,3 +1,4 @@
+/** Page `/partner/earnings` — Mes revenus. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { PartnerEarnings } from '@/components/portal/partner-earnings';

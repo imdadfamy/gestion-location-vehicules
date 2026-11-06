@@ -1,0 +1,128 @@
+# Mise en ligne
+
+Ce document explique comment publier une modification, dans quel ordre, avec quels outils, et **ce qui est déjà en
+production ou non**. Aucun secret n'est écrit ici ni dans le dépôt : les mots de passe et clés privées se saisissent
+dans un terminal ou dans le tableau de bord du service concerné.
+
+## Environnements
+
+| | Local | Production |
+|---|---|---|
+| Base et fonctions | Stack Supabase locale (Docker) | Projet Supabase `zkhpdpixwlimqnwublab` |
+| Site Next.js | `npm run dev` (http://localhost:3000) | Vercel, projet `fima-auto` (https://fima-auto.vercel.app), lié dans `web/.vercel` |
+| Garde-fou | Toute URL Supabase non locale est refusée en développement (`web/src/lib/supabase/config.ts`) | — |
+
+## Ordre des opérations
+
+Toujours dans cet ordre : une migration doit être en ligne **avant** le code qui l'utilise.
+
+### 1. Migrations de la base
+
+Dans un terminal PowerShell, à la racine du dépôt :
+
+```powershell
+.\scripts\prod-database.ps1                  # sauvegarde complète, liste, simulation, puis application après « oui »
+.\scripts\prod-database.ps1 -SansSauvegarde  # si la sauvegarde vient d'être faite
+```
+
+Le script demande le mot de passe de la base (saisie masquée, jamais écrit nulle part), vérifie le code de sortie de chaque étape
+et n'applique qu'après confirmation. Les sauvegardes sont rangées dans `C:\Users\imdad\sauvegarde-fima`.
+Vérifier ensuite que les migrations apparaissent bien dans la liste des migrations appliquées du projet.
+
+### 2. Fonctions Edge
+
+Fonctions : `manage-users`, `send-push`, `client-contract-download`, `client-inspection-photo` (dossier `supabase/functions/`).
+`send-push` se déploie **sans** vérification du jeton (`verify_jwt` désactivé) : elle est appelée par un déclencheur SQL et
+se protège elle-même (revendication de l'envoi par `push_sent_at`).
+
+À redéployer quand leur code change. Cas piège : la liste blanche des modules de permission de `manage-users`
+(`modules` dans `supabase/functions/manage-users/index.ts`) doit contenir tout nouveau module, sinon l'écran Utilisateurs ne
+peut pas l'attribuer.
+
+Secrets des fonctions (tableau de bord Supabase → Edge Functions → Secrets) : `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
+`VAPID_SUBJECT` (envoi des alertes) ; `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` sont fournis par la plateforme.
+
+### 3. Site (Vercel)
+
+Variables de build du site :
+
+| Variable | Valeur |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Adresse du projet Supabase de production |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé publiable du projet (publique par nature : Supabase → Settings → API). **Jamais** la clé `service_role` |
+| `NEXT_PUBLIC_SITE_URL` | https://fima-auto.vercel.app |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Clé publique des alertes (fichier local `web/.vapid-public.txt`, non versionné) |
+
+Depuis `web/` :
+
+```bash
+npx vercel deploy --prod --yes \
+  -b NEXT_PUBLIC_SUPABASE_URL=<url du projet> \
+  -b NEXT_PUBLIC_SUPABASE_ANON_KEY=<clé publiable> \
+  -b NEXT_PUBLIC_SITE_URL=https://fima-auto.vercel.app \
+  -b NEXT_PUBLIC_VAPID_PUBLIC_KEY=$(cat .vapid-public.txt | tr -d '[:space:]')
+```
+
+### 4. Contrôles après mise en ligne
+
+- Se connecter au back-office, ouvrir Analyses et un rapport.
+- Ouvrir une fiche véhicule : la section « Tarifs selon la durée » est présente.
+- Vérifier le catalogue public avec des dates (estimation du prix).
+- Activer les alertes sur un téléphone de test.
+
+## Alertes push : mise en place
+
+1. `.\scripts\prod-push-keys.ps1` génère la paire de clés (la clé privée est copiée dans le presse-papiers, jamais affichée) et
+   écrit la clé publique dans `web/.vapid-public.txt`.
+2. Saisir les secrets `VAPID_*` dans Supabase (voir ci-dessus).
+3. L'adresse de la fonction appelée par le déclencheur SQL est dans la table `app_config` (clé `push_function_url`) :
+   la migration y met l'adresse de production ; en local, elle vaut `http://kong:8000/functions/v1/send-push`.
+
+## Fonctions Edge en local
+
+```bash
+cd supabase
+npx supabase functions serve                  # toutes les fonctions
+npx supabase functions serve send-push --env-file supabase/.env   # une seule, avec ses secrets locaux
+```
+
+À relancer après un `db reset`. Les liens signés renvoyés en local pointent vers `http://kong:8000` et ne s'ouvrent pas dans le navigateur.
+
+## À ne pas faire pendant le développement
+
+`supabase db push`, `supabase functions deploy` et `supabase link` visent le projet en ligne : ne les lancer que pour une vraie mise en production.
+
+---
+
+## État au 6 novembre 2026
+
+Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des migrations locales à celle du projet en ligne).
+
+**Déjà en production**
+
+- Toutes les migrations jusqu'à `20261103100000_marketing` (chauffeur, transferts avec suivi, alertes push, marketing).
+- Fonctions Edge : `send-push` (alertes équipe, clients, partenaires, transferts) et `manage-users` (liste blanche incluant `marketing`).
+- Site : vitrine bilingue, transferts, alertes push, marketing, corrections d'affichage.
+
+**Développé et testé en local, pas encore en production**
+
+| Migration | Objet |
+|---|---|
+| `20261103140000_analytics_foundation` | Catalogue de mesures, vues d'analyse, fonction d'agrégation |
+| `20261103160000_analytics_personalization` | Cartes et rapports enregistrés (tables conservées ; l'écran correspondant a été retiré) |
+| `20261104100000_acquisition` | Question « Comment nous avez-vous connus ? », coût d'acquisition par canal |
+| `20261105100000_analytics_incidents` | Incidents dans les analyses |
+| `20261106100000_duration_pricing` | Tarifs selon la durée (prix client et prix partenaire) |
+| `20261106110000_price_tiers_in_days` | Seuils des tarifs en jours (ou en mois) |
+| `20261107100000_fleet_profitability` | Prix d'achat et rentabilité du parc |
+
+À faire à la mise en ligne de ce lot : les 7 migrations (dans cet ordre), **redéployer `manage-users`** (nouveau module `fleet_finance`), puis déployer le site.
+Le site actuellement en ligne ne contient pas encore : les nouvelles Analyses, la suppression de l'ancienne page Rapports,
+la provenance des clients, les tarifs selon la durée, la rentabilité du parc.
+
+**Rappels en suspens**
+
+- Changer le mot de passe de la base de production (il a été saisi dans un échange pendant la mise en place).
+- Ajouter `https://fima-auto.vercel.app/**` aux adresses de redirection autorisées de Supabase Auth.
+- Saisir les vrais prix des trajets de transfert dans l'éditeur « Site web ».
+- Attribuer la permission « Rentabilité du parc » aux comptes concernés (le Super Admin y a accès d'office).

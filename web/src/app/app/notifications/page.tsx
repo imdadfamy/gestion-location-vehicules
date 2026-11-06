@@ -1,3 +1,4 @@
+/** Page `/app/notifications` — Notifications (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { NotificationsView } from '@/components/staff/notifications-view';
 import { requireModule } from '@/components/staff/require-module';

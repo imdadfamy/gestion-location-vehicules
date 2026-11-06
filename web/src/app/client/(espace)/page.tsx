@@ -1,3 +1,4 @@
+/** Page `/client` — Mon espace. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ClientHome } from '@/components/portal/client-home';

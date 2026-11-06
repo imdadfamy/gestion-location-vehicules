@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { itemFor } from './staff-menu';
 
+/** En-tête du back-office : bouton de menu, thème et cloche de notifications. */
 export function StaffHeader({ unread, showNotifications }: { unread: number; showNotifications: boolean }) {
   const title = itemFor(usePathname())?.title ?? 'Espace de gestion';
   return (

@@ -1,3 +1,4 @@
+/** Page `/partner/vehicles` — Mes véhicules. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { PartnerVehicles } from '@/components/portal/partner-vehicles';

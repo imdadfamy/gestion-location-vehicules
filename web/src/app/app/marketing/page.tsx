@@ -1,3 +1,4 @@
+/** Page `/app/marketing` — Marketing (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { MarketingManager } from '@/components/staff/marketing/marketing-manager';
 import { requireModule } from '@/components/staff/require-module';

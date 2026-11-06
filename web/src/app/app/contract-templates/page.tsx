@@ -1,3 +1,4 @@
+/** Page `/app/contract-templates` — Modèles de contrat (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { ContractTemplates } from '@/components/staff/admin/contract-templates';
 import { requireModule } from '@/components/staff/require-module';

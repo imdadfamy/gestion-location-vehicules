@@ -1,3 +1,4 @@
+/** Page `/app/analytics` — Analyses (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { AnalyticsView } from '@/components/staff/analytics/analytics-view';
 import { requireModule } from '@/components/staff/require-module';

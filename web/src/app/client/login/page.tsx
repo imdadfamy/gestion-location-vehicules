@@ -1,3 +1,4 @@
+/** Page `/client/login` — Connexion client. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { AuthShell } from '@/components/auth/auth-shell';

@@ -1,3 +1,4 @@
+/** Page `/app` — Tableau de bord. */
 import Link from 'next/link';
 import { Suspense } from 'react';
 import {

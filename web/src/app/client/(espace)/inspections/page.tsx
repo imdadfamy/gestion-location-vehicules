@@ -1,3 +1,4 @@
+/** Page `/client/inspections` — Mes inspections. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ClientInspections } from '@/components/portal/client-inspections';

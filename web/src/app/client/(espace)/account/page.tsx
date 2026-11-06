@@ -1,3 +1,4 @@
+/** Page `/client/account` — Mon profil. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ClientAccount } from '@/components/portal/client-account';

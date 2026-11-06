@@ -1,3 +1,4 @@
+/** Page `/client/contracts` — Contrats. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ClientContracts } from '@/components/portal/client-contracts';

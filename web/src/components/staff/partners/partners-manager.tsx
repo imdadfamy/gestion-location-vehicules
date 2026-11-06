@@ -63,6 +63,7 @@ function Thumbnails({ photos, onOpen }: { photos: Photo[]; onOpen: (url: string)
   );
 }
 
+/** Back-office : partenaires et évaluation de leurs véhicules (validation, prix client, comptes d'accès). */
 export function PartnersManager({ reviewerId, canManageAccounts }: { reviewerId: string; canManageAccounts: boolean }) {
   const [program, setProgram] = useState<Program | null>(null);
   const [error, setError] = useState('');

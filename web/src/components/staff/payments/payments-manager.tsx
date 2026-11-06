@@ -19,6 +19,7 @@ import { PaymentReceipt } from './payment-receipt';
 
 export type PaymentPermissions = { record: boolean; receiveDeposit: boolean; settleDeposit: boolean };
 
+/** Back-office : encaissements des locations, cautions reçues et soldées. */
 export function PaymentsManager({ permissions }: { permissions: PaymentPermissions }) {
   const [rows, setRows] = useState<FinancialRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});

@@ -25,6 +25,7 @@ type Vehicle = { id: string; registration_number: string; make: string; model: s
 const today = () => new Date().toLocaleDateString('en-CA');
 const blank = () => ({ vehicle_id: '', maintenance_type: '', maintenance_date: today(), status: 'in_progress', description: '' });
 
+/** Espace partenaire : déclaration et suivi des maintenances de ses véhicules. */
 export function PartnerMaintenance() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);

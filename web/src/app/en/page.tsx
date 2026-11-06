@@ -1,3 +1,4 @@
+/** Page `/en` — accueil du site public en anglais (même contenu, textes traduits par `lib/i18n-en.ts`). */
 import type { Metadata } from 'next';
 import { HomeView } from '@/components/site/home-view';
 import { getHomeContent } from '@/lib/data/site-content-server';

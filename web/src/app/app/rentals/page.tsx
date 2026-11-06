@@ -1,3 +1,4 @@
+/** Page `/app/rentals` — Locations (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { requireModule } from '@/components/staff/require-module';
 import { RentalsManager } from '@/components/staff/rentals/rentals-manager';

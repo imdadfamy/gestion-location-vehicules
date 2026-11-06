@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { useLang } from './lang-provider';
 
+/** Bascule entre thème clair et sombre sur le site public. */
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const { t } = useLang();

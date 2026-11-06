@@ -1,3 +1,4 @@
+/** Page `/client/vehicles` — Véhicules disponibles. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ClientVehicles } from '@/components/portal/client-vehicles';

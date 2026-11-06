@@ -1,3 +1,4 @@
+/** Page `/` — accueil du site public en français (catalogue, transfert aéroport, contenu éditable depuis « Site web »). */
 import type { Metadata } from 'next';
 import { HomeView } from '@/components/site/home-view';
 import { getHomeContent } from '@/lib/data/site-content-server';

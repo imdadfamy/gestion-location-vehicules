@@ -1,3 +1,4 @@
+/** Page `/app/fleet` — Rentabilité du parc (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { FleetProfitability } from '@/components/staff/fleet/fleet-profitability';
 import { requireModule } from '@/components/staff/require-module';

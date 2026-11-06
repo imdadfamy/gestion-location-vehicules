@@ -1,3 +1,4 @@
+/** Page `/partner/calendar` — Calendrier. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { PartnerCalendar } from '@/components/portal/partner-calendar';

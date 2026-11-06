@@ -1,3 +1,4 @@
+/** Page `/invite` — Activer mon compte. */
 import type { Metadata } from 'next';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { InviteForm } from '@/components/auth/invite-form';

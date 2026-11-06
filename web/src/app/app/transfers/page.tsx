@@ -1,3 +1,4 @@
+/** Page `/app/transfers` — Transferts (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { requireModule } from '@/components/staff/require-module';
 import { TransfersManager } from '@/components/staff/transfers/transfers-manager';

@@ -1,3 +1,4 @@
+/** Page `/partner/maintenance` — Maintenance. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { PartnerMaintenance } from '@/components/portal/partner-maintenance';

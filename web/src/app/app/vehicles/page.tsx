@@ -1,3 +1,4 @@
+/** Page `/app/vehicles` — Véhicules (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { requireModule } from '@/components/staff/require-module';
 import { VehiclesManager } from '@/components/staff/vehicles/vehicles-manager';

@@ -1,3 +1,4 @@
+/** Page `/partner` — Tableau de bord. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { PartnerDashboard } from '@/components/portal/partner-dashboard';

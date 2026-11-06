@@ -1,3 +1,4 @@
+/** Page `/app/reservations/rental` — Créer la location (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { ReservationRentalStep } from '@/components/staff/reservations/reservation-rental-step';
 import { requireModule } from '@/components/staff/require-module';

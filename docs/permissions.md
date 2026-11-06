@@ -76,13 +76,20 @@ Les modules concernés sont :
 * incidents ;
 * documents ;
 * notifications ;
-* reports ;
+* reports (écran Analyses) ;
+* reservations (réservations et transferts aéroport) ;
+* partners (validation des véhicules de partenaires et de leurs prix) ;
+* website (éditeur du contenu du site public) ;
+* marketing (dépenses et campagnes ; conditionne aussi les mesures marketing des Analyses) ;
 * fleet_finance (prix d'achat et rentabilité des véhicules de l'agence ; actions : voir, ajouter, modifier, supprimer) ;
 * users ;
 * permissions ;
 * settings ;
 * contract_templates ;
 * activity_logs.
+
+Dans le back-office, **Paramètres, Modèles de contrat, Journal et Utilisateurs sont réservés au Super Admin** (entrées `adminOnly` du menu), quel que
+soit le module. La liste des modules attribuables est dans `components/staff/admin/users-manager.tsx` et dans la liste blanche de la fonction Edge `manage-users`.
 
 ---
 

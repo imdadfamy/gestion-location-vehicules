@@ -1,3 +1,4 @@
+/** Page `/app/clients` — Clients (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { ClientsManager } from '@/components/staff/clients/clients-manager';
 import { requireModule } from '@/components/staff/require-module';

@@ -10,6 +10,8 @@ Lire avant toute modification importante :
 - docs/database.md
 - docs/permissions.md
 - docs/contrat-location-original.pdf
+- docs/README.md (index) et docs/fonctionnalites.md (où se trouve chaque fonctionnalité dans le code)
+- docs/deploiement.md (mise en ligne, état local / production)
 
 ## Stack
 
@@ -82,3 +84,9 @@ Ne pas supprimer du code existant sans justification.
 ## Git
 
 Faire un commit après chaque grande fonctionnalité.
+
+## Documentation à tenir à jour
+
+Une nouvelle table, fonction SQL ou migration → `docs/database.md` (section 7). Une nouvelle fonctionnalité →
+`docs/fonctionnalites.md`. Tout ce qui change la mise en ligne (migration, fonction Edge, variable) → `docs/deploiement.md`,
+section « État ». Une règle métier → `docs/business-rules.md` avant le code.

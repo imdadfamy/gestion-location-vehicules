@@ -1,3 +1,4 @@
+/** Page `/partner/notifications` — Notifications. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { PartnerNotifications } from '@/components/portal/partner-notifications';

@@ -1,3 +1,4 @@
+/** Page `/app/users` — Utilisateurs (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { UsersManager } from '@/components/staff/admin/users-manager';
 import { requireModule } from '@/components/staff/require-module';

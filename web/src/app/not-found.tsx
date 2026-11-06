@@ -1,3 +1,4 @@
+/** Page « Erreur 404 » commune à tout le site. */
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 

@@ -1,3 +1,4 @@
+/** Page `/client/reservations` — Mes réservations. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ClientReservations } from '@/components/portal/client-reservations';

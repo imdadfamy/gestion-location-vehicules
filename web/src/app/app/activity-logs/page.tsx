@@ -1,3 +1,4 @@
+/** Page `/app/activity-logs` — Journal d’activité (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { ActivityLog } from '@/components/staff/admin/activity-log';
 import { requireModule } from '@/components/staff/require-module';

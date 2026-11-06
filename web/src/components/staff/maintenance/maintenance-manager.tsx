@@ -33,6 +33,7 @@ import { createClient } from '@/lib/supabase/client';
 
 type Vehicle = { id: string; registration_number: string; make: string; model: string };
 
+/** Back-office : maintenances des véhicules (dates, coûts, factures). */
 export function MaintenanceManager({
   permissions,
   initialVehicle,

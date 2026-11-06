@@ -1,3 +1,4 @@
+/** Page `/app/reservations/client` — Client de la réservation (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { ReservationClientStep } from '@/components/staff/reservations/reservation-client-step';
 import { requireModule } from '@/components/staff/require-module';

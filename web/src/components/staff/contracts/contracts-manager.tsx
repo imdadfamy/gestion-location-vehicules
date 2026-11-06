@@ -26,6 +26,7 @@ import { ContractView } from './contract-view';
 
 type Candidate = NonNullable<Awaited<ReturnType<typeof rentalsWithoutContract>>['data']>[number];
 
+/** Back-office : liste des contrats de location et accès à leur suivi et leur signature. */
 export function ContractsManager({ canCreate, staffName }: { canCreate: boolean; staffName: string }) {
   const [rows, setRows] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);

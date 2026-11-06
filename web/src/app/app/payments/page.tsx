@@ -1,3 +1,4 @@
+/** Page `/app/payments` — Paiements (droits vérifiés par `requireModule` puis par la RLS de la base). */
 import { Suspense } from 'react';
 import { PaymentsManager } from '@/components/staff/payments/payments-manager';
 import { requireModule } from '@/components/staff/require-module';

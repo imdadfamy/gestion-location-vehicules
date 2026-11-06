@@ -5,6 +5,7 @@ import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 
+/** Bouton de déconnexion : ferme la session puis redirige vers `redirectTo`. */
 export function LogoutButton({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
   return (
