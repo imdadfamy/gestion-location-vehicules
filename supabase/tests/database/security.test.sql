@@ -134,12 +134,15 @@ set local role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', :partner, 'role', 'authenticated')::text, true);
 
 select is((select count(*) from public.vehicles), 2::bigint, 'partenaire : ne voit que ses véhicules');
-select is((select count(*) from public.clients), 0::bigint, 'partenaire : aucun client visible');
+select is((select count(*) from public.clients where owner_partner_id is distinct from public.my_partner_id()), 0::bigint, 'partenaire : aucun client qui ne soit pas le sien (ni ceux de l’agence)');
 select throws_ok($$ update public.vehicles set status = 'available' where id = '30000000-0000-0000-0000-000000000006' $$,
                  '23514', null, 'partenaire : ne peut pas remettre en service un véhicule en maintenance');
 select lives_ok($$ update public.vehicles set status = 'unavailable' where id = '30000000-0000-0000-0000-000000000007' $$,
                 'partenaire : peut encore marquer son véhicule indisponible');
-select is((select count(*) from public.rentals), 0::bigint, 'partenaire : aucun accès direct à la table des locations');
+select is((select count(*) from public.rentals where owner_partner_id is distinct from public.my_partner_id()), 0::bigint, 'partenaire : aucune location qui ne soit pas la sienne (ni celles de l’agence)');
+select throws_ok($$ insert into public.rentals (client_id, vehicle_id, departure_date, return_date) select id, '30000000-0000-0000-0000-000000000001', now() + interval '60 days', now() + interval '61 days' from public.clients limit 1 $$, '42501', null, 'partenaire : ne crée pas de location par écriture directe');
+select throws_ok($$ select public.partner_create_rental(null,'A','B','1',null,'I','P','2031-01-01','E','1','Ad',null,'30000000-0000-0000-0000-000000000001', now() + interval '60 days', now() + interval '61 days','x','y',1,0,null,false,false) $$, '42501', null, 'partenaire : ne peut pas louer un véhicule de l’agence');
+select throws_ok($$ select public.partner_create_rental(null,'A','B','1',null,'I','P','2031-01-01','E','1','Ad',null,'30000000-0000-0000-0000-000000000007', now() + interval '60 days', now() + interval '61 days','x','y',1,0,null,false,false) $$, '42501', null, 'partenaire : ne peut pas louer un véhicule non validé par l’équipe');
 select is((select count(*) from public.partner_rental_earnings()), 1::bigint, 'partenaire : voit la location de son véhicule');
 select is((select payout from public.partner_rental_earnings()), 90000::numeric, 'partenaire : part calculée (3 jours × 30 000)');
 reset role;
