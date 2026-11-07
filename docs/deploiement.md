@@ -100,13 +100,13 @@ npx supabase functions serve send-push --env-file supabase/.env   # une seule, a
 
 Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des migrations locales à celle du projet en ligne).
 
-**En production (branche `main`, jusqu'au commit `6b72cbe`)**
+**En production (branche `main`, jusqu'au commit `ca8067b`)**
 
 - Toutes les migrations locales, jusqu'à `20261109100000_partner_contract_templates` : chauffeur, transferts avec suivi, alertes push, marketing, Analyses,
   provenance des clients, tarifs selon la durée, rentabilité du parc, puis le partenaire autonome (profil et demandes de réservation sans compte,
   locations et contrats propres, inspections et caution, contrat personnalisé).
 - Fonctions Edge : `send-push` (version 4) et `manage-users` (version 14, liste blanche incluant `marketing` et `fleet_finance`).
-- Site : tout le contenu de `main`, déployé sur https://fima-auto.vercel.app (dépendance `unpdf` pour la lecture des PDF de contrat).
+- Site : tout le contenu de `main`, déployé sur https://fima-auto.vercel.app (dépendance `unpdf` pour la lecture des PDF de contrat), avec la typographie agrandie (docs/architecture.md §18).
 
 **Développé en local, pas en production**
 
