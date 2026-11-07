@@ -242,3 +242,39 @@ La clé `service_role` de Supabase ne doit jamais être exposée dans l'applicat
 Les données importantes ne doivent pas être supprimées sans conserver une trace lorsque l'historique métier l'exige.
 
 Les actions administratives importantes doivent apparaître dans le journal d'activité.
+
+---
+
+## 17. Partenaire autonome (en cours de conception, branche `partenaire-autonome`)
+
+Un partenaire peut louer lui-même ses véhicules, avec son identité et son contrat. Rien de cette section n'est en production.
+
+### Validation des véhicules (inchangée)
+
+Tout véhicule ajouté par un partenaire reste soumis à la validation de l'équipe (Super Admin ou Responsable autorisé). Tant qu'il n'est pas validé, il n'apparaît ni sur le site public ni dans l'assistant de location, et le partenaire ne peut pas le louer. Cette règle s'applique aussi aux partenaires autonomes.
+
+### Profil du partenaire
+
+Page « Mon profil » dans l'espace partenaire : nom commercial, logo, téléphone, numéro WhatsApp, adresse. Le partenaire la renseigne lui-même. Le numéro WhatsApp sert à la redirection des réservations du site public (voir plus bas) ; s'il est absent, la redirection retombe sur le numéro de l'agence.
+
+### Contrat personnalisé
+
+* Sans contrat propre, les locations du partenaire utilisent le modèle de l'agence (par défaut).
+* Le partenaire peut téléverser son contrat en PDF. Le système en extrait le contenu (clauses dans l'ordre, logo, couleurs), repère les champs variables (client, véhicule, dates, prix, caution…) et régénère le contrat avec la logique habituelle de la plateforme. Le partenaire contrôle l'aperçu et corrige les champs mal repérés.
+* La section des pièces d'identité du client garde toujours le format de la plateforme.
+* Avant activation, l'équipe relit et valide le contrat du partenaire. Une fois validé, toutes les locations créées depuis son espace utilisent ce contrat.
+* Versionnement obligatoire : chaque modification crée une version. Un contrat signé garde son texte, son logo et ses coordonnées figés ; une modification ultérieure du modèle ne le change jamais.
+* Limites connues : un PDF scanné se lit mal (préférer un PDF numérique) ; le contenu est reproduit fidèlement, pas la mise en page au pixel près.
+
+### Locations du partenaire
+
+* Parcours unique et continu : véhicule → client → dates et prix → caution → contrat → signature. Pas d'étape « contrat » séparée à rejoindre après coup.
+* Onglet « Contrats » : liste des contrats signés du partenaire. Il gère aussi les inspections (départ et retour) de ses propres locations.
+* Le partenaire ne voit que ses véhicules, ses clients, ses locations et ses contrats ; l'équipe voit tout. Le calendrier est commun avec l'agence : un véhicule ne peut pas être loué deux fois sur des périodes qui se chevauchent.
+* À confirmer avant le code : commission éventuelle de l'agence sur les locations faites par le partenaire (et exclusion de ces locations du calcul de sa part sur les locations de l'agence) ; clients séparés de ceux de l'agence (recommandé).
+
+### Réservation sur le site public
+
+* Plus de création de compte obligatoire : le visiteur renseigne son nom, son téléphone et ses dates, puis le site ouvre WhatsApp avec un message prérempli (véhicule, dates, prix estimé, référence). La création de compte reste proposée, en option.
+* Destinataire : véhicule de l'agence → numéro WhatsApp de l'agence ; véhicule d'un partenaire → numéro WhatsApp du partenaire (à défaut, celui de l'agence).
+* La demande est enregistrée avant la redirection (suivi, canal d'acquisition, retrouvable par le partenaire ou l'équipe), avec une limite de demandes par numéro comme pour les transferts.
