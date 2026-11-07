@@ -90,7 +90,7 @@ export function VehicleGallery({ photos, alt }: { photos: string[]; alt: string 
               <CarouselItem key={photo} className="pl-0">
                 <button type="button" onClick={() => setFull(true)} className="block w-full cursor-zoom-in" aria-label={t('Agrandir la photo')}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo} alt={`${alt} – photo ${i + 1}`} className="aspect-[16/10] w-full object-cover" draggable={false} loading={i === 0 ? 'eager' : 'lazy'} />
+                  <img src={photo} alt={`${alt} – photo ${i + 1}`} className="aspect-[16/10] w-full object-cover" draggable={false} loading="eager" />
                 </button>
               </CarouselItem>
             ))}

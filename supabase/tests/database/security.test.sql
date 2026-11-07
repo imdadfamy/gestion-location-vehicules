@@ -153,6 +153,11 @@ select lives_ok($$ insert into public.partner_contract_templates (partner_id, co
 select is((select status from public.partner_contract_templates order by version_number desc limit 1), 'pending_review', 'partenaire : son contrat attend la validation de l’équipe');
 select throws_ok($$ select public.review_partner_contract_template((select id from public.partner_contract_templates limit 1), true) $$, '42501', null, 'partenaire : ne peut pas valider son propre contrat');
 select throws_ok($$ insert into public.partner_contract_templates (partner_id, content) values (public.my_partner_id(), '{"sections":[]}') $$, '22023', null, 'partenaire : un contrat sans section est refusé');
+-- Un compte connecté (autre rôle que anon) voit les photos du catalogue public, mais jamais les documents administratifs.
+select is((select count(*) from storage.objects where name = 'vehicles/30000000-0000-0000-0000-000000000001/face.jpg'),
+          1::bigint, 'partenaire connecté : photo d’un véhicule du catalogue public lisible');
+select is((select count(*) from storage.objects where name = 'vehicles/30000000-0000-0000-0000-000000000001/carte-grise.jpg'),
+          0::bigint, 'partenaire connecté : document administratif d’un véhicule de l’agence NON lisible');
 reset role;
 
 -- ───────────────────────── Responsable ─────────────────────────
