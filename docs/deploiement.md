@@ -110,8 +110,14 @@ Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des 
 
 **Développé en local, pas en production**
 
-Rien pour l'instant : la branche `partenaire-autonome` (partenaire autonome : profil, contrat personnalisé, locations propres,
-réservation publique par WhatsApp) est en cours de développement et ne sera déployée qu'après accord.
+Branche `partenaire-autonome` (partenaire autonome), en cours de développement ; ne sera déployée qu'après accord :
+
+| Élément | Objet |
+|---|---|
+| Migration `20261108100000_partner_profile_and_booking_requests` | WhatsApp et adresse du partenaire, demandes de réservation sans compte, numéro du partenaire dans le catalogue public |
+| Fonction Edge `send-push` | À redéployer : l'alerte d'une demande de réservation ouvre la bonne page |
+
+À venir sur la même branche : contrat personnalisé du partenaire, locations propres du partenaire.
 
 **Rappels en suspens**
 

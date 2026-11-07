@@ -517,6 +517,7 @@ sont dans `web/src/lib/database.types.ts`.
 | `vehicle_price_tiers` | Prix client par jour selon la durée (palier « à partir de N jours ») | `duration_pricing`, `price_tiers_in_days` |
 | `vehicle_partner_price_tiers` | Prix par jour souhaité par le partenaire selon la durée | idem |
 | `vehicle_purchases` | Prix et date d'achat d'un véhicule de l'agence (permission `fleet_finance`) | `fleet_profitability` |
+| `booking_requests` | Demandes de réservation du site public sans compte (lisibles par l'équipe et par le partenaire propriétaire du véhicule ; aucune écriture directe) | `partner_profile_and_booking_requests` |
 | `contract_number_counters` | Numérotation des contrats | `contract_number_generation` |
 
 ## 7.2 Colonnes ajoutées sur les tables existantes
@@ -527,6 +528,7 @@ sont dans `web/src/lib/database.types.ts`.
 | `vehicles` | `driver_daily_price` | `driver_option` |
 | `reservations`, `rentals` | `with_driver`, `driver_daily_price` | `driver_option` |
 | `clients`, `transfer_requests` | `acquisition_source`, `acquisition_detail` | `acquisition` |
+| `partners` | `whatsapp_phone`, `address` (renseignés par le partenaire) | `partner_profile_and_booking_requests` |
 
 ## 7.3 Vues et fonctions importantes
 
@@ -541,6 +543,7 @@ sont dans `web/src/lib/database.types.ts`.
 | `partner_rental_earnings` | Revenus détaillés d'un partenaire |
 | `analytics_*` (vues), `analytics_metric(...)`, `analytics_day(...)` | Analyses : vues plates par sujet, agrégation par mesure et dimension, jour à l'heure de Porto-Novo |
 | `fleet_profitability()` | Rentabilité par véhicule de l'agence (réservée à `fleet_finance`) |
+| `public_create_booking_request`, `set_booking_request_status` | Demande de réservation sans compte (contrôles, disponibilité, limite de 5 par heure et par téléphone, alerte équipe et partenaire) ; avancement par l'équipe ou le partenaire propriétaire |
 
 ## 7.4 Stockage (buckets)
 
@@ -564,6 +567,7 @@ sont dans `web/src/lib/database.types.ts`.
 | Provenance des clients | `20261104100000` |
 | Tarifs selon la durée | `20261106100000`, `20261106110000` |
 | Rentabilité du parc | `20261107100000` |
+| Partenaire autonome (profil, demandes sans compte) | `20261108100000` |
 
 Règle : **ne jamais modifier une migration déjà appliquée en production** ; ajouter une nouvelle migration. Les migrations encore
 locales sont listées dans [deploiement.md](deploiement.md).

@@ -20,9 +20,18 @@ export function myPartner(db: Db, profileId: string) {
   return db.from('partners').select('*').eq('profile_id', profileId).maybeSingle();
 }
 
-export type ProfileForm = { company_name: string; contact_name: string; phone: string; email: string; payout_details: string };
+export type ProfileForm = {
+  company_name: string;
+  contact_name: string;
+  phone: string;
+  email: string;
+  payout_details: string;
+  /** Numéro WhatsApp en format international (chiffres, avec l'indicatif du pays) : reçoit les demandes de réservation du site. */
+  whatsapp_phone: string;
+  address: string;
+};
 
-/** Crée ou met à jour la fiche (RPC) puis les coordonnées de versement. */
+/** Crée ou met à jour la fiche (RPC) puis les coordonnées de versement, le WhatsApp et l'adresse. */
 export async function savePartnerProfile(db: Db, form: ProfileForm) {
   const saved = await db.rpc('ensure_partner_profile', {
     target_company_name: form.company_name.trim(),
@@ -34,7 +43,11 @@ export async function savePartnerProfile(db: Db, form: ProfileForm) {
   const record = saved.data as PartnerRecord;
   const payout = await db
     .from('partners')
-    .update({ payout_details: form.payout_details.trim() || null })
+    .update({
+      payout_details: form.payout_details.trim() || null,
+      whatsapp_phone: form.whatsapp_phone.trim() || null,
+      address: form.address.trim() || null,
+    })
     .eq('id', record.id)
     .select()
     .single();

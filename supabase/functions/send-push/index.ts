@@ -14,9 +14,10 @@ const pageFor = (role: string | null, type: string | null) => {
     if (type === 'inspection') return '/client/inspections';
     return '/client';
   }
-  if (role === 'partner') return type === 'vehicle' ? '/partner/vehicles' : '/partner/notifications';
+  if (role === 'partner') return type === 'vehicle' ? '/partner/vehicles' : type === 'booking_request' ? '/partner/requests' : '/partner/notifications';
   if (type === 'reservation') return '/app/reservations';
   if (type === 'transfer') return '/app/transfers';
+  if (type === 'booking_request') return '/app/booking-requests';
   return '/app/notifications';
 };
 

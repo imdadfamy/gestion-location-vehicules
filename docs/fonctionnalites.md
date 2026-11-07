@@ -40,6 +40,7 @@ Le menu est défini dans `components/staff/staff-menu.ts` : chaque entrée porte
 | Maintenance | `/app/maintenance` | `components/staff/maintenance/`, `lib/data/maintenance.ts` | `initial_schema` | `maintenance` |
 | Incidents | `/app/incidents` | `components/staff/incidents/`, `lib/data/incidents.ts` | `initial_schema` | `incidents` |
 | Partenaires (validation des véhicules, prix) | `/app/partners` | `components/staff/partners/`, `lib/data/partners.ts` | `partner_program`, `partner_space_improvements` | `partners` |
+| Demandes de réservation du site (sans compte) | `/app/booking-requests` | `components/staff/booking/booking-requests-list.tsx`, `lib/data/booking-requests.ts` | `partner_profile_and_booking_requests` | `reservations` |
 | Transferts aéroport | `/app/transfers` | `components/staff/transfers/`, `lib/data/transfers.ts` | `transfer_requests`, `transfer_tracking` | `reservations` |
 | Marketing (dépenses, campagnes) | `/app/marketing` | `components/staff/marketing/`, `lib/data/marketing.ts` | `marketing` | `marketing` |
 | **Analyses** (résumé et 8 rapports) | `/app/analytics` | `components/staff/analytics/`, `lib/data/analytics.ts` | `analytics_foundation`, `analytics_personalization`, `acquisition`, `analytics_incidents` | `reports` (+ `marketing` pour les mesures marketing) |
@@ -59,6 +60,7 @@ Le menu est défini dans `components/staff/staff-menu.ts` : chaque entrée porte
 | Contenu éditable (accueil, pages, FAQ, bandeaux) | `lib/data/site-content*.ts`, `app/p/[slug]/page.tsx` | Brouillons et versions : `site_drafts_and_versions` |
 | Transfert aéroport : demande, suivi, FAQ | `components/site/transfer-section.tsx`, `transfer-tracker.tsx`, `phone-field.tsx`, `lib/countries.ts`, `app/api/geo/route.ts` | Pays par défaut déduit de l'adresse IP |
 | Version anglaise (`/en`) | `app/en/`, `lib/i18n.ts`, `lib/i18n-en.ts`, `lib/data/site-content-en.ts`, `components/site/lang-provider.tsx` | Voir « Traduction » ci-dessous |
+| Réservation sans compte par WhatsApp | `components/site/booking-dialog.tsx`, `catalog-view.tsx`, `lib/data/booking-requests.ts` | La demande est enregistrée (`booking_requests`), puis WhatsApp s'ouvre vers le numéro du partenaire propriétaire du véhicule, sinon celui de l'agence ; le compte client reste proposé en option |
 | Question « Comment nous avez-vous connus ? » | `lib/acquisition.ts`, `components/site/acquisition-field.tsx` | Alimente l'analyse par canal |
 
 ## Espace client (`/client`)
@@ -72,7 +74,8 @@ Fonctions Edge : `client-contract-download`, `client-inspection-photo`.
 
 Proposer un véhicule (assistant en 4 étapes, prix souhaité et paliers selon la durée), suivre ses véhicules, calendrier, revenus, maintenance :
 `components/portal/partner-*.tsx`, `lib/data/partner-portal.ts`, `lib/data/partner-stats.ts`, `lib/partner-earnings-export.ts`.
-Migrations : `partner_program`, `partner_space_improvements`. Un véhicule validé n'est plus modifiable côté partenaire.
+Migrations : `partner_program`, `partner_space_improvements`, `partner_profile_and_booking_requests`. Un véhicule validé n'est plus modifiable côté partenaire, et tout véhicule ajouté reste validé par l'équipe avant publication.
+Profil (téléphone, **numéro WhatsApp**, adresse) : `components/portal/partner-account.tsx`. Demandes de réservation reçues du site : `/partner/requests` (`components/staff/booking/booking-requests-list.tsx`, partagé avec l'écran de l'équipe).
 
 ## Fonctions transversales
 

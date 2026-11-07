@@ -30,6 +30,8 @@ export function PartnerAccount({ profileId, email }: { profileId: string; email:
         phone: data?.phone ?? '',
         email: data?.email ?? email,
         payout_details: data?.payout_details ?? '',
+        whatsapp_phone: data?.whatsapp_phone ?? '',
+        address: data?.address ?? '',
       });
     });
     // Chargement unique par compte.
@@ -42,6 +44,7 @@ export function PartnerAccount({ profileId, email }: { profileId: string; email:
     setError('');
     setMessage('');
     if (!form.contact_name.trim() || !form.phone.trim()) return setError('Nom du contact et téléphone obligatoires.');
+    if (form.whatsapp_phone && form.whatsapp_phone.length < 8) return setError('Numéro WhatsApp incomplet : indiquez-le avec l’indicatif du pays (ex. 22901020304).');
     setSaving(true);
     const { error: failure } = await savePartnerProfile(createClient(), form);
     setSaving(false);
@@ -59,7 +62,7 @@ export function PartnerAccount({ profileId, email }: { profileId: string; email:
   return (
     <div className="mx-auto grid max-w-2xl gap-6">
       <PageHeading eyebrow="Mon profil" title="Mes informations">
-        Ces informations servent à vous contacter et à vous reverser vos gains.
+        Ces informations servent à vous contacter, à vous reverser vos gains et à recevoir les demandes de réservation de vos véhicules.
       </PageHeading>
       <FormMessage error={error} message={error ? '' : message} />
       {!form ? (
@@ -79,6 +82,13 @@ export function PartnerAccount({ profileId, email }: { profileId: string; email:
               </Field>
               <Field label="E-mail" htmlFor="partner-email">
                 <Input type="email" {...field('email')} />
+              </Field>
+              <Field label="Numéro WhatsApp" htmlFor="partner-whatsapp_phone">
+                <Input type="tel" inputMode="numeric" placeholder="22901020304" {...field('whatsapp_phone', true)} />
+                <p className="text-xs text-muted-foreground">Avec l’indicatif du pays, sans + ni espaces. Les visiteurs qui demandent un de vos véhicules sur le site sont envoyés vers ce numéro.</p>
+              </Field>
+              <Field label="Adresse" htmlFor="partner-address">
+                <Input {...field('address')} />
               </Field>
               <Field label="Coordonnées de versement (banque, mobile money…)" htmlFor="partner-payout_details" className="sm:col-span-2">
                 <Textarea rows={2} {...field('payout_details')} />

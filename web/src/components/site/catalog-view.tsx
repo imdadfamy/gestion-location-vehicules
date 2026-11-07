@@ -23,6 +23,7 @@ import { catalogVehicles, formatMoney, fuelLabel, rentalDays, type CatalogVehicl
 import { createClient } from '@/lib/supabase/client';
 import { CATEGORIES } from './hero';
 import { useLang } from './lang-provider';
+import { BookingDialog } from './booking-dialog';
 import { VehicleCard } from './vehicle-card';
 import { VehicleDetail } from './vehicle-detail';
 
@@ -69,6 +70,8 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
   const [result, setResult] = useState<{ key: string; data: CatalogVehicle[]; error: string } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(params.get('vehicule'));
   const [withDriver, setWithDriver] = useState(false);
+  // Véhicule en cours de réservation (fenêtre « sans compte », message WhatsApp).
+  const [booking, setBooking] = useState<CatalogVehicle | null>(null);
 
   const datesInvalid = !!departure && !!returnDate && new Date(returnDate) <= new Date(departure);
   // La période n'est appliquée que si les deux dates sont saisies.
@@ -186,10 +189,7 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
       toast.error(t('Ce véhicule n’est pas disponible sur ces dates.'));
       return;
     }
-    // La page de connexion renvoie directement vers l'espace client si la session existe.
-    const target = new URLSearchParams({ vehicle: vehicle.id, depart: departure, retour: returnDate });
-    if (withDriver) target.set('chauffeur', '1');
-    router.push(`/client/login?${target}`);
+    setBooking(vehicle);
   }
 
   const detail = selected && (
@@ -206,6 +206,12 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
       onTransfer={hasTransfer ? goToTransfer : undefined}
     />
   );
+  /** Pour qui préfère réserver avec un compte : la page de connexion renvoie directement vers l'espace client si la session existe. */
+  function accountHref() {
+    const target = new URLSearchParams({ vehicle: booking?.id ?? '', depart: departure, retour: returnDate });
+    if (withDriver) target.set('chauffeur', '1');
+    return `/client/login?${target}`;
+  }
   const title = selected ? `${selected.make} ${selected.model}${selected.year ? ` · ${selected.year}` : ''}` : '';
 
   return (
@@ -431,6 +437,16 @@ export function CatalogView({ whatsappPhone, pageSize = 6 }: { whatsappPhone?: s
           </DialogContent>
         </Dialog>
       )}
+
+      <BookingDialog
+        vehicle={booking}
+        departure={departure}
+        returnDate={returnDate}
+        withDriver={withDriver}
+        agencyPhone={whatsappPhone}
+        onClose={() => setBooking(null)}
+        accountHref={accountHref()}
+      />
     </>
   );
 }

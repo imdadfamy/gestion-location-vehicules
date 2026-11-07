@@ -968,6 +968,8 @@ export type Database = {
           notes: string | null;
           payout_details: string | null;
           phone: string;
+          whatsapp_phone: string | null;
+          address: string | null;
           profile_id: string | null;
           updated_at: string;
           updated_by: string | null;
@@ -982,6 +984,8 @@ export type Database = {
           notes?: string | null;
           payout_details?: string | null;
           phone: string;
+          whatsapp_phone?: string | null;
+          address?: string | null;
           profile_id?: string | null;
           updated_at?: string;
           updated_by?: string | null;
@@ -996,6 +1000,8 @@ export type Database = {
           notes?: string | null;
           payout_details?: string | null;
           phone?: string;
+          whatsapp_phone?: string | null;
+          address?: string | null;
           profile_id?: string | null;
           updated_at?: string;
           updated_by?: string | null;
@@ -1797,6 +1803,18 @@ export type Database = {
           },
         ];
       };
+      booking_requests: {
+        Row: {
+          id: string; reference: string; vehicle_id: string | null; vehicle_label: string; partner_id: string | null;
+          departure_date: string; return_date: string; with_driver: boolean; estimated_total: number | null;
+          customer_name: string; customer_phone: string; notes: string | null;
+          acquisition_source: string | null; acquisition_detail: string | null;
+          status: string; created_at: string; updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       transfer_requests: {
         Row: {
           acquisition_detail: string | null;
@@ -2335,7 +2353,26 @@ export type Database = {
           year: number;
           driver_daily_price: number;
           price_tiers: Json;
+          contact_whatsapp: string | null;
         }[];
+      };
+      public_create_booking_request: {
+        Args: {
+          target_acquisition_detail?: string;
+          target_acquisition_source?: string;
+          target_customer_name: string;
+          target_customer_phone: string;
+          target_departure: string;
+          target_notes?: string;
+          target_return: string;
+          target_vehicle_id: string;
+          target_with_driver?: boolean;
+        };
+        Returns: { reference: string; whatsapp_phone: string | null }[];
+      };
+      set_booking_request_status: {
+        Args: { target_id: string; target_status: string };
+        Returns: undefined;
       };
       public_create_transfer_request: {
         Args: {

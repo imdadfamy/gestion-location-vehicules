@@ -84,7 +84,10 @@ export function VehicleDetail({
   }
 
   const period = departure && returnDate ? ` ${t('du {from} au {to}', { from: formatLocal(departure, locale), to: formatLocal(returnDate, locale) })}` : '';
-  const message = () => `${t('Bonjour FIMA AUTO, je suis intéressé par {name}', { name })}${withDriver ? ` ${t('avec chauffeur')}` : ''}${period}. ${link()}`;
+  // Véhicule de partenaire : on écrit au partenaire (son numéro), pas à l'agence.
+  const contactPhone = vehicle.contact_whatsapp ?? whatsappPhone;
+  const greeting = vehicle.contact_whatsapp ? t('Bonjour, je suis intéressé par {name}', { name }) : t('Bonjour FIMA AUTO, je suis intéressé par {name}', { name });
+  const message = () => `${greeting}${withDriver ? ` ${t('avec chauffeur')}` : ''}${period}. ${link()}`;
 
   async function share() {
     const url = link();
@@ -104,7 +107,7 @@ export function VehicleDetail({
     }
   }
 
-  const askHref = whatsappLink(whatsappPhone, message());
+  const askHref = whatsappLink(contactPhone, message());
   const shareHref = `https://wa.me/?text=${encodeURIComponent(`${t('{name} à louer chez FIMA AUTO', { name })} : ${typeof window === 'undefined' ? '' : link()}`)}`;
 
   return (

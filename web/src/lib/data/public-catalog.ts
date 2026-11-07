@@ -76,5 +76,5 @@ export const fuelLabel: Record<string, string> = {
 };
 
 /** Ce dont une carte de véhicule a besoin (le portail client n'a pas les caractéristiques détaillées). */
-export type CardVehicle = Omit<CatalogVehicle, 'is_available' | 'seats' | 'doors' | 'air_conditioning' | 'features' | 'mileage'> &
-  Partial<Pick<CatalogVehicle, 'is_available' | 'seats' | 'doors' | 'air_conditioning' | 'features' | 'mileage'>>;
+export type CardVehicle = Omit<CatalogVehicle, 'is_available' | 'seats' | 'doors' | 'air_conditioning' | 'features' | 'mileage' | 'contact_whatsapp'> &
+  Partial<Pick<CatalogVehicle, 'is_available' | 'seats' | 'doors' | 'air_conditioning' | 'features' | 'mileage' | 'contact_whatsapp'>>;
