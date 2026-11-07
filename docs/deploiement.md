@@ -96,31 +96,22 @@ npx supabase functions serve send-push --env-file supabase/.env   # une seule, a
 
 ---
 
-## État au 6 novembre 2026
+## État au 7 novembre 2026
 
 Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des migrations locales à celle du projet en ligne).
 
-**Déjà en production**
+**En production (branche `refonte-v2`, jusqu'au commit `4f08a88`)**
 
-- Toutes les migrations jusqu'à `20261103100000_marketing` (chauffeur, transferts avec suivi, alertes push, marketing).
-- Fonctions Edge : `send-push` (alertes équipe, clients, partenaires, transferts) et `manage-users` (liste blanche incluant `marketing`).
-- Site : vitrine bilingue, transferts, alertes push, marketing, corrections d'affichage.
+- Toutes les migrations jusqu'à `20261107100000_fleet_profitability` : chauffeur, transferts avec suivi, alertes push, marketing, Analyses
+  (`analytics_foundation`, `analytics_personalization`, `analytics_incidents`), provenance des clients (`acquisition`), tarifs selon la durée
+  (`duration_pricing`, `price_tiers_in_days`), rentabilité du parc (`fleet_profitability`). Appliquées le 7 novembre 2026.
+- Fonctions Edge : `send-push` et `manage-users` (version 14, liste blanche incluant `marketing` et `fleet_finance`).
+- Site : tout le contenu de la branche, déployé sur https://fima-auto.vercel.app.
 
-**Développé et testé en local, pas encore en production**
+**Développé en local, pas en production**
 
-| Migration | Objet |
-|---|---|
-| `20261103140000_analytics_foundation` | Catalogue de mesures, vues d'analyse, fonction d'agrégation |
-| `20261103160000_analytics_personalization` | Cartes et rapports enregistrés (tables conservées ; l'écran correspondant a été retiré) |
-| `20261104100000_acquisition` | Question « Comment nous avez-vous connus ? », coût d'acquisition par canal |
-| `20261105100000_analytics_incidents` | Incidents dans les analyses |
-| `20261106100000_duration_pricing` | Tarifs selon la durée (prix client et prix partenaire) |
-| `20261106110000_price_tiers_in_days` | Seuils des tarifs en jours (ou en mois) |
-| `20261107100000_fleet_profitability` | Prix d'achat et rentabilité du parc |
-
-À faire à la mise en ligne de ce lot : les 7 migrations (dans cet ordre), **redéployer `manage-users`** (nouveau module `fleet_finance`), puis déployer le site.
-Le site actuellement en ligne ne contient pas encore : les nouvelles Analyses, la suppression de l'ancienne page Rapports,
-la provenance des clients, les tarifs selon la durée, la rentabilité du parc.
+Rien pour l'instant : la branche `partenaire-autonome` (partenaire autonome : profil, contrat personnalisé, locations propres,
+réservation publique par WhatsApp) est en cours de développement et ne sera déployée qu'après accord.
 
 **Rappels en suspens**
 
