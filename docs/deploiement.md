@@ -108,10 +108,10 @@ Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des 
 - Fonctions Edge : `send-push` (version 4) et `manage-users` (version 14, liste blanche incluant `marketing` et `fleet_finance`).
 - Site : tout le contenu de `main`, déployé sur https://fima-auto.vercel.app (dépendance `unpdf` pour la lecture des PDF de contrat), avec la typographie agrandie (docs/architecture.md §18).
 
-**Développé en local, pas en production**
+- Section « Logos partenaires » du site public, en production : migrations `20261110100000_partner_public_logos` et `20261110110000_contract_assets_image_types` (logos JPEG et WebP acceptés par le stockage) appliquées (colonne `logo_public_consent`, fonctions `public_partner_logos` et `is_public_partner_logo`, policy de lecture du stockage). Le bandeau reste invisible tant que moins de 5 partenaires ont un logo et ont donné leur accord. Pas de fonction Edge ni de variable.
+- Correctif photos de la fiche véhicule, en production : migration `20261110120000_public_vehicle_photos_for_signed_in` appliquée (la lecture publique des photos ne valait que pour les visiteurs sans compte ; un partenaire ou un membre du personnel connecté ne voyait pas les photos du catalogue) et galerie sans chargement différé.
 
-- Branche `partenaires-logos` : section « Logos partenaires » du site public. Migrations `20261110100000_partner_public_logos` et `20261110110000_contract_assets_image_types` (logos JPEG et WebP acceptés par le stockage) à appliquer avant le déploiement du site (colonne `logo_public_consent`, fonctions `public_partner_logos` et `is_public_partner_logo`, policy de lecture du stockage). Pas de fonction Edge ni de variable.
-- Correctif photos de la fiche véhicule : migration `20261110120000_public_vehicle_photos_for_signed_in` (la lecture publique des photos ne valait que pour les visiteurs sans compte ; un partenaire ou un membre du personnel connecté ne voyait pas les photos du catalogue). À appliquer en production avec le code du site (galerie sans chargement différé).
+**Développé en local, pas en production** : rien pour le moment.
 
 À vérifier avec un vrai compte après la mise en ligne : l'import d'un PDF de contrat, l'envoi d'un logo, et la lecture automatique des pièces (le lecteur télécharge ses fichiers de langue la première fois).
 
