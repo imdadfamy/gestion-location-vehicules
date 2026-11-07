@@ -531,6 +531,7 @@ sont dans `web/src/lib/database.types.ts`.
 | `clients`, `transfer_requests` | `acquisition_source`, `acquisition_detail` | `acquisition` |
 | `partners` | `whatsapp_phone`, `address` (renseignés par le partenaire) | `partner_profile_and_booking_requests` |
 | `partners` | `logo_path` (logo du partenaire pour ses contrats) | `partner_contract_templates` |
+| `partners` | `logo_public_consent` (accord du partenaire pour afficher son logo sur le site public, faux par défaut) |
 | `contracts` | `partner_template_id` (version du contrat du partenaire utilisée) | `partner_contract_templates` |
 | `clients`, `rentals`, `contracts` | `owner_partner_id` (ce qui appartient à un partenaire ; immuable ; RLS dédiée) | `partner_rentals` |
 
@@ -551,6 +552,8 @@ sont dans `web/src/lib/database.types.ts`.
 | `partner_record_payment`, `partner_receive_deposit`, `partner_settle_deposit`, `partner_owns_rental/inspection/client` | Partenaire autonome : solde, caution reçue / restituée / retenue ; contrôles de propriété utilisés par la RLS (inspections, photos, pièces d'identité) |
 | `my_partner_id()`, `partner_create_rental(...)`, `partner_create_contract(location)` | Partenaire autonome : identité du partenaire connecté, création client + location (+ paiement) et création du contrat figé ; seules ses locations sur ses véhicules validés |
 | `public_create_booking_request`, `set_booking_request_status` | Demande de réservation sans compte (contrôles, disponibilité, limite de 5 par heure et par téléphone, alerte équipe et partenaire) ; avancement par l'équipe ou le partenaire propriétaire |
+| `public_partner_logos()` | Nom commercial et chemin du logo des partenaires publiables (compte actif, nom, logo, accord) ; lisible par tous |
+| `is_public_partner_logo(path)` | Vrai si le fichier est le logo d'un partenaire publiable (sert la policy de lecture anonyme du stockage) |
 
 ## 7.4 Stockage (buckets)
 
@@ -578,6 +581,7 @@ sont dans `web/src/lib/database.types.ts`.
 | Partenaire autonome (locations propres, contrats) | `20261108200000` |
 | Partenaire autonome (inspections, caution, pièces d'identité) | `20261108300000` |
 | Partenaire autonome (contrat personnalisé) | `20261109100000` |
+| Logos des partenaires sur le site public | `20261110100000` |
 
 Règle : **ne jamais modifier une migration déjà appliquée en production** ; ajouter une nouvelle migration. Les migrations encore
 locales sont listées dans [deploiement.md](deploiement.md).

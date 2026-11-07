@@ -121,6 +121,7 @@ export const DEFAULT_DATA_EN: BlockData = {
     title: 'They trust us',
     items: [{ name: 'Customer name', role: 'Customer', quote: 'Fast service and vehicles in perfect condition.' }],
   },
+  partner_logos: { eyebrow: 'They drive with us', title: 'Our partners', threshold: 5 },
   stats: {
     eyebrow: 'In numbers',
     title: 'FIMA AUTO',

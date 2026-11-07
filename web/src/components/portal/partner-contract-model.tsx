@@ -8,13 +8,15 @@ import { PageHeading } from '@/components/portal/page-heading';
 import { StatusBadge } from '@/components/staff/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import type { ContractSection } from '@/lib/contract-import';
 import { frenchError } from '@/lib/errors';
 import { frDateTime } from '@/lib/format';
-import { importPdf, listTemplates, logoUrl, sectionsOf, submitTemplate, TEMPLATE_STATUSES, uploadLogo, type PartnerTemplate } from '@/lib/data/partner-contract';
+import { importPdf, listTemplates, logoUrl, sectionsOf, setLogoPublicConsent, submitTemplate, TEMPLATE_STATUSES, uploadLogo, type PartnerTemplate } from '@/lib/data/partner-contract';
 import { myPartner, type PartnerRecord } from '@/lib/data/partner-portal';
 import { createClient } from '@/lib/supabase/client';
 
@@ -87,6 +89,15 @@ export function PartnerContractModel({ profileId }: { profileId: string }) {
     setVersion((value) => value + 1);
   }
 
+  async function changeConsent(consent: boolean) {
+    if (!partner) return;
+    setError('');
+    const { error: failure } = await setLogoPublicConsent(createClient(), partner.id, consent);
+    if (failure) return setError(frenchError(failure));
+    setPartner({ ...partner, logo_public_consent: consent });
+    toast.success(consent ? 'Merci : votre logo pourra apparaître sur le site public.' : 'Votre logo n’apparaît plus sur le site public.');
+  }
+
   async function send() {
     if (!partner) return;
     setError('');
@@ -132,6 +143,25 @@ export function PartnerContractModel({ profileId }: { profileId: string }) {
           <Button variant="outline" onClick={() => logoInput.current?.click()} disabled={!partner}>
             <ImagePlus /> {logo ? 'Changer le logo' : 'Ajouter mon logo'}
           </Button>
+          <div className="flex w-full items-start gap-3 border-t pt-4">
+            <Checkbox
+              id="partner-logo-consent"
+              checked={!!partner?.logo_public_consent}
+              disabled={!partner}
+              onCheckedChange={(value) => changeConsent(value === true)}
+              className="mt-1"
+            />
+            <div className="grid gap-1">
+              <Label htmlFor="partner-logo-consent" className="text-base leading-snug">
+                J’accepte que mon logo apparaisse sur le site public de FIMA AUTO
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Seuls votre nom commercial et votre logo sont affichés, dans le bandeau « Nos partenaires » (visible dès que 5 partenaires y figurent). Décochez à tout moment pour le retirer.
+                {partner && !partner.company_name?.trim() && ' Renseignez d’abord votre nom commercial dans « Mon profil » : sans lui, le logo ne peut pas être affiché.'}
+                {partner?.logo_public_consent && !logo && ' Ajoutez aussi votre logo pour qu’il soit affiché.'}
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

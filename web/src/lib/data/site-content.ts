@@ -88,6 +88,7 @@ export type BlockData = {
   announcement: { text: string; linkLabel: string; linkHref: string; tone: 'info' | 'promo' };
   testimonials: { eyebrow: string; title: string; items: Testimonial[] };
   stats: { eyebrow: string; title: string; items: Stat[] };
+  partner_logos: { eyebrow: string; title: string; threshold: number };
   video: { eyebrow: string; title: string; url: string; caption: string };
   text: { title: string; text: string };
 };
@@ -109,6 +110,7 @@ export const BLOCK_TYPES = [
   'announcement',
   'testimonials',
   'stats',
+  'partner_logos',
   'video',
   'text',
 ] as const satisfies readonly BlockType[];
@@ -128,6 +130,7 @@ export const BLOCK_META: Record<BlockType, { label: string; description: string;
   announcement: { label: 'Bandeau d’annonce', description: 'Un message court (promotion, information).' },
   testimonials: { label: 'Témoignages', description: 'Avis de clients.' },
   stats: { label: 'Chiffres clés', description: 'Quelques chiffres mis en avant.' },
+  partner_logos: { label: 'Logos partenaires', description: 'Bandeau défilant des logos de partenaires, visible dès que le seuil est atteint.', unique: true },
   video: { label: 'Vidéo', description: 'Une vidéo YouTube ou un fichier vidéo.' },
   text: { label: 'Texte libre', description: 'Un titre et des paragraphes.' },
 };
@@ -241,6 +244,7 @@ export const DEFAULT_DATA: BlockData = {
       { value: '24/7', label: 'Réservation en ligne' },
     ],
   },
+  partner_logos: { eyebrow: 'Ils roulent avec nous', title: 'Nos partenaires', threshold: 5 },
   video: { eyebrow: 'Vidéo', title: 'Découvrez-nous', url: '', caption: '' },
   text: { title: 'Titre de la section', text: 'Votre texte ici.\n\nSéparez les paragraphes par une ligne vide.' },
 };
@@ -361,7 +365,15 @@ export function normalizeBlocks(stored: unknown, fallback: Block[] = []): Block[
     });
 }
 
-export const homeContent = (stored: unknown): HomeContent => ({ blocks: normalizeBlocks(stored, DEFAULT_HOME_BLOCKS) });
+/** L'accueil enregistré avant l'arrivée de la section des logos la reçoit après le bloc partenaires (elle reste invisible sous le seuil). */
+function withPartnerLogos(blocks: Block[]): Block[] {
+  if (blocks.some((block) => block.type === 'partner_logos')) return blocks;
+  const logos = { id: 'partner_logos', type: 'partner_logos', show: true, data: defaultData('partner_logos') } as Block;
+  const at = blocks.findIndex((block) => block.type === 'partner');
+  return at < 0 ? [...blocks, logos] : [...blocks.slice(0, at + 1), logos, ...blocks.slice(at + 1)];
+}
+
+export const homeContent = (stored: unknown): HomeContent => ({ blocks: withPartnerLogos(normalizeBlocks(stored, DEFAULT_HOME_BLOCKS)) });
 export const footerContent = (stored: unknown) => mergeContent(DEFAULT_FOOTER, stored);
 export const pageContent = (stored: unknown): PageContent => ({
   ...mergeContent({ title: '', description: '' }, stored),

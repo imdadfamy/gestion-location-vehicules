@@ -969,6 +969,7 @@ export type Database = {
       partners: {
         Row: {
           logo_path: string | null;
+          logo_public_consent: boolean;
           company_name: string | null;
           contact_name: string;
           created_at: string;
@@ -986,6 +987,7 @@ export type Database = {
         };
         Insert: {
           logo_path?: string | null;
+          logo_public_consent?: boolean;
           company_name?: string | null;
           contact_name: string;
           created_at?: string;
@@ -1003,6 +1005,7 @@ export type Database = {
         };
         Update: {
           logo_path?: string | null;
+          logo_public_consent?: boolean;
           company_name?: string | null;
           contact_name?: string;
           created_at?: string;
@@ -2354,6 +2357,10 @@ export type Database = {
           transmission: string;
           year: number;
         }[];
+      };
+      public_partner_logos: {
+        Args: Record<PropertyKey, never>;
+        Returns: { company_name: string; logo_path: string }[];
       };
       public_catalog_vehicles: {
         Args: { target_departure?: string; target_return?: string };

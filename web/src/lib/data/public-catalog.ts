@@ -78,3 +78,21 @@ export const fuelLabel: Record<string, string> = {
 /** Ce dont une carte de véhicule a besoin (le portail client n'a pas les caractéristiques détaillées). */
 export type CardVehicle = Omit<CatalogVehicle, 'is_available' | 'seats' | 'doors' | 'air_conditioning' | 'features' | 'mileage' | 'contact_whatsapp'> &
   Partial<Pick<CatalogVehicle, 'is_available' | 'seats' | 'doors' | 'air_conditioning' | 'features' | 'mileage' | 'contact_whatsapp'>>;
+
+export type PartnerLogo = { name: string; url: string };
+
+/**
+ * Logos des partenaires qui ont donné leur accord (nom commercial et logo, rien d'autre), avec un lien de 10 minutes
+ * vers chaque fichier. Voir docs/business-rules.md, section 18.
+ */
+export async function partnerLogos(db: Db): Promise<PartnerLogo[]> {
+  const result = await db.rpc('public_partner_logos');
+  if (result.error) return [];
+  const logos = await Promise.all(
+    (result.data ?? []).map(async (item) => {
+      const signed = await db.storage.from('contract-assets').createSignedUrl(item.logo_path, 600);
+      return signed.data?.signedUrl ? { name: item.company_name, url: signed.data.signedUrl } : null;
+    }),
+  );
+  return logos.filter((logo): logo is PartnerLogo => !!logo);
+}

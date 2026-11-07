@@ -215,5 +215,30 @@ select throws_ok($$ insert into public.rentals (client_id, vehicle_id, departure
                             now() + interval '31 days', now() + interval '32 days', 25000) $$,
                  '23P01', null, 'location chevauchante refusée pour un même véhicule');
 
+-- ───────────────────────── Logos des partenaires sur le site public ─────────────────────────
+reset role;
+update public.partners set company_name = 'Garage Test', logo_path = 'partners/10000000-0000-0000-0000-000000000099/logo-1.png', logo_public_consent = false
+where profile_id = :partner;
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select is((select count(*) from public.public_partner_logos())::int, 0, 'logos : sans accord du partenaire, rien n''est public');
+select is(public.is_public_partner_logo('partners/10000000-0000-0000-0000-000000000099/logo-1.png'), false, 'logos : le fichier n''est pas lisible sans accord');
+reset role;
+update public.partners set logo_public_consent = true where profile_id = :partner;
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select is((select count(*) from public.public_partner_logos())::int, 1, 'logos : avec l''accord, le logo devient public');
+select is((select company_name from public.public_partner_logos()), 'Garage Test', 'logos : seul le nom commercial est exposé');
+select is(public.is_public_partner_logo('partners/10000000-0000-0000-0000-000000000099/logo-1.png'), true, 'logos : le fichier devient lisible');
+select is(public.is_public_partner_logo('partners/autre/logo-2.png'), false, 'logos : un autre fichier reste privé');
+reset role;
+alter table public.profiles disable trigger user;
+update public.profiles set is_active = false where id = :partner;
+alter table public.profiles enable trigger user;
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select is((select count(*) from public.public_partner_logos())::int, 0, 'logos : un compte désactivé disparaît aussitôt');
+reset role;
+
 select * from finish();
 rollback;

@@ -58,3 +58,8 @@ export async function logoUrl(db: Db, path: string | null | undefined) {
 export function reviewTemplate(db: Db, id: string, approve: boolean, note: string) {
   return db.rpc('review_partner_contract_template', { target_id: id, approve, note: note || undefined });
 }
+
+/** Accord (ou retrait de l'accord) du partenaire pour afficher son logo sur le site public. */
+export function setLogoPublicConsent(db: Db, partnerId: string, consent: boolean) {
+  return db.from('partners').update({ logo_public_consent: consent }).eq('id', partnerId);
+}

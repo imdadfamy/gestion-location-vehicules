@@ -291,3 +291,13 @@ Page « Mon profil » dans l'espace partenaire : nom commercial, logo, télépho
 * Plus de création de compte obligatoire : le visiteur renseigne son nom, son téléphone et ses dates, puis le site ouvre WhatsApp avec un message prérempli (véhicule, dates, prix estimé, référence). La création de compte reste proposée, en option.
 * Destinataire : véhicule de l'agence → numéro WhatsApp de l'agence ; véhicule d'un partenaire → numéro WhatsApp du partenaire (à défaut, celui de l'agence).
 * La demande est enregistrée avant la redirection (suivi, canal d'acquisition, retrouvable par le partenaire ou l'équipe), avec une limite de demandes par numéro comme pour les transferts.
+
+## 18. Logos des partenaires sur le site public (branche `partenaires-logos`)
+
+Une section « Nos partenaires » du site public fait défiler les logos des partenaires.
+
+* **Accord obligatoire** : le partenaire coche lui-même, à côté de son logo (page « Mon contrat »), « J'accepte que mon logo apparaisse sur le site public de FIMA AUTO ». La case est décochée par défaut ; la décocher retire le logo du site aussitôt.
+* **Partenaire publiable** : compte actif, nom commercial renseigné, logo envoyé et accord donné. Le contrat personnalisé n'est pas une condition.
+* **Seuil** : la section n'apparaît que lorsque le nombre de partenaires publiables atteint le seuil (5 par défaut, modifiable dans l'éditeur « Site web », section « Logos partenaires »). En dessous, elle reste invisible. Chaque nouveau partenaire publiable s'ajoute tout seul au défilement ; si le nombre retombe sous le seuil (logo retiré, accord retiré, compte désactivé), la section se cache.
+* **Ce qui est public** : le nom commercial et le logo, rien d'autre (ni contrat, ni coordonnées). Le logo n'est lisible publiquement que tant que le partenaire est publiable.
+* Le logo n'est pas cliquable (V1). Pas de page dédiée : une section de l'accueil, que l'équipe peut masquer ou déplacer comme les autres.

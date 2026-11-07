@@ -110,7 +110,7 @@ Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des 
 
 **Développé en local, pas en production**
 
-Rien pour l'instant.
+- Branche `partenaires-logos` : section « Logos partenaires » du site public. Migration `20261110100000_partner_public_logos` à appliquer avant le déploiement du site (colonne `logo_public_consent`, fonctions `public_partner_logos` et `is_public_partner_logo`, policy de lecture du stockage). Pas de fonction Edge ni de variable.
 
 À vérifier avec un vrai compte après la mise en ligne : l'import d'un PDF de contrat, l'envoi d'un logo, et la lecture automatique des pièces (le lecteur télécharge ses fichiers de langue la première fois).
 

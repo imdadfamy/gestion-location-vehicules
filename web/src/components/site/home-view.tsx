@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, MessageCircle, Quote } from 'lucide-react';
 import { Suspense, cache } from 'react';
 import AnimatedContent from '@/components/AnimatedContent';
+import LogoLoop from '@/components/LogoLoop';
 import SpotlightCard from '@/components/SpotlightCard';
 import { Hero } from '@/components/site/hero';
 import { SiteFooter } from '@/components/site/site-footer';
@@ -12,7 +13,7 @@ import { TransferSection } from '@/components/site/transfer-section';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { companyContact, whatsappLink } from '@/lib/data/public-catalog';
+import { companyContact, partnerLogos, whatsappLink } from '@/lib/data/public-catalog';
 import { safeHref, youtubeEmbed, type Block, type BlockData, type Faq, type FooterContent, type Link as MenuLink, type Announcement } from '@/lib/data/site-content';
 import { localHref, translator, type Lang } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/server';
@@ -54,6 +55,20 @@ async function Catalog({ count }: { count: number }) {
 async function Transfer({ content, anchor }: { content: BlockData['transfer']; anchor: boolean }) {
   const company = await getCompany();
   return <TransferSection content={content} whatsappPhone={company?.whatsapp_phone} anchor={anchor} />;
+}
+
+/** Logos des partenaires : visibles seulement quand leur nombre atteint le seuil réglé dans l'éditeur (docs/business-rules.md, section 18). */
+async function PartnerLogos({ content, anchor }: { content: BlockData['partner_logos']; anchor: boolean }) {
+  const logos = await partnerLogos(await createClient());
+  if (logos.length < Math.max(1, content.threshold)) return null;
+  return (
+    <section id={anchor ? 'nos-partenaires' : undefined} className="scroll-mt-20 border-t border-border/60 py-16">
+      <div className="mx-auto max-w-6xl px-4">
+        <SectionTitle eyebrow={content.eyebrow} title={content.title} />
+      </div>
+      <LogoLoop logos={logos} className="mt-10" />
+    </section>
+  );
 }
 
 function CatalogSkeleton() {
@@ -284,6 +299,13 @@ function BlockView({ block, anchor, transfer, lang }: { block: Block; anchor: bo
         </section>
       );
     }
+
+    case 'partner_logos':
+      return (
+        <Suspense fallback={null}>
+          <PartnerLogos content={block.data} anchor={anchor} />
+        </Suspense>
+      );
 
     case 'cta': {
       const { title, text } = block.data;

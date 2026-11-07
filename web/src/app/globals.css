@@ -196,6 +196,26 @@
     min-height: 1.5em;
   }
 }
+/* Bandeau de logos (components/LogoLoop.tsx) : la piste contient deux fois le même jeu, elle avance d'une moitié puis recommence. */
+@keyframes logo-loop {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.logo-loop-track {
+  animation: logo-loop var(--logo-loop-duration, 30s) linear infinite;
+}
+.logo-loop:hover .logo-loop-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-loop-track {
+    animation: none;
+  }
+  .logo-loop {
+    overflow-x: auto;
+  }
+}
 /* FullCalendar aux couleurs du thème (clair et sombre) ; ses variables sont posées sur `.fc`. */
 .staff-calendar .fc {
   --fc-border-color: var(--border);
