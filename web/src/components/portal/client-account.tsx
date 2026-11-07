@@ -38,6 +38,8 @@ import {
 } from '@/lib/data/client-portal';
 import { missingItems, PROFILE_STEPS } from '@/lib/data/client-progress';
 import { frenchError } from '@/lib/errors';
+import { SCAN_FIELDS } from '@/lib/identity-scan';
+import { useDocumentScan } from '@/lib/use-document-scan';
 import { digitsOnly } from '@/lib/format';
 import { prepareImage } from '@/lib/image-compress';
 import { createClient } from '@/lib/supabase/client';
@@ -139,6 +141,11 @@ export function ClientAccount({
     setForm((current) => current && { ...current, [key]: value });
   }
 
+  // Lecture automatique des photos : ne remplit que les champs encore vides (la personne garde la main sur tout).
+  const documentScan = useDocumentScan(form ?? EMPTY, (next) => {
+    for (const { key } of [...SCAN_FIELDS.identity, ...SCAN_FIELDS.license]) if (next[key] !== (form ?? EMPTY)[key]) change(key, next[key]);
+  });
+
   async function goTo(next: number) {
     if (dirty) await persist();
     setStep(next);
@@ -212,6 +219,7 @@ export function ClientAccount({
       const file = event.target.files?.[0];
       event.target.value = '';
       void upload(file, type, replaced);
+      documentScan.scan(type === 'identity_document' ? 'identity' : 'license', file);
     };
     return (
       <div className="grid gap-2 rounded-lg border p-3">
@@ -258,6 +266,11 @@ export function ClientAccount({
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">JPG, PNG ou PDF. Les photos sont réduites automatiquement avant l’envoi.</p>
+        {documentScan.notes[type === 'identity_document' ? 'identity' : 'license'] && (
+          <p className="text-xs text-primary" role="status">
+            {documentScan.notes[type === 'identity_document' ? 'identity' : 'license']}
+          </p>
+        )}
       </div>
     );
   }

@@ -26,6 +26,7 @@ import {
 import { loadTiers } from '@/lib/data/price-tiers';
 import { formatMoney } from '@/lib/data/public-catalog';
 import { frenchError } from '@/lib/errors';
+import { useDocumentScan } from '@/lib/use-document-scan';
 import { digitsOnly } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 import { dailyPriceFor, tierTitle, type PriceTier } from '@/lib/pricing';
@@ -63,6 +64,8 @@ export function RentalWizard({
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [matches, setMatches] = useState<Client[]>([]);
   const [files, setFiles] = useState<Record<string, File>>({});
+  // Lecture automatique des photos de pièce et de permis : ne remplit que les champs encore vides.
+  const documentScan = useDocumentScan(client, setClient);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -306,8 +309,12 @@ export function RentalWizard({
                       onChange={(event) => {
                         const file = event.target.files?.[0];
                         if (file) setFiles({ ...files, [type]: file });
+                        if (type === 'identity_document') documentScan.scan('identity', file);
+                        if (type === 'driving_license') documentScan.scan('license', file);
                       }}
                     />
+                    {type === 'identity_document' && documentScan.notes.identity && <span className="text-xs text-primary" role="status">{documentScan.notes.identity}</span>}
+                    {type === 'driving_license' && documentScan.notes.license && <span className="text-xs text-primary" role="status">{documentScan.notes.license}</span>}
                   </label>
                 ))}
               </div>

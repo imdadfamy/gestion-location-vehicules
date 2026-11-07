@@ -33,6 +33,15 @@ Les informations du client doivent être conservées dans son historique.
 
 ---
 
+### Lecture automatique des pièces
+
+Quand une photo de pièce d'identité ou de permis est ajoutée (assistant de location de l'équipe, fiche client, assistant du partenaire, dossier du client), elle est lue automatiquement pour proposer le prénom, le nom, le numéro de pièce, le numéro de permis et sa date d'expiration.
+
+* La lecture ne fait que **proposer** : seuls les champs encore **vides** sont remplis. Un champ déjà saisi n'est jamais écrasé, même s'il a été modifié à la main avant ou pendant la lecture ; tout reste modifiable et effaçable.
+* Si tous les champs concernés sont **déjà remplis** avant l'ajout de la pièce, il n'y a aucune lecture : la pièce est simplement conservée.
+* La lecture se fait dans le navigateur ; l'image n'est envoyée à aucun service. Un échec, un PDF ou une pièce illisible ne bloque jamais : on saisit à la main.
+* L'agent ou le client vérifie toujours les informations avant d'enregistrer.
+
 ## 4. Véhicules
 
 Un véhicule ne peut pas être réservé pour deux locations qui se chevauchent.

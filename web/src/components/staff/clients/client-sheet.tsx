@@ -17,7 +17,6 @@ import {
   clientDocumentLink,
   clientDocuments,
   clientRentals,
-  extractIdentity,
   RENTAL_STATUSES,
   saveClient,
   toClientForm,
@@ -26,6 +25,7 @@ import {
   type ClientForm,
 } from '@/lib/data/clients';
 import { frenchError } from '@/lib/errors';
+import { fillEmpty, scanDocument, scanMessage } from '@/lib/identity-scan';
 import { digitsOnly, frDate } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 
@@ -122,24 +122,10 @@ export function ClientSheet({
     setError('');
     setMessage('Lecture de la pièce en cours…');
     try {
-      // Chargé à la demande : la reconnaissance de texte est lourde et rarement utilisée.
-      const { recognize } = await import('tesseract.js');
-      const result = await recognize(file, 'fra+eng');
-      const extracted = extractIdentity(result.data.text);
-      setForm((current) =>
-        current && {
-          ...current,
-          first_name: current.first_name || extracted.first_name,
-          last_name: current.last_name || extracted.last_name,
-          id_document_number: current.id_document_number || extracted.id_document_number,
-        },
-      );
-      const count = Object.values(extracted).filter(Boolean).length;
-      setMessage(
-        count
-          ? `Lecture terminée : ${count} information(s) proposée(s). Vérifiez et corrigez les champs avant l’enregistrement.`
-          : 'Lecture terminée. Aucun champ n’a pu être identifié automatiquement : saisissez-les manuellement.',
-      );
+      // Même lecture que partout (lib/identity-scan.ts) : seuls les champs encore vides sont remplis.
+      const { status, proposal } = await scanDocument(file, 'identity', form);
+      setForm((current) => current && fillEmpty(current, proposal, 'identity').next);
+      setMessage(scanMessage(status, fillEmpty(form, proposal, 'identity').filled));
       if (form.id) await archiveIdentity(file, form.id, documents);
     } catch {
       setMessage('');

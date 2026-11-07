@@ -20,6 +20,7 @@ import { createPartnerContract, createPartnerRental, myClients, rentableVehicles
 import { formatMoney } from '@/lib/data/public-catalog';
 import { durationDays, EMPTY_WIZARD_CLIENT, EMPTY_WIZARD_RENTAL, validClient, validRental, type WizardClient, type WizardRental } from '@/lib/data/rentals';
 import { frenchError } from '@/lib/errors';
+import { useDocumentScan } from '@/lib/use-document-scan';
 import { digitsOnly } from '@/lib/format';
 import { dailyPriceFor, type PriceTier } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/client';
@@ -53,6 +54,8 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
   const [contract, setContract] = useState<Contract | null>(null);
   // Photos facultatives de la pièce d'identité et du permis, jointes au contrat signé.
   const [documents, setDocuments] = useState<{ identity_document?: File; driving_license?: File }>({});
+  // Lecture automatique des photos : ne remplit que les champs encore vides, tout reste modifiable.
+  const documentScan = useDocumentScan(client, setClient);
 
   useEffect(() => {
     const db = createClient();
@@ -286,11 +289,13 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
             <Field label="Contact d’urgence : téléphone" required htmlFor="pr-client-emergency_contact_phone">
               <Input type="tel" {...clientField('emergency_contact_phone')} />
             </Field>
-            <Field label="Photo de la pièce d’identité (facultatif)" htmlFor="pr-doc-identity">
-              <Input id="pr-doc-identity" type="file" accept="image/*" onChange={(event) => setDocuments({ ...documents, identity_document: event.target.files?.[0] })} />
+            <Field label="Photo de la pièce d’identité (lue automatiquement)" htmlFor="pr-doc-identity">
+              <Input id="pr-doc-identity" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; setDocuments({ ...documents, identity_document: file }); documentScan.scan('identity', file); }} />
+              {documentScan.notes.identity && <p className="text-xs text-muted-foreground" role="status">{documentScan.notes.identity}</p>}
             </Field>
-            <Field label="Photo du permis (facultatif)" htmlFor="pr-doc-license">
-              <Input id="pr-doc-license" type="file" accept="image/*" onChange={(event) => setDocuments({ ...documents, driving_license: event.target.files?.[0] })} />
+            <Field label="Photo du permis (lue automatiquement)" htmlFor="pr-doc-license">
+              <Input id="pr-doc-license" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; setDocuments({ ...documents, driving_license: file }); documentScan.scan('license', file); }} />
+              {documentScan.notes.license && <p className="text-xs text-muted-foreground" role="status">{documentScan.notes.license}</p>}
             </Field>
           </CardContent>
         </Card>

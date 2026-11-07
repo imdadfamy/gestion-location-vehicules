@@ -94,6 +94,8 @@ export function clientDocumentLink(db: Db, document: ClientDocument) {
 /**
  * Lecture d'une pièce d'identité : propose prénom, nom et numéro à partir du texte
  * reconnu (mêmes motifs que l'écran Angular). L'agent vérifie toujours avant d'enregistrer.
+ * Ancienne version, conservée : les écrans utilisent maintenant `lib/identity-scan.ts` (prénom, nom, numéro, permis,
+ * zone lisible par machine, et jamais d'écrasement d'un champ déjà rempli).
  */
 export function extractIdentity(text: string) {
   const clean = text.replace(/\r/g, '\n');
