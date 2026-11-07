@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Bell, CalendarCheck, CalendarDays, CarFront, ClipboardCheck, FileSignature, Inbox, KeyRound, LayoutDashboard, LogOut, Menu, UserCircle, Wallet, Wrench } from 'lucide-react';
+import { Bell, CalendarCheck, CalendarDays, CarFront, ClipboardCheck, FileSignature, Inbox, KeyRound, LayoutDashboard, LogOut, Menu, ScrollText, UserCircle, Wallet, Wrench } from 'lucide-react';
 import { ThemeToggle } from '@/components/site/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -30,6 +30,7 @@ const LINKS = {
     { href: '/partner/calendar', label: 'Calendrier', icon: CalendarDays },
     { href: '/partner/rentals', label: 'Locations', icon: KeyRound },
     { href: '/partner/contracts', label: 'Contrats', icon: FileSignature },
+    { href: '/partner/contract-model', label: 'Mon contrat', icon: ScrollText },
     { href: '/partner/requests', label: 'Demandes', icon: Inbox },
     { href: '/partner/earnings', label: 'Mes revenus', icon: Wallet },
     { href: '/partner/maintenance', label: 'Maintenance', icon: Wrench },
@@ -40,7 +41,7 @@ const LINKS = {
 };
 
 /** Liens du partenaire affichés en pictogramme seul dans la barre (leur nom reste en infobulle). */
-const ICON_ONLY = ['/partner/maintenance', '/partner/inspections', '/partner/notifications', '/partner/account'];
+const ICON_ONLY = ['/partner/contract-model', '/partner/maintenance', '/partner/inspections', '/partner/notifications', '/partner/account'];
 
 /** Barre de navigation des espaces client et partenaire (menu latéral sur téléphone ; pastille de notifications pour le partenaire). */
 export function PortalNav({ space, userId, contact }: { space: Space; userId?: string; contact?: AgencyContact }) {

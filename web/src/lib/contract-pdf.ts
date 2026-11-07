@@ -35,7 +35,8 @@ export async function companyLogo(db: Db, contract?: Contract | null): Promise<s
     if (!path && company?.is_partner) return null;
     if (!path) path = (await db.from('company_settings').select('logo_storage_path').limit(1).maybeSingle()).data?.logo_storage_path;
     if (path) {
-      const signed = await db.storage.from('rental-documents').createSignedUrl(path, 60);
+      // Logo d'un partenaire : stocké avec les documents de contrat ; celui de l'agence, avec les documents de l'entreprise.
+      const signed = await db.storage.from(path.startsWith('partners/') ? 'contract-assets' : 'rental-documents').createSignedUrl(path, 60);
       if (signed.data?.signedUrl) return asDataUrl(await (await fetch(signed.data.signedUrl)).blob());
     }
     return asDataUrl(await (await fetch('/logo.jpg')).blob());

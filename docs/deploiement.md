@@ -117,9 +117,10 @@ Branche `partenaire-autonome` (partenaire autonome), en cours de développement 
 | Migration `20261108100000_partner_profile_and_booking_requests` | WhatsApp et adresse du partenaire, demandes de réservation sans compte, numéro du partenaire dans le catalogue public |
 | Migration `20261108200000_partner_rentals` | Propriété partenaire (clients, locations, contrats), RLS, création de location et de contrat par le partenaire, exclusion de ses locations des chiffres de l'agence |
 | Migration `20261108300000_partner_rental_lifecycle` | Inspections, photos, paiement du solde, caution et pièces d'identité pour les locations du partenaire |
+| Migration `20261109100000_partner_contract_templates` | Contrat personnalisé du partenaire (versions, validation, logo) ; nouvelle dépendance du site : `unpdf` (lecture des PDF, côté serveur) |
 | Fonction Edge `send-push` | À redéployer : l'alerte d'une demande de réservation ouvre la bonne page |
 
-À venir sur la même branche : contrat personnalisé du partenaire (PDF analysé).
+Chantier fonctionnellement complet ; reste à décider du déploiement. Après mise en ligne : vérifier que le téléversement de logo et l'import d'un PDF fonctionnent sur Vercel (lecture du PDF sur le serveur).
 
 **Rappels en suspens**
 

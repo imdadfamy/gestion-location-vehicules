@@ -149,6 +149,10 @@ select throws_ok($$ select public.partner_record_payment('50000000-0000-0000-000
 select throws_ok($$ select public.partner_receive_deposit('50000000-0000-0000-0000-000000000001') $$, '42501', null, 'partenaire : ne peut pas toucher à la caution d’une location de l’agence');
 select is((select count(*) from public.deposits where not public.partner_owns_rental(rental_id)), 0::bigint, 'partenaire : aucune caution qui ne soit pas la sienne');
 select is((select count(*) from public.client_documents where not public.partner_owns_client(client_id)), 0::bigint, 'partenaire : aucune pièce de client qui ne soit pas la sienne');
+select lives_ok($$ insert into public.partner_contract_templates (partner_id, content) values (public.my_partner_id(), '{"sections":[{"title":"1. Objet","clauses":["Texte."]}]}') $$, 'partenaire : peut envoyer son contrat pour validation');
+select is((select status from public.partner_contract_templates order by version_number desc limit 1), 'pending_review', 'partenaire : son contrat attend la validation de l’équipe');
+select throws_ok($$ select public.review_partner_contract_template((select id from public.partner_contract_templates limit 1), true) $$, '42501', null, 'partenaire : ne peut pas valider son propre contrat');
+select throws_ok($$ insert into public.partner_contract_templates (partner_id, content) values (public.my_partner_id(), '{"sections":[]}') $$, '22023', null, 'partenaire : un contrat sans section est refusé');
 reset role;
 
 -- ───────────────────────── Responsable ─────────────────────────

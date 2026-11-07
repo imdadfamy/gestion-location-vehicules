@@ -14,10 +14,11 @@ const pageFor = (role: string | null, type: string | null) => {
     if (type === 'inspection') return '/client/inspections';
     return '/client';
   }
-  if (role === 'partner') return type === 'vehicle' ? '/partner/vehicles' : type === 'booking_request' ? '/partner/requests' : '/partner/notifications';
+  if (role === 'partner') return type === 'vehicle' ? '/partner/vehicles' : type === 'booking_request' ? '/partner/requests' : type === 'contract_template' ? '/partner/contract-model' : '/partner/notifications';
   if (type === 'reservation') return '/app/reservations';
   if (type === 'transfer') return '/app/transfers';
   if (type === 'booking_request') return '/app/booking-requests';
+  if (type === 'contract_template') return '/app/partner-contracts';
   return '/app/notifications';
 };
 

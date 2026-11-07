@@ -477,6 +477,7 @@ export type Database = {
       };
       contracts: {
         Row: {
+          partner_template_id: string | null;
           owner_partner_id: string | null;
           contract_number: string | null;
           created_at: string;
@@ -494,6 +495,7 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          partner_template_id?: string | null;
           owner_partner_id?: string | null;
           contract_number?: string | null;
           created_at?: string;
@@ -511,6 +513,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          partner_template_id?: string | null;
           owner_partner_id?: string | null;
           contract_number?: string | null;
           created_at?: string;
@@ -965,6 +968,7 @@ export type Database = {
       };
       partners: {
         Row: {
+          logo_path: string | null;
           company_name: string | null;
           contact_name: string;
           created_at: string;
@@ -981,6 +985,7 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          logo_path?: string | null;
           company_name?: string | null;
           contact_name: string;
           created_at?: string;
@@ -997,6 +1002,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          logo_path?: string | null;
           company_name?: string | null;
           contact_name?: string;
           created_at?: string;
@@ -1824,6 +1830,15 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      partner_contract_templates: {
+        Row: {
+          id: string; partner_id: string; version_number: number; content: Json; source_file_name: string | null;
+          status: string; review_note: string | null; reviewed_by: string | null; reviewed_at: string | null; created_at: string;
+        };
+        Insert: { partner_id: string; content: Json; source_file_name?: string | null };
+        Update: never;
+        Relationships: [];
+      };
       transfer_requests: {
         Row: {
           acquisition_detail: string | null;
@@ -2392,6 +2407,10 @@ export type Database = {
       };
       partner_settle_deposit: {
         Args: { target_rental: string; target_retained?: number; target_observation?: string };
+        Returns: undefined;
+      };
+      review_partner_contract_template: {
+        Args: { target_id: string; approve: boolean; note?: string };
         Returns: undefined;
       };
       partner_create_contract: {
