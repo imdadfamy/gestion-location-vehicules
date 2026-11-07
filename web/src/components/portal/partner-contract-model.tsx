@@ -128,7 +128,7 @@ export function PartnerContractModel({ profileId }: { profileId: string }) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Votre logo</CardTitle>
-          <CardDescription>Affiché en tête de vos contrats. PNG, JPEG ou WebP, 2 Mo au plus.</CardDescription>
+          <CardDescription>Affiché en tête de vos contrats. PNG, JPEG ou WebP, 2 Mo au plus. Préférez un PNG à fond transparent : sur le site public, seul le logo est affiché, sans cadre.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-4">
           {logo ? (
