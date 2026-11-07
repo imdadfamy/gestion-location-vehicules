@@ -311,10 +311,12 @@ export function RentalWizard({
                         if (file) setFiles({ ...files, [type]: file });
                         if (type === 'identity_document') documentScan.scan('identity', file);
                         if (type === 'driving_license') documentScan.scan('license', file);
+                        if (type === 'document') documentScan.scan('any', file);
                       }}
                     />
                     {type === 'identity_document' && documentScan.notes.identity && <span className="text-xs text-primary" role="status">{documentScan.notes.identity}</span>}
                     {type === 'driving_license' && documentScan.notes.license && <span className="text-xs text-primary" role="status">{documentScan.notes.license}</span>}
+                    {type === 'document' && documentScan.notes.any && <span className="text-xs text-primary" role="status">{documentScan.notes.any}</span>}
                   </label>
                 ))}
               </div>

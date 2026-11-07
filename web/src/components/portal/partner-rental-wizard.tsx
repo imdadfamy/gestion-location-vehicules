@@ -53,7 +53,7 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
   const [saving, setSaving] = useState(false);
   const [contract, setContract] = useState<Contract | null>(null);
   // Photos facultatives de la pièce d'identité et du permis, jointes au contrat signé.
-  const [documents, setDocuments] = useState<{ identity_document?: File; driving_license?: File }>({});
+  const [documents, setDocuments] = useState<{ identity_document?: File; driving_license?: File; document?: File }>({});
   // Lecture automatique des photos : ne remplit que les champs encore vides, tout reste modifiable.
   const documentScan = useDocumentScan(client, setClient);
 
@@ -139,7 +139,7 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
     }
     const clientId = (created.data as { client_id?: string } | null)?.client_id;
     if (clientId) {
-      for (const [type, file] of Object.entries(documents) as ['identity_document' | 'driving_license', File][]) {
+      for (const [type, file] of Object.entries(documents) as ['identity_document' | 'driving_license' | 'document', File][]) {
         const failure = await uploadClientDocument(db, clientId, type, file);
         if (failure) toast.error('Une photo de pièce n’a pas pu être envoyée : ' + frenchError(failure));
       }
@@ -296,6 +296,10 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
             <Field label="Photo du permis (lue automatiquement)" htmlFor="pr-doc-license">
               <Input id="pr-doc-license" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; setDocuments({ ...documents, driving_license: file }); documentScan.scan('license', file); }} />
               {documentScan.notes.license && <p className="text-xs text-muted-foreground" role="status">{documentScan.notes.license}</p>}
+            </Field>
+            <Field label="Autre pièce (passeport, justificatif…, lue automatiquement)" htmlFor="pr-doc-other" className="sm:col-span-2">
+              <Input id="pr-doc-other" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; setDocuments({ ...documents, document: file }); documentScan.scan('any', file); }} />
+              {documentScan.notes.any && <p className="text-xs text-muted-foreground" role="status">{documentScan.notes.any}</p>}
             </Field>
           </CardContent>
         </Card>

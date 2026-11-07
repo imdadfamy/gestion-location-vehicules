@@ -10,22 +10,28 @@
  *  - une lecture qui échoue ne bloque jamais : on saisit à la main.
  */
 
-export type ScanKind = 'identity' | 'license';
+/** `any` : « autre pièce » (passeport, deuxième pièce…), lue à la fois comme identité et comme permis. */
+export type ScanKind = 'identity' | 'license' | 'any';
 export type ScanField = 'first_name' | 'last_name' | 'id_document_number' | 'driving_license_number' | 'driving_license_expiry_date';
 export type ScanProposal = Partial<Record<ScanField, string>>;
 export type ScanStatus = 'ok' | 'empty' | 'unsupported' | 'skipped' | 'failed';
 
+const IDENTITY_FIELDS: { key: ScanField; label: string }[] = [
+  { key: 'first_name', label: 'prénom' },
+  { key: 'last_name', label: 'nom' },
+  { key: 'id_document_number', label: 'n° de pièce' },
+];
+const LICENSE_FIELDS: { key: ScanField; label: string }[] = [
+  { key: 'driving_license_number', label: 'n° de permis' },
+  { key: 'driving_license_expiry_date', label: 'date d’expiration' },
+];
+
 /** Champs que chaque type de pièce peut remplir, avec leur libellé pour le message à l'utilisateur. */
+// « Autre pièce » peut remplir tout ce que remplissent la pièce d'identité et le permis.
 export const SCAN_FIELDS: Record<ScanKind, { key: ScanField; label: string }[]> = {
-  identity: [
-    { key: 'first_name', label: 'prénom' },
-    { key: 'last_name', label: 'nom' },
-    { key: 'id_document_number', label: 'n° de pièce' },
-  ],
-  license: [
-    { key: 'driving_license_number', label: 'n° de permis' },
-    { key: 'driving_license_expiry_date', label: 'date d’expiration' },
-  ],
+  identity: IDENTITY_FIELDS,
+  license: LICENSE_FIELDS,
+  any: [...IDENTITY_FIELDS, ...LICENSE_FIELDS],
 };
 
 const MAX_BYTES = 12 * 1024 * 1024;
@@ -177,7 +183,13 @@ export async function scanDocument(file: File, kind: ScanKind, current: Partial<
     // Chargé à la demande : la reconnaissance de texte est lourde et rarement utilisée.
     const { recognize } = await import('tesseract.js');
     const { data } = await recognize(file, 'fra+eng');
-    const proposal = kind === 'identity' ? parseIdentityText(data.text) : parseLicenseText(data.text);
+    const proposal =
+      kind === 'identity'
+        ? parseIdentityText(data.text)
+        : kind === 'license'
+          ? parseLicenseText(data.text)
+          : // Autre pièce : le permis n'est lu que si le texte parle d'un permis (sinon le numéro d'une carte serait pris pour un n° de permis).
+            { ...(/permis|licen[cs]e|driving/i.test(data.text) ? parseLicenseText(data.text) : {}), ...parseIdentityText(data.text) };
     return { status: Object.keys(proposal).length ? 'ok' : 'empty', proposal };
   } catch {
     return { status: 'failed', proposal: {} };

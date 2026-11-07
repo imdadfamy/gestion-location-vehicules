@@ -167,6 +167,13 @@ export function ClientSheet({
     if (failure) return setError(frenchError(failure));
     toast.success('Document ajouté.');
     setVersion((value) => value + 1);
+    // Autre pièce : lue aussi, sans jamais écraser un champ déjà rempli (la fiche reste à enregistrer).
+    if (editable) {
+      const { status, proposal } = await scanDocument(file, 'any', form);
+      setForm((current) => current && fillEmpty(current, proposal, 'any').next);
+      const filled = fillEmpty(form, proposal, 'any').filled;
+      setMessage(`${scanMessage(status, filled)}${filled.length ? ' Pensez à enregistrer la fiche.' : ''}`);
+    }
   }
 
   async function open(document: ClientDocument) {
