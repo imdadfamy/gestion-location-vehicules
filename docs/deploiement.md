@@ -96,31 +96,23 @@ npx supabase functions serve send-push --env-file supabase/.env   # une seule, a
 
 ---
 
-## État au 7 novembre 2026
+## État au 8 novembre 2026
 
 Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des migrations locales à celle du projet en ligne).
 
-**En production (branche `refonte-v2`, jusqu'au commit `4f08a88`)**
+**En production (branche `main`, jusqu'au commit `6b72cbe`)**
 
-- Toutes les migrations jusqu'à `20261107100000_fleet_profitability` : chauffeur, transferts avec suivi, alertes push, marketing, Analyses
-  (`analytics_foundation`, `analytics_personalization`, `analytics_incidents`), provenance des clients (`acquisition`), tarifs selon la durée
-  (`duration_pricing`, `price_tiers_in_days`), rentabilité du parc (`fleet_profitability`). Appliquées le 7 novembre 2026.
-- Fonctions Edge : `send-push` et `manage-users` (version 14, liste blanche incluant `marketing` et `fleet_finance`).
-- Site : tout le contenu de la branche, déployé sur https://fima-auto.vercel.app.
+- Toutes les migrations locales, jusqu'à `20261109100000_partner_contract_templates` : chauffeur, transferts avec suivi, alertes push, marketing, Analyses,
+  provenance des clients, tarifs selon la durée, rentabilité du parc, puis le partenaire autonome (profil et demandes de réservation sans compte,
+  locations et contrats propres, inspections et caution, contrat personnalisé).
+- Fonctions Edge : `send-push` (version 4) et `manage-users` (version 14, liste blanche incluant `marketing` et `fleet_finance`).
+- Site : tout le contenu de `main`, déployé sur https://fima-auto.vercel.app (dépendance `unpdf` pour la lecture des PDF de contrat).
 
 **Développé en local, pas en production**
 
-Branche `partenaire-autonome` (partenaire autonome), en cours de développement ; ne sera déployée qu'après accord :
+Rien pour l'instant.
 
-| Élément | Objet |
-|---|---|
-| Migration `20261108100000_partner_profile_and_booking_requests` | WhatsApp et adresse du partenaire, demandes de réservation sans compte, numéro du partenaire dans le catalogue public |
-| Migration `20261108200000_partner_rentals` | Propriété partenaire (clients, locations, contrats), RLS, création de location et de contrat par le partenaire, exclusion de ses locations des chiffres de l'agence |
-| Migration `20261108300000_partner_rental_lifecycle` | Inspections, photos, paiement du solde, caution et pièces d'identité pour les locations du partenaire |
-| Migration `20261109100000_partner_contract_templates` | Contrat personnalisé du partenaire (versions, validation, logo) ; nouvelle dépendance du site : `unpdf` (lecture des PDF, côté serveur) |
-| Fonction Edge `send-push` | À redéployer : l'alerte d'une demande de réservation ouvre la bonne page |
-
-Chantier fonctionnellement complet ; reste à décider du déploiement. Après mise en ligne : vérifier que le téléversement de logo et l'import d'un PDF fonctionnent sur Vercel (lecture du PDF sur le serveur).
+À vérifier avec un vrai compte après la mise en ligne : l'import d'un PDF de contrat, l'envoi d'un logo, et la lecture automatique des pièces (le lecteur télécharge ses fichiers de langue la première fois).
 
 **Rappels en suspens**
 
