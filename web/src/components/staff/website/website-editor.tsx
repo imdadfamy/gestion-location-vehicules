@@ -198,18 +198,18 @@ function SectionCard({
             <Switch checked={block.show} onCheckedChange={(show) => onChange({ ...block, show })} disabled={disabled} aria-label={`Afficher « ${meta.label} »`} />
             <span className="hidden sm:inline">Afficher</span>
           </label>
-          <Button type="button" size="icon" variant="ghost" className="size-8" disabled={disabled || index === 0} onClick={() => onMove(index - 1)} aria-label="Monter la section">
+          <Button type="button" size="icon" variant="ghost" className="size-10" disabled={disabled || index === 0} onClick={() => onMove(index - 1)} aria-label="Monter la section">
             <ArrowUp />
           </Button>
-          <Button type="button" size="icon" variant="ghost" className="size-8" disabled={disabled || index === total - 1} onClick={() => onMove(index + 1)} aria-label="Descendre la section">
+          <Button type="button" size="icon" variant="ghost" className="size-10" disabled={disabled || index === total - 1} onClick={() => onMove(index + 1)} aria-label="Descendre la section">
             <ArrowDown />
           </Button>
           {!meta.unique && (
-            <Button type="button" size="icon" variant="ghost" className="size-8" disabled={disabled} onClick={onDuplicate} aria-label="Dupliquer la section">
+            <Button type="button" size="icon" variant="ghost" className="size-10" disabled={disabled} onClick={onDuplicate} aria-label="Dupliquer la section">
               <Copy />
             </Button>
           )}
-          <Button type="button" size="icon" variant="ghost" className="size-8 text-destructive" disabled={disabled} onClick={onDelete} aria-label="Supprimer la section">
+          <Button type="button" size="icon" variant="ghost" className="size-10 text-destructive" disabled={disabled} onClick={onDelete} aria-label="Supprimer la section">
             <Trash2 />
           </Button>
         </div>

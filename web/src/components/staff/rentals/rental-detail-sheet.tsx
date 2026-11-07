@@ -153,7 +153,7 @@ export function RentalDetailSheet({
         </SheetHeader>
 
         {!loaded ? (
-          <div className="grid gap-3 p-4">
+          <div className="grid grid-cols-1 gap-3 p-4 [&>*]:min-w-0">
             <FormMessage error={error} />
             {!error && (
               <>
@@ -164,7 +164,7 @@ export function RentalDetailSheet({
           </div>
         ) : (
           rental && (
-            <div className="grid gap-5 p-4">
+            <div className="grid grid-cols-1 gap-5 p-4 [&>*]:min-w-0">
               <div className="grid gap-2 sm:grid-cols-3">
                 <Amount label="Prix total">{formatMoney(rental.rental_price)}</Amount>
                 <Amount label="Paiement">

@@ -355,7 +355,7 @@ export function UsersManager({ currentUserId }: { currentUserId: string }) {
                     : 'Les permissions prennent effet côté base (RLS) dès l’enregistrement.'}
                 </SheetDescription>
               </SheetHeader>
-              <div className="grid gap-5 p-4">
+              <div className="grid grid-cols-1 gap-5 p-4 [&>*]:min-w-0">
                 {editor.mode === 'invite' ? (
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Nom complet" required htmlFor="invite-name">

@@ -175,7 +175,7 @@ export function ContractView({
           </div>
         </SheetHeader>
 
-        <div className="grid gap-5 p-4">
+        <div className="grid grid-cols-1 gap-5 p-4 [&>*]:min-w-0">
           <div className="grid gap-3 sm:grid-cols-2">
             <section className="rounded-lg border p-3 text-sm">
               <h3 className="mb-1 font-medium">Entreprise</h3>

@@ -326,7 +326,7 @@ export function ClientInspections() {
                 <SheetTitle>Ajouter des photos — inspection de {inspectionLabel(addingTo.inspection_type).toLowerCase()}</SheetTitle>
                 <SheetDescription>Les photos peuvent être ajoutées jusqu’à une heure après l’inspection.</SheetDescription>
               </SheetHeader>
-              <div className="grid gap-4 p-4">
+              <div className="grid grid-cols-1 gap-4 p-4 [&>*]:min-w-0">
                 <PhotoPickers photos={photos} onChange={setPhotos} />
                 <FormMessage error={formError} />
               </div>

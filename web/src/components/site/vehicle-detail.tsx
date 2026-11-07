@@ -111,7 +111,7 @@ export function VehicleDetail({
   const shareHref = `https://wa.me/?text=${encodeURIComponent(`${t('{name} à louer chez FIMA AUTO', { name })} : ${typeof window === 'undefined' ? '' : link()}`)}`;
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0">
       <VehicleGallery key={vehicle.id} photos={vehicle.photos} alt={name} />
 
       <div className="flex flex-wrap items-center gap-2">

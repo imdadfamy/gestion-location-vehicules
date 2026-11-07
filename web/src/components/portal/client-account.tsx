@@ -326,7 +326,7 @@ export function ClientAccount({
                       {byStep[index].length === 0 ? <Check className="size-3.5 text-emerald-600" /> : <span className="tabular-nums text-muted-foreground">{index + 1}.</span>}
                       <span className="hidden sm:inline">{label}</span>
                     </span>
-                    <span className={cn('text-[11px] font-normal', byStep[index].length ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400')}>
+                    <span className={cn('text-sm font-normal', byStep[index].length ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400')}>
                       {byStep[index].length ? `${byStep[index].length} à compléter` : 'Complet'}
                     </span>
                   </button>

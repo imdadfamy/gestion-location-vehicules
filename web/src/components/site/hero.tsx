@@ -119,7 +119,7 @@ export function Hero({ content, transfer }: { content: BlockData['hero']; transf
                 aria-selected={mode === value}
                 onClick={() => setMode(value)}
                 className={cn(
-                  'flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
+                  'flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-colors',
                   mode === value ? 'bg-primary text-primary-foreground' : 'text-white/80 hover:text-white',
                 )}
               >

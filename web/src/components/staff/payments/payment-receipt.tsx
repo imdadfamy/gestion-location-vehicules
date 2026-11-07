@@ -213,7 +213,7 @@ export function PaymentReceipt({
           <SheetDescription className="sr-only">Paiements et caution de la location</SheetDescription>
         </SheetHeader>
 
-        <div className="grid gap-5 p-4">
+        <div className="grid grid-cols-1 gap-5 p-4 [&>*]:min-w-0">
           <div className="grid gap-4 text-sm sm:grid-cols-2">
             <section>
               <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Client</h3>

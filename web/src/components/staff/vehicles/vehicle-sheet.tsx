@@ -217,7 +217,7 @@ export function VehicleSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="grid gap-6 p-4">
+        <div className="grid grid-cols-1 gap-6 p-4 [&>*]:min-w-0">
           <div className="grid gap-4 sm:grid-cols-6">
             <Field label="Immatriculation" required className="sm:col-span-2" htmlFor="vehicle-registration_number">
               <Input {...input('registration_number')} />

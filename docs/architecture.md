@@ -305,3 +305,27 @@ La carte détaillée « fonctionnalité → écran → code → migration » est
 
 `npx tsc --noEmit`, `npm run lint` (0 erreur attendue), `npm run build`. Voir [../README.md](../README.md).
 
+
+## 18. Typographie et tailles
+
+L'interface (site public, espaces client et partenaire, back-office) suit une échelle de texte lisible, inspirée de Shopify. Elle est définie à un seul endroit :
+`web/src/app/globals.css` (jetons `--text-*` du bloc `@theme`) et les composants communs `web/src/components/ui/`.
+
+| Élément | Taille |
+|---|---|
+| Texte courant (`text-sm`) | 16 px |
+| Texte secondaire, aides, dates (`text-xs`) | 14 px |
+| Texte de base (`text-base`), menus | 17 px |
+| Titres de page (`text-2xl`) | 28 px, graisse 600 |
+| Boutons, champs, listes, lignes de menu | 44 px de haut (boutons `sm` : 40 px) |
+| Pictogrammes de menu | 22 px |
+| Gris secondaire | contraste d'au moins 7 : 1 en clair, 10 : 1 en sombre |
+
+**Règles à respecter pour tout nouvel écran**
+
+- Aucun texte sous 14 px : pas de `text-[10px]`, `text-[11px]`, `text-[12px]`… ; utiliser `text-xs` au minimum.
+- Cible tactile d'au moins 40 à 44 px de haut : utiliser les composants `Button`, `Input`, `Select`, `Tabs` sans les réduire (`h-8`, `size-8`…). Un lien dans une phrase fait exception.
+- Dans une grille (`grid`), les éléments ont `min-width: 0` (règle globale) : un tableau ou un carrousel défile dans sa case au lieu d'élargir la page. Un tableau large va dans un conteneur `overflow-x-auto`.
+- Le menu du partenaire compte 12 liens : la barre horizontale n'apparaît qu'à partir de 1536 px, en dessous c'est le panneau (comme sur téléphone).
+- Après un changement de taille, mesurer avec `docs/outils/audit-interface.js` (débordements, textes sous 14 px, cibles sous 38 px, chevauchements d'en-tête, panneaux ouverts) sur téléphone (375 px) et ordinateur (1280 px et 1600 px), en clair et en sombre.
+- En développement, si un style semble ignoré après une modification de `globals.css`, vider le dossier `web/.next` et relancer le serveur : le cache pouvait servir d'anciens styles.

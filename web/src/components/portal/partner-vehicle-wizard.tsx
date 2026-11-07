@@ -261,7 +261,7 @@ export function PartnerVehicleWizard() {
                     <li key={photo.url} className="relative">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={photo.url} alt={`Photo ${index + 1}`} className="aspect-4/3 w-full rounded-lg border object-cover" />
-                      {index === 0 && <span className="absolute bottom-1.5 left-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">Photo principale</span>}
+                      {index === 0 && <span className="absolute bottom-1.5 left-1.5 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white">Photo principale</span>}
                       <button
                         type="button"
                         onClick={() => removePhoto(index)}

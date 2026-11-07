@@ -133,7 +133,7 @@ export function ClientHome({ profileId, contact, fallbackName }: { profileId: st
           </CardHeader>
           <CardContent>
             <ReservationTimeline row={ongoing} />
-            <Button asChild variant="link" className="mt-2 h-auto px-0">
+            <Button asChild variant="link" className="mt-2 h-auto min-h-11 px-0">
               <Link href="/client/reservations">Toutes mes réservations</Link>
             </Button>
           </CardContent>

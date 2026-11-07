@@ -225,7 +225,7 @@ export function RentalWizard({
                   step === index + 1 ? 'border-primary bg-primary/10 text-primary' : 'text-muted-foreground',
                 )}
               >
-                <span className="flex size-5 items-center justify-center rounded-full border text-[11px]">
+                <span className="flex size-6 items-center justify-center rounded-full border text-xs">
                   {step > index + 1 ? <Check className="size-3" /> : index + 1}
                 </span>
                 {label}
@@ -234,7 +234,7 @@ export function RentalWizard({
           </ol>
         </SheetHeader>
 
-        <div className="grid gap-4 p-4">
+        <div className="grid grid-cols-1 gap-4 p-4 [&>*]:min-w-0">
           {step === 1 ? (
             <>
               <div className="grid gap-4 sm:grid-cols-6">

@@ -76,10 +76,10 @@ export function PortalNav({ space, userId, contact }: { space: Space; userId?: s
       const active = link.href === '/partner' || link.href === '/client' ? pathname === link.href : pathname === link.href || pathname.startsWith(`${link.href}/`);
       const badge = link.href === '/partner/notifications' ? unread : link.href === '/client/contracts' ? toSign : 0;
       return (
-        <Button key={link.href} asChild variant={active ? 'secondary' : 'ghost'} size="sm" className={cn('justify-start', active && 'font-semibold')}>
+        <Button key={link.href} asChild variant={active ? 'secondary' : 'ghost'} size={inSheet ? 'lg' : 'sm'} className={cn('justify-start', inSheet && 'gap-3 text-base [&_svg:not([class*=size-])]:size-[22px]', active && 'font-semibold')}>
           <Link href={link.href} onClick={onNavigate} aria-current={active ? 'page' : undefined} title={link.label} aria-label={badge ? `${link.label} (${badge} à traiter)` : link.label}>
             <link.icon /> <span className={!inSheet ? (ICON_ONLY.includes(link.href) ? 'sr-only' : 'sr-only 2xl:not-sr-only') : undefined}>{link.label}</span>
-            {badge > 0 && <span className="ml-0.5 rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">{badge}</span>}
+            {badge > 0 && <span className="ml-0.5 rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">{badge}</span>}
           </Link>
         </Button>
       );
@@ -95,28 +95,28 @@ export function PortalNav({ space, userId, contact }: { space: Space; userId?: s
           <img src="/logo-horizontal-white.png" alt="" className="hidden h-8 w-auto dark:block" />
           <span className={cn('text-xs font-medium tracking-wide text-muted-foreground uppercase', space === 'partner' ? 'sr-only' : 'hidden lg:inline')}>{title}</span>
         </Link>
-        <nav className="ml-4 hidden items-center gap-1 xl:flex" aria-label={title}>
+        <nav className={cn('ml-4 hidden items-center gap-1', space === 'partner' ? '2xl:flex' : 'xl:flex')} aria-label={title}>
           {items()}
         </nav>
         <div className="ml-auto flex items-center gap-1">
           {space === 'client' && contact && <ContactAgency contact={contact} />}
           <ThemeToggle />
-          <Button variant="ghost" size="sm" onClick={logout} className="hidden xl:inline-flex">
+          <Button variant="ghost" size="sm" onClick={logout} className={space === 'partner' ? 'hidden 2xl:inline-flex' : 'hidden xl:inline-flex'}>
             <LogOut /> <span className="sr-only 2xl:not-sr-only">Déconnexion</span>
           </Button>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="xl:hidden" aria-label="Ouvrir le menu">
+              <Button variant="ghost" size="icon" className={space === 'partner' ? '2xl:hidden' : 'xl:hidden'} aria-label="Ouvrir le menu">
                 <Menu />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-72">
+            <SheetContent side="right" className="w-80">
               <SheetHeader>
                 <SheetTitle>{title}</SheetTitle>
               </SheetHeader>
               <nav className="grid gap-1 px-4" aria-label={title}>
                 {items(() => setOpen(false), true)}
-                <Button variant="ghost" size="sm" className="justify-start" onClick={logout}>
+                <Button variant="ghost" size="lg" className="justify-start gap-3 text-base [&_svg:not([class*=size-])]:size-[22px]" onClick={logout}>
                   <LogOut /> Déconnexion
                 </Button>
               </nav>

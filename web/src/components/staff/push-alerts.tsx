@@ -110,7 +110,7 @@ export function PushAlerts({ kind = 'staff', hideWhenDone = false }: { kind?: Ki
             type="button"
             onClick={() => setHelp((open) => !open)}
             aria-expanded={help || state === 'needs-install'}
-            className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            className="flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
             Comment faire ? <ChevronDown className={`size-4 transition-transform ${help || state === 'needs-install' ? 'rotate-180' : ''}`} />
           </button>

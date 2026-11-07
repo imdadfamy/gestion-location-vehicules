@@ -59,18 +59,18 @@ export function PartnerCalendar() {
   const isToday = (day: Date) => day.toDateString() === today.toDateString();
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <PageHeading eyebrow="Disponibilité" title="Calendrier de mes véhicules">
         Quand chaque véhicule est libre, réservé, loué ou en maintenance.
       </PageHeading>
       <FormMessage error={error} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <Button variant="outline" size="icon" onClick={() => move(-1)} aria-label="Mois précédent">
             <ChevronLeft />
           </Button>
-          <span className="min-w-40 text-center text-sm font-medium">{monthLabel(key)}</span>
+          <span className="min-w-32 text-center text-sm font-medium sm:min-w-40">{monthLabel(key)}</span>
           <Button variant="outline" size="icon" onClick={() => move(1)} aria-label="Mois suivant">
             <ChevronRight />
           </Button>
@@ -102,7 +102,7 @@ export function PartnerCalendar() {
                 <th className="sticky left-0 z-10 min-w-36 border-b bg-card px-3 py-2 text-left font-medium">Véhicule</th>
                 {days.map((day) => (
                   <th key={day.getDate()} className={cn('min-w-7 border-b px-0.5 py-2 text-center font-normal tabular-nums', isToday(day) && 'font-bold text-primary')}>
-                    <span className="block text-[10px] text-muted-foreground uppercase">{day.toLocaleDateString('fr-FR', { weekday: 'narrow' })}</span>
+                    <span className="block text-xs text-muted-foreground uppercase">{day.toLocaleDateString('fr-FR', { weekday: 'narrow' })}</span>
                     {day.getDate()}
                   </th>
                 ))}
@@ -115,7 +115,7 @@ export function PartnerCalendar() {
                     <span className="block">
                       {vehicle.make} {vehicle.model}
                     </span>
-                    <span className="block font-mono text-[10px] font-normal text-muted-foreground">{vehicle.registration_number}</span>
+                    <span className="block font-mono text-xs font-normal text-muted-foreground">{vehicle.registration_number}</span>
                   </th>
                   {days.map((day) => {
                     const { state, label } = dayState(list, vehicle.id, day);

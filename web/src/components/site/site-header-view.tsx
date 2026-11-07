@@ -109,13 +109,13 @@ export function SiteHeaderView({ overHero = false, links, announcement }: { over
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-72">
+            <SheetContent side="right" className="w-80">
               <SheetHeader>
                 <SheetTitle>{t('Menu')}</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-1 px-4" aria-label={t('Navigation mobile')}>
                 {links.map((link, index) => (
-                  <Button key={index} asChild variant="ghost" className="justify-start">
+                  <Button key={index} asChild variant="ghost" size="lg" className="justify-start text-base">
                     <Link href={href(safeHref(link.href))}>{link.label}</Link>
                   </Button>
                 ))}

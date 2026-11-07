@@ -164,7 +164,7 @@ export function TransferSection({ content, whatsappPhone, anchor = true }: { con
                     <li className="flex gap-4">
                       <span className="relative flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <SiteIcon name={step.icon} className="size-5" />
-                        <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-[#06232b] text-[11px] font-semibold text-[#5fd3df] ring-2 ring-primary">
+                        <span className="absolute -top-1 -right-1 flex size-6 items-center justify-center rounded-full bg-[#06232b] text-xs font-semibold text-[#5fd3df] ring-2 ring-primary">
                           {i + 1}
                         </span>
                       </span>

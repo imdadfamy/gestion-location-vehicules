@@ -280,7 +280,7 @@ export function ContractTemplates() {
                     : 'Reprend la dernière version. Une fois créée, elle ne pourra plus être modifiée.'}
                 </SheetDescription>
               </SheetHeader>
-              <div className="grid gap-4 p-4">
+              <div className="grid grid-cols-1 gap-4 p-4 [&>*]:min-w-0">
                 {draft.map((section, index) => (
                   <Card key={index} className="gap-3 py-4">
                     <CardContent className="grid gap-3 px-4">

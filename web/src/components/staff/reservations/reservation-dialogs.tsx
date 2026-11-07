@@ -189,7 +189,7 @@ export function ReservationDetailSheet({ item: current, onClose }: { item: Reser
           </SheetTitle>
           <SheetDescription>{item.phone}</SheetDescription>
         </SheetHeader>
-        <dl className="grid gap-3 p-4">
+        <dl className="grid grid-cols-1 gap-3 p-4 [&>*]:min-w-0">
           <Row label="Statut">
             <StatusBadge tone={RESERVATION_STATUSES[item.status]?.tone ?? 'muted'}>{reservationLabel(item)}</StatusBadge>
           </Row>

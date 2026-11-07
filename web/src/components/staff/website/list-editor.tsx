@@ -44,13 +44,13 @@ export function ListEditor<T>({
             {render(item, (change) => onChange(items.map((row, i) => (i === index ? { ...row, ...change } : row))), index)}
           </div>
           <div className="flex gap-1 sm:flex-col">
-            <Button type="button" size="icon" variant="ghost" className="size-8" disabled={disabled || index === 0} onClick={() => move(index, index - 1)} aria-label="Monter">
+            <Button type="button" size="icon" variant="ghost" className="size-10" disabled={disabled || index === 0} onClick={() => move(index, index - 1)} aria-label="Monter">
               <ArrowUp />
             </Button>
-            <Button type="button" size="icon" variant="ghost" className="size-8" disabled={disabled || index === items.length - 1} onClick={() => move(index, index + 1)} aria-label="Descendre">
+            <Button type="button" size="icon" variant="ghost" className="size-10" disabled={disabled || index === items.length - 1} onClick={() => move(index, index + 1)} aria-label="Descendre">
               <ArrowDown />
             </Button>
-            <Button type="button" size="icon" variant="ghost" className="size-8 text-destructive" disabled={disabled} onClick={() => onChange(items.filter((_, i) => i !== index))} aria-label="Supprimer">
+            <Button type="button" size="icon" variant="ghost" className="size-10 text-destructive" disabled={disabled} onClick={() => onChange(items.filter((_, i) => i !== index))} aria-label="Supprimer">
               <Trash2 />
             </Button>
           </div>

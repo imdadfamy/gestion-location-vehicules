@@ -239,7 +239,7 @@ export function ActivityLog() {
                         <span className="tabular-nums">
                           {new Date(entry.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <button type="button" className="text-primary hover:underline" onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}>
+                        <button type="button" className="-my-2 min-h-11 text-primary hover:underline" onClick={() => setExpanded(expanded === entry.id ? null : entry.id)}>
                           {expanded === entry.id ? 'Masquer les détails' : 'Plus de détails'}
                         </button>
                       </div>

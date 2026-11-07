@@ -69,7 +69,7 @@ function Stepper({ step }: { step: number }) {
           aria-current={step === index + 1 ? 'step' : undefined}
           className={cn('flex items-center gap-2 rounded-md border px-2 py-1.5', step === index + 1 ? 'border-primary bg-primary/10 text-primary' : 'text-muted-foreground')}
         >
-          <span className="flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px]">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full border text-xs">
             {step > index + 1 ? <Check className="size-3" /> : index + 1}
           </span>
           <span className="truncate">{label}</span>

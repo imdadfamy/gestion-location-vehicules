@@ -80,7 +80,7 @@ export function ClientsManager({ permissions }: { permissions: ClientPermissions
 
       <Card className="py-0">
         {loading ? (
-          <div className="grid gap-3 p-4">
+          <div className="grid grid-cols-1 gap-3 p-4 [&>*]:min-w-0">
             {Array.from({ length: 5 }, (_, index) => (
               <Skeleton key={index} className="h-12 w-full" />
             ))}

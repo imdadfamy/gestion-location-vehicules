@@ -261,7 +261,7 @@ export function MarketingManager({ permissions, userId }: { permissions: Marketi
 
           <Card className="py-0">
             {loading ? (
-              <div className="grid gap-3 p-4">
+              <div className="grid grid-cols-1 gap-3 p-4 [&>*]:min-w-0">
                 {Array.from({ length: 4 }, (_, index) => (
                   <Skeleton key={index} className="h-12 w-full" />
                 ))}
@@ -556,7 +556,7 @@ function ExpenseFormBody({
         <SheetTitle>{form.id ? 'Modifier la dépense' : 'Nouvelle dépense'}</SheetTitle>
         <SheetDescription>Elle sera déduite du résultat net de sa période, dans Rapports.</SheetDescription>
       </SheetHeader>
-      <div className="grid gap-4 p-4">
+      <div className="grid grid-cols-1 gap-4 p-4 [&>*]:min-w-0">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Date" required htmlFor="mk-date">
             <Input id="mk-date" type="date" value={form.spent_on} onChange={(event) => set('spent_on', event.target.value)} />

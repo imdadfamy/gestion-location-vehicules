@@ -84,7 +84,7 @@ export function PartnerContractsReview({ canValidate }: { canValidate: boolean }
 
       <Card className="py-0">
         {!rows ? (
-          <div className="grid gap-3 p-4">
+          <div className="grid grid-cols-1 gap-3 p-4 [&>*]:min-w-0">
             {Array.from({ length: 3 }, (_, index) => (
               <Skeleton key={index} className="h-12 w-full" />
             ))}
@@ -141,7 +141,7 @@ export function PartnerContractsReview({ canValidate }: { canValidate: boolean }
                   {TEMPLATE_STATUSES[open.status]?.label ?? open.status}
                 </StatusBadge>
               </SheetHeader>
-              <div className="grid gap-4 p-4">
+              <div className="grid grid-cols-1 gap-4 p-4 [&>*]:min-w-0">
                 {sectionsOf(open).map((section) => (
                   <section key={section.title} className="grid gap-1 text-sm">
                     <h3 className="font-medium text-primary">{section.title}</h3>

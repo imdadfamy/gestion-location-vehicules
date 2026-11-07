@@ -228,7 +228,7 @@ function Summary({ catalog, canMarketing, onOpen }: { catalog: Catalog; canMarke
                   return (
                     <TableRow key={id} className="cursor-pointer" onClick={() => onOpen(id, preset)}>
                       <TableCell className="pl-4 font-medium whitespace-normal">
-                        <button type="button" className="text-left hover:text-primary focus-visible:underline focus-visible:outline-none" onClick={(event) => { event.stopPropagation(); onOpen(id, preset); }}>
+                        <button type="button" className="min-h-10 text-left hover:text-primary focus-visible:underline focus-visible:outline-none" onClick={(event) => { event.stopPropagation(); onOpen(id, preset); }}>
                           {metric.label}
                         </button>
                       </TableCell>

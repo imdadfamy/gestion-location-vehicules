@@ -273,7 +273,7 @@ export function InspectionDetailSheet({ inspectionId, onClose }: { inspectionId:
           <SheetDescription>{inspection ? frDateTime(inspection.inspection_date, true) : 'Chargement…'}</SheetDescription>
         </SheetHeader>
         {!inspection ? (
-          <div className="grid gap-3 p-4">
+          <div className="grid grid-cols-1 gap-3 p-4 [&>*]:min-w-0">
             <FormMessage error={error} />
             {!error && <Skeleton className="h-48" />}
           </div>

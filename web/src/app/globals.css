@@ -4,6 +4,23 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Échelle de texte lisible (voir docs/architecture.md, « Typographie ») : texte courant 16 px, secondaire 14 px, base 17 px.
+   Au-delà de 2xl, les tailles de Tailwind ne changent pas (titres d'accueil, bannières). */
+@theme {
+  --text-xs: 0.875rem;
+  --text-xs--line-height: 1.4;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.6;
+  --text-lg: 1.1875rem;
+  --text-lg--line-height: 1.55;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.4;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 1.25;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -63,7 +80,7 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.46 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -101,7 +118,7 @@
   --secondary: oklch(0.285 0.028 215);
   --secondary-foreground: oklch(0.975 0.005 215);
   --muted: oklch(0.255 0.026 215);
-  --muted-foreground: oklch(0.74 0.02 215);
+  --muted-foreground: oklch(0.80 0.02 215);
   --accent: oklch(0.3 0.03 215);
   --accent-foreground: oklch(0.975 0.005 215);
   --destructive: oklch(0.704 0.191 22.216);
@@ -151,6 +168,10 @@
   iframe {
     max-width: 100%;
   }
+  /* Un élément de grille ne doit jamais élargir sa colonne au-delà de l'écran (tableau, carrousel, long texte) : il défile ou se coupe dans sa case. */
+  .grid > * {
+    min-width: 0;
+  }
 }
 /* FullCalendar aux couleurs du thème (clair et sombre) ; ses variables sont posées sur `.fc`. */
 .staff-calendar .fc {
@@ -166,15 +187,18 @@
   --fc-button-hover-border-color: var(--border);
   --fc-button-active-bg-color: var(--primary);
   --fc-button-active-border-color: var(--primary);
-  font-size: 0.8125rem;
+  --fc-small-font-size: 0.875rem;
+  font-size: 0.9375rem;
 }
 .staff-calendar .fc .fc-toolbar-title {
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 600;
   text-transform: capitalize;
 }
 .staff-calendar .fc .fc-button {
-  font-size: 0.8125rem;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9375rem;
   border-radius: var(--radius);
   box-shadow: none;
 }

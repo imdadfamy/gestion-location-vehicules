@@ -278,7 +278,7 @@ export function PartnerVehicles() {
                 </SheetTitle>
                 <SheetDescription>Ces photos servent à l’évaluation, puis à la galerie du portail client.</SheetDescription>
               </SheetHeader>
-              <div className="grid gap-4 p-4">
+              <div className="grid grid-cols-1 gap-4 p-4 [&>*]:min-w-0">
                 <Button variant="outline" asChild className={uploading ? 'pointer-events-none justify-self-start opacity-50' : 'justify-self-start'}>
                   <label className="cursor-pointer">
                     {uploading ? <Loader2 className="animate-spin" /> : <ImagePlus />} Ajouter des photos

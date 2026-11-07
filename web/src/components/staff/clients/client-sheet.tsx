@@ -192,7 +192,7 @@ export function ClientSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="grid gap-6 p-4">
+        <div className="grid grid-cols-1 gap-6 p-4 [&>*]:min-w-0">
           {editable && (
             <div className="flex flex-col gap-3 rounded-lg border border-dashed bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm">

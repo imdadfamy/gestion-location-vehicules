@@ -167,7 +167,7 @@ export function TransfersManager({ canUpdate }: { canUpdate: boolean }) {
 
       <Card className="py-0">
         {loading ? (
-          <div className="grid gap-3 p-4">
+          <div className="grid grid-cols-1 gap-3 p-4 [&>*]:min-w-0">
             {Array.from({ length: 4 }, (_, index) => (
               <Skeleton key={index} className="h-12 w-full" />
             ))}
@@ -313,7 +313,7 @@ function TransferDetail({
           {item.customer_phone} · <span className="font-mono">{item.reference}</span>
         </SheetDescription>
       </SheetHeader>
-      <div className="grid gap-5 p-4">
+      <div className="grid grid-cols-1 gap-5 p-4 [&>*]:min-w-0">
         <dl className="grid gap-2">
           <Row label="Trajet">
             {item.route_from} → {item.route_to}

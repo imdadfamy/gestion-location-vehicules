@@ -148,7 +148,7 @@ export function PartnerDashboard({ profileId }: { profileId: string }) {
                   </li>
                 ))}
               </ul>
-              <Button asChild variant="link" className="h-auto px-0">
+              <Button asChild variant="link" className="h-auto min-h-11 px-0">
                 <Link href="/partner/vehicles">Corriger et renvoyer</Link>
               </Button>
             </div>
@@ -208,7 +208,7 @@ export function PartnerDashboard({ profileId }: { profileId: string }) {
             ) : (
               <p className="text-sm text-muted-foreground">Aucune nouvelle notification.</p>
             )}
-            <Button asChild variant="link" className="mt-2 h-auto px-0">
+            <Button asChild variant="link" className="mt-2 h-auto min-h-11 px-0">
               <Link href="/partner/notifications">Toutes les notifications</Link>
             </Button>
           </CardContent>

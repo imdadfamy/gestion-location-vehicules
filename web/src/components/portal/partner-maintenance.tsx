@@ -131,7 +131,7 @@ export function PartnerMaintenance() {
                 <SheetTitle>Nouvelle maintenance</SheetTitle>
                 <SheetDescription>Pendant la maintenance, le véhicule n’est plus proposé à la réservation.</SheetDescription>
               </SheetHeader>
-              <div className="grid gap-4 p-4">
+              <div className="grid grid-cols-1 gap-4 p-4 [&>*]:min-w-0">
                 <Field label="Véhicule" required>
                   <Select value={form.vehicle_id || undefined} onValueChange={(id) => setForm({ ...form, vehicle_id: id })}>
                     <SelectTrigger className="w-full" aria-label="Véhicule">
