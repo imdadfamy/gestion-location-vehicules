@@ -1,6 +1,7 @@
 'use client';
 
 import { Field } from '@/components/staff/form-field';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -415,6 +416,33 @@ export function BlockForm({ block, onChange, disabled }: Props & { block: Block;
             )}
           />
           <p className="text-xs text-muted-foreground">Ne publiez que des chiffres exacts.</p>
+        </div>
+      );
+    }
+    case 'partner_logos': {
+      const d = block.data;
+      const set = (patch: Partial<typeof d>) => onChange({ ...block, data: { ...d, ...patch } });
+      return (
+        <div className="grid gap-4">
+          <Pair>
+            <TextRow id={`${id}-eyebrow`} label="Sur-titre" value={d.eyebrow} onChange={(eyebrow) => set({ eyebrow })} disabled={disabled} />
+            <TextRow id={`${id}-title`} label="Titre" value={d.title} onChange={(title) => set({ title })} disabled={disabled} />
+          </Pair>
+          <Field label="Nombre de logos à partir duquel la section s’affiche" htmlFor={`${id}-threshold`}>
+            <Input
+              id={`${id}-threshold`}
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={50}
+              value={d.threshold}
+              disabled={disabled}
+              onChange={(event) => set({ threshold: Math.min(50, Math.max(1, Math.round(Number(event.target.value)) || 1)) })}
+            />
+          </Field>
+          <p className="text-xs text-muted-foreground">
+            Les logos viennent des partenaires eux-mêmes (compte actif, nom commercial, logo et accord de publication). Rien à saisir ici : la section reste invisible tant que le seuil n’est pas atteint, puis chaque nouveau logo s’ajoute au défilement.
+          </p>
         </div>
       );
     }

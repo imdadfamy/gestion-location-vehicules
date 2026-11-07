@@ -153,6 +153,11 @@ select lives_ok($$ insert into public.partner_contract_templates (partner_id, co
 select is((select status from public.partner_contract_templates order by version_number desc limit 1), 'pending_review', 'partenaire : son contrat attend la validation de l’équipe');
 select throws_ok($$ select public.review_partner_contract_template((select id from public.partner_contract_templates limit 1), true) $$, '42501', null, 'partenaire : ne peut pas valider son propre contrat');
 select throws_ok($$ insert into public.partner_contract_templates (partner_id, content) values (public.my_partner_id(), '{"sections":[]}') $$, '22023', null, 'partenaire : un contrat sans section est refusé');
+-- Un compte connecté (autre rôle que anon) voit les photos du catalogue public, mais jamais les documents administratifs.
+select is((select count(*) from storage.objects where name = 'vehicles/30000000-0000-0000-0000-000000000001/face.jpg'),
+          1::bigint, 'partenaire connecté : photo d’un véhicule du catalogue public lisible');
+select is((select count(*) from storage.objects where name = 'vehicles/30000000-0000-0000-0000-000000000001/carte-grise.jpg'),
+          0::bigint, 'partenaire connecté : document administratif d’un véhicule de l’agence NON lisible');
 reset role;
 
 -- ───────────────────────── Responsable ─────────────────────────
@@ -214,6 +219,31 @@ select throws_ok($$ insert into public.rentals (client_id, vehicle_id, departure
                     values ('20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001',
                             now() + interval '31 days', now() + interval '32 days', 25000) $$,
                  '23P01', null, 'location chevauchante refusée pour un même véhicule');
+
+-- ───────────────────────── Logos des partenaires sur le site public ─────────────────────────
+reset role;
+update public.partners set company_name = 'Garage Test', logo_path = 'partners/10000000-0000-0000-0000-000000000099/logo-1.png', logo_public_consent = false
+where profile_id = :partner;
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select is((select count(*) from public.public_partner_logos())::int, 0, 'logos : sans accord du partenaire, rien n''est public');
+select is(public.is_public_partner_logo('partners/10000000-0000-0000-0000-000000000099/logo-1.png'), false, 'logos : le fichier n''est pas lisible sans accord');
+reset role;
+update public.partners set logo_public_consent = true where profile_id = :partner;
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select is((select count(*) from public.public_partner_logos())::int, 1, 'logos : avec l''accord, le logo devient public');
+select is((select company_name from public.public_partner_logos()), 'Garage Test', 'logos : seul le nom commercial est exposé');
+select is(public.is_public_partner_logo('partners/10000000-0000-0000-0000-000000000099/logo-1.png'), true, 'logos : le fichier devient lisible');
+select is(public.is_public_partner_logo('partners/autre/logo-2.png'), false, 'logos : un autre fichier reste privé');
+reset role;
+alter table public.profiles disable trigger user;
+update public.profiles set is_active = false where id = :partner;
+alter table public.profiles enable trigger user;
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select is((select count(*) from public.public_partner_logos())::int, 0, 'logos : un compte désactivé disparaît aussitôt');
+reset role;
 
 select * from finish();
 rollback;
