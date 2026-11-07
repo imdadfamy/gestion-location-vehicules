@@ -41,7 +41,7 @@ const LINKS = {
 };
 
 /** Liens du partenaire affichés en pictogramme seul dans la barre (leur nom reste en infobulle). */
-const ICON_ONLY = ['/partner/contract-model', '/partner/maintenance', '/partner/inspections', '/partner/notifications', '/partner/account'];
+const ICON_ONLY = ['/partner/rentals', '/partner/contracts', '/partner/requests', '/partner/contract-model', '/partner/maintenance', '/partner/inspections', '/partner/notifications', '/partner/account'];
 
 /** Barre de navigation des espaces client et partenaire (menu latéral sur téléphone ; pastille de notifications pour le partenaire). */
 export function PortalNav({ space, userId, contact }: { space: Space; userId?: string; contact?: AgencyContact }) {
@@ -93,7 +93,7 @@ export function PortalNav({ space, userId, contact }: { space: Space; userId?: s
           <img src="/logo-horizontal-color.png" alt="FIMA AUTO" className="h-8 w-auto dark:hidden" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-horizontal-white.png" alt="" className="hidden h-8 w-auto dark:block" />
-          <span className="hidden text-xs font-medium tracking-wide text-muted-foreground uppercase lg:inline">{title}</span>
+          <span className={cn('text-xs font-medium tracking-wide text-muted-foreground uppercase', space === 'partner' ? 'sr-only' : 'hidden lg:inline')}>{title}</span>
         </Link>
         <nav className="ml-4 hidden items-center gap-1 xl:flex" aria-label={title}>
           {items()}

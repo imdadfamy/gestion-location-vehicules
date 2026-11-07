@@ -288,4 +288,5 @@ export const EN: Record<string, string> = {
   'Continuer sur WhatsApp': 'Continue on WhatsApp',
   'Pas besoin de compte.': 'No account needed.',
   'Je préfère réserver avec un compte': 'I prefer to book with an account',
+  'Bonjour FIMA AUTO,': 'Hello FIMA AUTO,',
 };

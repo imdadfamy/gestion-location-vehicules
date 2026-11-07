@@ -48,10 +48,17 @@ export function PartnerContractsReview({ canValidate }: { canValidate: boolean }
   }, [version]);
 
   const open = rows?.find((row) => row.id === openId) ?? null;
+  // Ouvrir une autre fiche efface l'erreur de la précédente.
+  const openRow = (id: string) => {
+    setError('');
+    setNote('');
+    setOpenId(id);
+  };
   const name = (row: Row) => row.partners?.company_name || row.partners?.contact_name || 'Partenaire';
 
   async function decide(approve: boolean) {
     if (!open) return;
+    if (!approve && !note.trim()) return setError('Indiquez le motif du refus : le partenaire le verra.');
     setBusy(true);
     const { error: failure } = await reviewTemplate(createClient(), open.id, approve, note);
     setBusy(false);
@@ -101,7 +108,7 @@ export function PartnerContractsReview({ canValidate }: { canValidate: boolean }
               {rows.map((row) => {
                 const status = TEMPLATE_STATUSES[row.status];
                 return (
-                  <TableRow key={row.id} className="cursor-pointer" onClick={() => setOpenId(row.id)}>
+                  <TableRow key={row.id} className="cursor-pointer" onClick={() => openRow(row.id)}>
                     <TableCell className="pl-4 font-medium whitespace-normal">{name(row)}</TableCell>
                     <TableCell>
                       v{row.version_number} · {sectionsOf(row).length} section(s)
@@ -146,6 +153,7 @@ export function PartnerContractsReview({ canValidate }: { canValidate: boolean }
                   </section>
                 ))}
                 {open.review_note && <p className="rounded-lg bg-muted p-3 text-sm">Motif : {open.review_note}</p>}
+                <FormMessage error={error} />
                 {open.status === 'pending_review' && canValidate && (
                   <div className="grid gap-2 border-t pt-4">
                     <Textarea rows={2} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Motif (obligatoire pour un refus)" aria-label="Motif du refus" />

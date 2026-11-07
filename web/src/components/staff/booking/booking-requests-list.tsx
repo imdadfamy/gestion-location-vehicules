@@ -103,12 +103,31 @@ export function BookingRequestsList({ canUpdate, signature }: { canUpdate: boole
                 <TableHead>Véhicule</TableHead>
                 <TableHead className="hidden md:table-cell">Période</TableHead>
                 <TableHead className="hidden lg:table-cell">Total estimé</TableHead>
-                <TableHead className="pr-4">Statut</TableHead>
+                <TableHead className="hidden pr-4 sm:table-cell">Statut</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {visible.map((item) => {
                 const status = BOOKING_STATUSES[item.status] ?? BOOKING_STATUSES.new;
+                const statusControl = canUpdate ? (
+                  <div className="flex items-center gap-2">
+                    <Select value={item.status} onValueChange={(value) => changeStatus(item, value)} disabled={busy === item.id}>
+                      <SelectTrigger className="h-8 w-44" aria-label={`Statut de la demande ${item.reference}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(BOOKING_STATUSES).map(([value, info]) => (
+                          <SelectItem key={value} value={value}>
+                            {info.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {busy === item.id && <Loader2 className="size-4 animate-spin" />}
+                  </div>
+                ) : (
+                  <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+                );
                 const reply = `Bonjour ${item.customer_name}, ${signature} : nous avons bien reçu votre demande ${item.reference} pour ${item.vehicle_label} du ${frDateTime(item.departure_date)} au ${frDateTime(item.return_date)}.`;
                 return (
                   <TableRow key={item.id}>
@@ -124,6 +143,7 @@ export function BookingRequestsList({ canUpdate, signature }: { canUpdate: boole
                       </a>
                       <span className="block font-mono text-xs text-muted-foreground">{item.reference}</span>
                       {item.notes && <span className="mt-1 block text-xs text-muted-foreground">« {item.notes} »</span>}
+                      <div className="mt-2 sm:hidden">{statusControl}</div>
                     </TableCell>
                     <TableCell className="whitespace-normal">
                       {item.vehicle_label}
@@ -137,27 +157,7 @@ export function BookingRequestsList({ canUpdate, signature }: { canUpdate: boole
                       <span className="block text-xs text-muted-foreground">→ {frDateTime(item.return_date)}</span>
                     </TableCell>
                     <TableCell className="hidden tabular-nums lg:table-cell">{item.estimated_total === null ? '—' : formatMoney(item.estimated_total)}</TableCell>
-                    <TableCell className="pr-4">
-                      {canUpdate ? (
-                        <div className="flex items-center gap-2">
-                          <Select value={item.status} onValueChange={(value) => changeStatus(item, value)} disabled={busy === item.id}>
-                            <SelectTrigger className="h-8 w-44" aria-label={`Statut de la demande ${item.reference}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(BOOKING_STATUSES).map(([value, info]) => (
-                                <SelectItem key={value} value={value}>
-                                  {info.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {busy === item.id && <Loader2 className="size-4 animate-spin" />}
-                        </div>
-                      ) : (
-                        <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
-                      )}
-                    </TableCell>
+                    <TableCell className="hidden pr-4 sm:table-cell">{statusControl}</TableCell>
                   </TableRow>
                 );
               })}

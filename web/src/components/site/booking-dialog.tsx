@@ -46,7 +46,9 @@ export function BookingDialog({
   /** Adresse de l'espace client pour qui préfère réserver avec un compte. */
   accountHref: string;
 }) {
-  const { t, plural, locale } = useLang();
+  const { t, plural, locale, lang } = useLang();
+  // Ponctuation : « Nom : x » en français, « Name: x » en anglais.
+  const colon = lang === 'en' ? ':' : ' :';
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState(DEFAULT_COUNTRY);
@@ -116,9 +118,9 @@ export function BookingDialog({
     const greeting = partnerNumber ? t('Bonjour,') : t('Bonjour FIMA AUTO,');
     const message = [
       `${greeting} ${t('je souhaite réserver {name}', { name: vehicleName })}${withDriver ? ` ${t('avec chauffeur')}` : ''} ${period}.`,
-      `${t('Total estimé')} : ${formatMoney(total, locale)}.`,
-      `${t('Nom')} : ${name.trim()}.`,
-      `${t('Référence')} : ${data.reference}.`,
+      `${t('Total estimé')}${colon} ${formatMoney(total, locale)}.`,
+      `${t('Nom')}${colon} ${name.trim()}.`,
+      `${t('Référence')}${colon} ${data.reference}.`,
     ].join('\n');
     const link = whatsappLink(partnerNumber ?? agencyPhone, message);
     setDone({ reference: data.reference, link });
@@ -144,7 +146,7 @@ export function BookingDialog({
             <p className="rounded-lg bg-muted px-3 py-2 text-sm">
               {vehicleName} · {period}
               <br />
-              {t('Référence')} : <strong>{done.reference}</strong>
+              {t('Référence')}{colon} <strong>{done.reference}</strong>
             </p>
             {done.link && (
               <Button asChild size="lg">

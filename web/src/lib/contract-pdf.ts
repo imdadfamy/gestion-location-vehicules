@@ -131,7 +131,9 @@ export async function buildContractPdf(db: Db, contract: Contract, signatures: S
 
   heading('PARTIES AU CONTRAT');
   text(
-    `Entreprise : ${c.company_name ?? 'À configurer'} | Adresse : ${c.address ?? 'À configurer'} | Téléphone : ${c.phone ?? ''} | RCCM : ${c.rccm ?? ''} | IFU : ${c.ifu ?? ''}`,
+    c.is_partner
+      ? [`Entreprise : ${c.company_name ?? ''}`, c.address && `Adresse : ${c.address}`, c.phone && `Téléphone : ${c.phone}`, c.email && `E-mail : ${c.email}`, c.rccm && `RCCM : ${c.rccm}`, c.ifu && `IFU : ${c.ifu}`].filter(Boolean).join(' | ')
+      : `Entreprise : ${c.company_name ?? 'À configurer'} | Adresse : ${c.address ?? 'À configurer'} | Téléphone : ${c.phone ?? ''} | RCCM : ${c.rccm ?? ''} | IFU : ${c.ifu ?? ''}`,
   );
   text(`Locataire : ${client.first_name ?? ''} ${client.last_name ?? ''} | Téléphone : ${client.phone ?? 'Non renseigné'}`);
   text(`Résidence : ${client.residence ?? 'Non renseignée'} | Adresse / maison / quartier : ${client.address ?? 'Non renseignée'}`);

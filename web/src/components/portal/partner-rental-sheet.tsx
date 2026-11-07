@@ -25,6 +25,8 @@ import type { Database } from '@/lib/database.types';
 type Inspection = Database['public']['Tables']['vehicle_inspections']['Row'];
 type Deposit = Database['public']['Tables']['deposits']['Row'];
 
+const fuelText = (level: string | null) => (level ? (FUEL_LEVELS[level] ?? level) : '—');
+
 const nowLocal = () => {
   const date = new Date();
   date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
@@ -136,7 +138,7 @@ export function PartnerRentalSheet({
             <Step done={!!departure} icon={ClipboardCheck} title="Inspection de départ">
               {departure ? (
                 <p className="text-muted-foreground">
-                  Faite le {frDateTime(departure.inspection_date)} · {departure.mileage.toLocaleString('fr-FR')} km · carburant {departure.fuel_level ?? '—'}
+                  Faite le {frDateTime(departure.inspection_date)} · {departure.mileage.toLocaleString('fr-FR')} km · carburant {fuelText(departure.fuel_level)}
                 </p>
               ) : !signed ? (
                 <p className="text-muted-foreground">À faire une fois le contrat signé.</p>
@@ -193,7 +195,17 @@ export function PartnerRentalSheet({
                         <Input type="number" min={1} max={depositAmount} value={retained} onChange={(event) => setRetained(event.target.value)} placeholder="Montant retenu" aria-label="Montant retenu" className="w-40" />
                         <Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Motif" aria-label="Motif de la retenue" className="min-w-40 flex-1" />
                       </div>
-                      <Button size="sm" variant="outline" className="w-fit" disabled={busy || !Number(retained)} onClick={() => run(() => partnerSettleDeposit(createClient(), rental.id, Number(retained), reason), 'Retenue enregistrée.')}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-fit"
+                        disabled={busy || !Number(retained)}
+                        onClick={() => {
+                          if (!reason.trim()) return setError('Indiquez le motif de la retenue.');
+                          if (Number(retained) > depositAmount) return setError('Le montant retenu dépasse la caution.');
+                          run(() => partnerSettleDeposit(createClient(), rental.id, Number(retained), reason), 'Retenue enregistrée.');
+                        }}
+                      >
                         Retenir ce montant
                       </Button>
                     </div>
@@ -205,7 +217,7 @@ export function PartnerRentalSheet({
             <Step done={!!returned} icon={ClipboardCheck} title="Inspection de retour">
               {returned ? (
                 <p className="text-muted-foreground">
-                  Faite le {frDateTime(returned.inspection_date)} · {returned.mileage.toLocaleString('fr-FR')} km · carburant {returned.fuel_level ?? '—'}
+                  Faite le {frDateTime(returned.inspection_date)} · {returned.mileage.toLocaleString('fr-FR')} km · carburant {fuelText(returned.fuel_level)}
                 </p>
               ) : !departure ? (
                 <p className="text-muted-foreground">À faire quand le véhicule revient, après l’inspection de départ.</p>
