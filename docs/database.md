@@ -581,7 +581,7 @@ sont dans `web/src/lib/database.types.ts`.
 | Partenaire autonome (locations propres, contrats) | `20261108200000` |
 | Partenaire autonome (inspections, caution, pièces d'identité) | `20261108300000` |
 | Partenaire autonome (contrat personnalisé) | `20261109100000` |
-| Logos des partenaires sur le site public | `20261110100000` |
+| Logos des partenaires sur le site public | `20261110100000`, `20261110110000` (JPEG et WebP autorisés pour les logos) |
 
 Règle : **ne jamais modifier une migration déjà appliquée en production** ; ajouter une nouvelle migration. Les migrations encore
 locales sont listées dans [deploiement.md](deploiement.md).
