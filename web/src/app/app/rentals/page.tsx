@@ -15,6 +15,7 @@ async function Rentals() {
         create: can(profile, 'rentals', 'create'),
         update: can(profile, 'rentals', 'update'),
         confirmPayment: can(profile, 'payments', 'create'),
+        forceClose: can(profile, 'rentals', 'validate'),
         payments: can(profile, 'payments'),
         inspections: can(profile, 'inspections'),
         incidents: can(profile, 'incidents'),

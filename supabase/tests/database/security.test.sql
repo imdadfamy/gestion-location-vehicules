@@ -47,6 +47,10 @@ insert into public.inspection_photos (inspection_id, photo_type, storage_path)
 values ('60000000-0000-0000-0000-000000000001', 'front', 'inspections/60000000-0000-0000-0000-000000000001/front-a.jpg');
 insert into storage.objects (bucket_id, name)
 values ('inspection-photos', 'inspections/60000000-0000-0000-0000-000000000001/front-a.jpg');
+-- Location en cours avec solde et caution non réglés (clôture forcée).
+insert into public.rentals (id, client_id, vehicle_id, departure_date, return_date, rental_price, deposit_amount, status)
+values ('50000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000002', :v_internal,
+        now() + interval '400 days', now() + interval '403 days', 75000, 100000, 'active');
 set local session_replication_role = origin;
 
 insert into public.notifications (user_id, notification_type, title, message)
@@ -172,6 +176,8 @@ delete from public.vehicles where id = :v_internal;
 select ok(exists (select 1 from public.vehicles where id = :v_internal), 'responsable : suppression refusée sans droit delete');
 select throws_ok($$ update public.profiles set permissions = '{"users":{"view":true}}' where id = '10000000-0000-0000-0000-000000000002' $$,
                  '42501', null, 'responsable : ne peut pas élargir ses propres permissions');
+select throws_ok($$ select public.force_complete_rental('50000000-0000-0000-0000-000000000003', 'Essai') $$,
+                 '42501', null, 'responsable sans droit « valider » : clôture forcée refusée');
 reset role;
 
 -- Compte désactivé.
@@ -243,6 +249,24 @@ alter table public.profiles enable trigger user;
 set local role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
 select is((select count(*) from public.public_partner_logos())::int, 0, 'logos : un compte désactivé disparaît aussitôt');
+reset role;
+
+-- ───────────────────────── Clôture forcée (Super Admin) ─────────────────────────
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :admin, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.force_complete_rental('50000000-0000-0000-0000-000000000003', '  ') $$,
+                 '22023', null, 'clôture forcée : motif obligatoire');
+select throws_ok($$ select public.force_complete_rental('50000000-0000-0000-0000-000000000001', 'Test') $$,
+                 '23514', null, 'clôture forcée : refusée pour une location en attente');
+select lives_ok($$ select public.force_complete_rental('50000000-0000-0000-0000-000000000003', 'Client parti sans régler') $$,
+                'clôture forcée : acceptée malgré le solde et la caution non réglés');
+select is((select status from public.rentals where id = '50000000-0000-0000-0000-000000000003'), 'completed',
+          'clôture forcée : la location est terminée');
+select is((select count(*) from public.rental_status_history
+           where rental_id = '50000000-0000-0000-0000-000000000003' and forced and reason = 'Client parti sans régler'),
+          1::bigint, 'clôture forcée : motif et marque conservés dans l’historique');
+select throws_ok($$ select public.force_complete_rental('50000000-0000-0000-0000-000000000003', 'Encore') $$,
+                 '23514', null, 'clôture forcée : impossible sur une location déjà terminée');
 reset role;
 
 select * from finish();

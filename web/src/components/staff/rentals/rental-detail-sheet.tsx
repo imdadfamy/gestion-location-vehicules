@@ -2,23 +2,34 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AlertTriangle, ClipboardCheck, FileText, Pencil, Wallet } from 'lucide-react';
+import { AlertTriangle, CheckCheck, ClipboardCheck, FileText, Pencil, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
 import { StatusBadge } from '@/components/staff/status-badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { clientDocumentLink, clientDocuments, type ClientDocument } from '@/lib/data/clients';
 import { formatMoney } from '@/lib/data/public-catalog';
 import {
   CLOSURE_BLOCKERS,
   closureBlockers,
   confirmPayment,
+  forceCompleteRental,
   getRental,
   refreshOverdue,
   RENTAL_STATUSES,
@@ -32,7 +43,15 @@ import { frDate, frDateTime } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 import type { RentalPermissions } from './rentals-manager';
 
-type History = { id: string; created_at: string; old_status: string | null; new_status: string; changed_by: string | null };
+type History = {
+  id: string;
+  created_at: string;
+  old_status: string | null;
+  new_status: string;
+  changed_by: string | null;
+  forced: boolean;
+  reason: string | null;
+};
 type Loaded = {
   rental: RentalDetail;
   history: History[];
@@ -71,6 +90,8 @@ export function RentalDetailSheet({
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [version, setVersion] = useState(0);
+  const [closing, setClosing] = useState(false);
+  const [reason, setReason] = useState('');
   const [source, setSource] = useState<string | null>(null);
   if (rentalId && rentalId !== source) {
     setSource(rentalId);
@@ -126,6 +147,21 @@ export function RentalDetailSheet({
     setSaving(false);
     if (failure) return setError(frenchError(failure));
     toast.success('Paiement total reçu et enregistré. Les informations sont maintenant verrouillées.');
+    setVersion((value) => value + 1);
+    onChanged();
+  }
+
+  async function forceClose() {
+    if (!rental) return;
+    setError('');
+    if (reason.trim().length < 3) return setError('Indiquez le motif de la clôture (3 caractères au minimum).');
+    setSaving(true);
+    const { error: failure } = await forceCompleteRental(createClient(), rental.id, reason.trim());
+    setSaving(false);
+    if (failure) return setError(frenchError(failure));
+    toast.success('Location terminée. Le motif est conservé dans l’historique.');
+    setClosing(false);
+    setReason('');
     setVersion((value) => value + 1);
     onChanged();
   }
@@ -295,6 +331,11 @@ export function RentalDetailSheet({
                         <span className="text-xs text-muted-foreground tabular-nums">{frDateTime(item.created_at)}</span>{' '}
                         {statusLabel(item.old_status)} → {statusLabel(item.new_status)} — par{' '}
                         <strong>{item.changed_by ? (loaded.names[item.changed_by] ?? 'Utilisateur interne') : 'Système'}</strong>
+                        {item.forced && (
+                          <span className="block text-xs text-amber-700 dark:text-amber-400">
+                            Clôture forcée{item.reason ? ` — motif : ${item.reason}` : ''}
+                          </span>
+                        )}
                       </li>
                     ))}
                   </ol>
@@ -309,6 +350,19 @@ export function RentalDetailSheet({
                 {canEdit && (
                   <Button size="sm" onClick={() => onEdit(rental)}>
                     <Pencil /> Modifier
+                  </Button>
+                )}
+                {permissions.forceClose && (rental.status === 'active' || rental.status === 'overdue') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setError('');
+                      setReason('');
+                      setClosing(true);
+                    }}
+                  >
+                    <CheckCheck /> Terminer la location
                   </Button>
                 )}
                 {permissions.payments && (
@@ -330,6 +384,41 @@ export function RentalDetailSheet({
           )
         )}
       </SheetContent>
+
+      <AlertDialog open={closing} onOpenChange={(open) => !saving && setClosing(open)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Terminer cette location ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La location passera à « Terminée » et le véhicule redeviendra disponible, même si le solde, la caution ou des incidents ne sont pas
+              réglés. Ces points ne sont pas effacés : ils restent à traiter dans leurs écrans. Cette action est définitive.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {loaded && loaded.blockers.length > 0 && (
+            <p className="text-sm text-amber-700 dark:text-amber-400">
+              Encore à régler : {loaded.blockers.map((code) => CLOSURE_BLOCKERS[code] ?? code).join(' · ')}
+            </p>
+          )}
+          <div className="grid gap-1.5">
+            <Label htmlFor="force-close-reason">Motif (obligatoire)</Label>
+            <Textarea
+              id="force-close-reason"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              placeholder="Ex. : client injoignable, litige réglé hors application…"
+              rows={3}
+              maxLength={500}
+            />
+          </div>
+          <FormMessage error={error} />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Annuler</AlertDialogCancel>
+            <Button onClick={forceClose} disabled={saving || reason.trim().length < 3}>
+              {saving ? 'Clôture…' : 'Terminer la location'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }

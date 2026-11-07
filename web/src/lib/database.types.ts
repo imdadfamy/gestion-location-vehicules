@@ -1155,25 +1155,31 @@ export type Database = {
         Row: {
           changed_by: string | null;
           created_at: string;
+          forced: boolean;
           id: string;
           new_status: string;
           old_status: string | null;
+          reason: string | null;
           rental_id: string;
         };
         Insert: {
           changed_by?: string | null;
           created_at?: string;
+          forced?: boolean;
           id?: string;
           new_status: string;
           old_status?: string | null;
+          reason?: string | null;
           rental_id: string;
         };
         Update: {
           changed_by?: string | null;
           created_at?: string;
+          forced?: boolean;
           id?: string;
           new_status?: string;
           old_status?: string | null;
+          reason?: string | null;
           rental_id?: string;
         };
         Relationships: [
@@ -2156,6 +2162,10 @@ export type Database = {
       confirm_rental_payment: {
         Args: { target_rental_id: string };
         Returns: Json;
+      };
+      force_complete_rental: {
+        Args: { closure_reason: string; target_rental_id: string };
+        Returns: undefined;
       };
       create_rental_from_reservation: {
         Args: {

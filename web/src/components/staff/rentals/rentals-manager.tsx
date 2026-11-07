@@ -24,6 +24,8 @@ export type RentalPermissions = {
   create: boolean;
   update: boolean;
   confirmPayment: boolean;
+  /** Terminer une location à la main (permission Valider sur Locations). */
+  forceClose: boolean;
   payments: boolean;
   inspections: boolean;
   incidents: boolean;

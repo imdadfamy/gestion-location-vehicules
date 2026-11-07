@@ -86,6 +86,16 @@ Une location doit obligatoirement être liée à :
 
 Le système doit vérifier la disponibilité du véhicule avant la création ou modification d'une location.
 
+### Clôture forcée par un responsable
+
+Une location se termine normalement toute seule (inspection de retour faite, paiement complet, caution restituée ou retenue, aucun incident ouvert). Un responsable peut exceptionnellement la **terminer à la main**, par exemple quand un point bloquant ne pourra jamais être réglé.
+
+* **Qui** : un compte qui a la permission « Valider » sur le module Locations (le Super Admin l'a toujours). La vérification est faite côté serveur.
+* **Quand** : seulement pour une location « en cours » ou « en retard ». Une location en attente, annulée ou déjà terminée ne peut pas être clôturée de force.
+* **Motif obligatoire** : le responsable écrit pourquoi (3 caractères au minimum). Le motif, la date et l'auteur sont conservés dans l'historique des statuts, marqués « clôture forcée », et visibles dans la fiche location.
+* **Effets** : la location passe à « Terminée » et le véhicule est remis disponible, comme pour une clôture normale. Les points non réglés (solde, caution, incidents) ne sont **pas** effacés : le paiement, la caution et les incidents gardent leur état et restent à traiter dans leurs écrans.
+* La clôture forcée est définitive : une location terminée ne revient pas en arrière.
+
 ---
 
 ## 6. Paiements

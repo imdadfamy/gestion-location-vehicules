@@ -81,6 +81,11 @@ export function confirmPayment(db: Db, rentalId: string) {
   return db.rpc('confirm_rental_payment', { target_rental_id: rentalId });
 }
 
+/** Termine à la main une location en cours ou en retard (permission Valider sur Locations, motif obligatoire). */
+export function forceCompleteRental(db: Db, rentalId: string, reason: string) {
+  return db.rpc('force_complete_rental', { target_rental_id: rentalId, closure_reason: reason });
+}
+
 /** Noms des membres du personnel (historique, encaissements). */
 export async function staffNames(db: Db, ids: (string | null | undefined)[]) {
   const unique = [...new Set(ids.filter((id): id is string => !!id))];

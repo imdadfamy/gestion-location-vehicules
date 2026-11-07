@@ -111,7 +111,9 @@ Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des 
 - Section « Logos partenaires » du site public, en production : migrations `20261110100000_partner_public_logos` et `20261110110000_contract_assets_image_types` (logos JPEG et WebP acceptés par le stockage) appliquées (colonne `logo_public_consent`, fonctions `public_partner_logos` et `is_public_partner_logo`, policy de lecture du stockage). Le bandeau reste invisible tant que moins de 5 partenaires ont un logo et ont donné leur accord. Pas de fonction Edge ni de variable.
 - Correctif photos de la fiche véhicule, en production : migration `20261110120000_public_vehicle_photos_for_signed_in` appliquée (la lecture publique des photos ne valait que pour les visiteurs sans compte ; un partenaire ou un membre du personnel connecté ne voyait pas les photos du catalogue) et galerie sans chargement différé.
 
-**Développé en local, pas en production** : rien pour le moment.
+**Développé en local, pas en production**
+
+- Bouton « Terminer la location » (clôture forcée par un responsable) : migration `20261111100000_force_complete_rental` à appliquer avant le déploiement du site (deux colonnes de l'historique des statuts et la fonction `force_complete_rental`). Pas de fonction Edge ni de variable. Le droit se donne par la case « Valider » du module Locations dans Utilisateurs (le Super Admin l'a toujours).
 
 À vérifier avec un vrai compte après la mise en ligne : l'import d'un PDF de contrat, l'envoi d'un logo, et la lecture automatique des pièces (le lecteur télécharge ses fichiers de langue la première fois).
 

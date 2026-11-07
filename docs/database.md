@@ -583,6 +583,7 @@ sont dans `web/src/lib/database.types.ts`.
 | Partenaire autonome (contrat personnalisé) | `20261109100000` |
 | Logos des partenaires sur le site public | `20261110100000`, `20261110110000` (JPEG et WebP autorisés pour les logos) |
 | Photos du catalogue public pour un visiteur connecté | `20261110120000` (la policy de lecture des photos vise `anon` et `authenticated`) |
+| Clôture forcée d'une location | `20261111100000` (colonnes `forced` et `reason` de `rental_status_history`, fonction `force_complete_rental(rental, reason)` : permission `rentals.validate`, location en cours ou en retard, motif obligatoire) |
 
 Règle : **ne jamais modifier une migration déjà appliquée en production** ; ajouter une nouvelle migration. Les migrations encore
 locales sont listées dans [deploiement.md](deploiement.md).
