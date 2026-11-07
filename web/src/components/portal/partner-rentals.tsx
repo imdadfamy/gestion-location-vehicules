@@ -6,6 +6,7 @@ import { CarFront, FilePlus2, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
 import { PageHeading } from '@/components/portal/page-heading';
+import { PartnerRentalSheet } from '@/components/portal/partner-rental-sheet';
 import { ContractView } from '@/components/staff/contracts/contract-view';
 import { StatusBadge } from '@/components/staff/status-badge';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export function PartnerRentals({ partnerName }: { partnerName: string }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [open, setOpen] = useState<Contract | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   function load() {
     return myRentals(createClient()).then(({ data, error: failure }) => {
@@ -100,7 +102,7 @@ export function PartnerRentals({ partnerName }: { partnerName: string }) {
                 const contract = rental.contracts[0];
                 const contractState = contract ? CONTRACT_STATUSES[contract.status] : null;
                 return (
-                  <TableRow key={rental.id}>
+                  <TableRow key={rental.id} className="cursor-pointer" onClick={() => setSelectedId(rental.id)}>
                     <TableCell className="pl-4 whitespace-normal">
                       <div className="font-medium">
                         {rental.clients?.first_name} {rental.clients?.last_name}
@@ -123,7 +125,15 @@ export function PartnerRentals({ partnerName }: { partnerName: string }) {
                       <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
                     </TableCell>
                     <TableCell className="pr-4 whitespace-normal">
-                      <Button size="sm" variant={contract ? 'outline' : 'default'} onClick={() => openContract(rental)} disabled={busy === rental.id}>
+                      <Button
+                        size="sm"
+                        variant={contract ? 'outline' : 'default'}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openContract(rental);
+                        }}
+                        disabled={busy === rental.id}
+                      >
                         {busy === rental.id ? <Loader2 className="animate-spin" /> : <FilePlus2 />}
                         {contract ? (contractState?.label ?? 'Contrat') : 'Créer le contrat'}
                       </Button>
@@ -135,6 +145,13 @@ export function PartnerRentals({ partnerName }: { partnerName: string }) {
           </Table>
         )}
       </Card>
+
+      <PartnerRentalSheet
+        rental={rows?.find((item) => item.id === selectedId) ?? null}
+        onClose={() => setSelectedId(null)}
+        onChanged={load}
+        onOpenContract={openContract}
+      />
 
       <ContractView
         contract={open}

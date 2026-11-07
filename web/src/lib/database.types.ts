@@ -2382,6 +2382,18 @@ export type Database = {
         };
         Returns: Json;
       };
+      partner_record_payment: {
+        Args: { target_rental: string; target_amount: number; target_method?: string };
+        Returns: undefined;
+      };
+      partner_receive_deposit: {
+        Args: { target_rental: string };
+        Returns: undefined;
+      };
+      partner_settle_deposit: {
+        Args: { target_rental: string; target_retained?: number; target_observation?: string };
+        Returns: undefined;
+      };
       partner_create_contract: {
         Args: { target_rental_id: string };
         Returns: Database['public']['Tables']['contracts']['Row'];

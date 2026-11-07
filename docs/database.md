@@ -544,6 +544,7 @@ sont dans `web/src/lib/database.types.ts`.
 | `partner_rental_earnings` | Revenus détaillés d'un partenaire |
 | `analytics_*` (vues), `analytics_metric(...)`, `analytics_day(...)` | Analyses : vues plates par sujet, agrégation par mesure et dimension, jour à l'heure de Porto-Novo |
 | `fleet_profitability()` | Rentabilité par véhicule de l'agence (réservée à `fleet_finance`) |
+| `partner_record_payment`, `partner_receive_deposit`, `partner_settle_deposit`, `partner_owns_rental/inspection/client` | Partenaire autonome : solde, caution reçue / restituée / retenue ; contrôles de propriété utilisés par la RLS (inspections, photos, pièces d'identité) |
 | `my_partner_id()`, `partner_create_rental(...)`, `partner_create_contract(location)` | Partenaire autonome : identité du partenaire connecté, création client + location (+ paiement) et création du contrat figé ; seules ses locations sur ses véhicules validés |
 | `public_create_booking_request`, `set_booking_request_status` | Demande de réservation sans compte (contrôles, disponibilité, limite de 5 par heure et par téléphone, alerte équipe et partenaire) ; avancement par l'équipe ou le partenaire propriétaire |
 
@@ -571,6 +572,7 @@ sont dans `web/src/lib/database.types.ts`.
 | Rentabilité du parc | `20261107100000` |
 | Partenaire autonome (profil, demandes sans compte) | `20261108100000` |
 | Partenaire autonome (locations propres, contrats) | `20261108200000` |
+| Partenaire autonome (inspections, caution, pièces d'identité) | `20261108300000` |
 
 Règle : **ne jamais modifier une migration déjà appliquée en production** ; ajouter une nouvelle migration. Les migrations encore
 locales sont listées dans [deploiement.md](deploiement.md).

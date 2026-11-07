@@ -145,6 +145,10 @@ select throws_ok($$ select public.partner_create_rental(null,'A','B','1',null,'I
 select throws_ok($$ select public.partner_create_rental(null,'A','B','1',null,'I','P','2031-01-01','E','1','Ad',null,'30000000-0000-0000-0000-000000000007', now() + interval '60 days', now() + interval '61 days','x','y',1,0,null,false,false) $$, '42501', null, 'partenaire : ne peut pas louer un véhicule non validé par l’équipe');
 select is((select count(*) from public.partner_rental_earnings()), 1::bigint, 'partenaire : voit la location de son véhicule');
 select is((select payout from public.partner_rental_earnings()), 90000::numeric, 'partenaire : part calculée (3 jours × 30 000)');
+select throws_ok($$ select public.partner_record_payment('50000000-0000-0000-0000-000000000001', 1000) $$, '42501', null, 'partenaire : ne peut pas encaisser sur une location de l’agence');
+select throws_ok($$ select public.partner_receive_deposit('50000000-0000-0000-0000-000000000001') $$, '42501', null, 'partenaire : ne peut pas toucher à la caution d’une location de l’agence');
+select is((select count(*) from public.deposits where not public.partner_owns_rental(rental_id)), 0::bigint, 'partenaire : aucune caution qui ne soit pas la sienne');
+select is((select count(*) from public.client_documents where not public.partner_owns_client(client_id)), 0::bigint, 'partenaire : aucune pièce de client qui ne soit pas la sienne');
 reset role;
 
 -- ───────────────────────── Responsable ─────────────────────────

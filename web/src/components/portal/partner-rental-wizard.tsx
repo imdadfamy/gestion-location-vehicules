@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { uploadClientDocument } from '@/lib/data/clients';
 import type { Contract } from '@/lib/data/contracts';
 import { loadTiers } from '@/lib/data/price-tiers';
 import { createPartnerContract, createPartnerRental, myClients, rentableVehicles, type PartnerClient } from '@/lib/data/partner-rentals';
@@ -50,6 +51,8 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [contract, setContract] = useState<Contract | null>(null);
+  // Photos facultatives de la pièce d'identité et du permis, jointes au contrat signé.
+  const [documents, setDocuments] = useState<{ identity_document?: File; driving_license?: File }>({});
 
   useEffect(() => {
     const db = createClient();
@@ -130,6 +133,13 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
     if (created.error || !rentalId) {
       setSaving(false);
       return setError(frenchError(created.error));
+    }
+    const clientId = (created.data as { client_id?: string } | null)?.client_id;
+    if (clientId) {
+      for (const [type, file] of Object.entries(documents) as ['identity_document' | 'driving_license', File][]) {
+        const failure = await uploadClientDocument(db, clientId, type, file);
+        if (failure) toast.error('Une photo de pièce n’a pas pu être envoyée : ' + frenchError(failure));
+      }
     }
     const made = await createPartnerContract(db, rentalId);
     setSaving(false);
@@ -276,6 +286,12 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
             <Field label="Contact d’urgence : téléphone" required htmlFor="pr-client-emergency_contact_phone">
               <Input type="tel" {...clientField('emergency_contact_phone')} />
             </Field>
+            <Field label="Photo de la pièce d’identité (facultatif)" htmlFor="pr-doc-identity">
+              <Input id="pr-doc-identity" type="file" accept="image/*" onChange={(event) => setDocuments({ ...documents, identity_document: event.target.files?.[0] })} />
+            </Field>
+            <Field label="Photo du permis (facultatif)" htmlFor="pr-doc-license">
+              <Input id="pr-doc-license" type="file" accept="image/*" onChange={(event) => setDocuments({ ...documents, driving_license: event.target.files?.[0] })} />
+            </Field>
           </CardContent>
         </Card>
       )}
@@ -355,8 +371,8 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
         staffName={partnerName}
         onClose={() => router.push('/partner/rentals')}
         onChanged={() => {
-          toast.success('Contrat signé et archivé.');
-          router.push('/partner/contracts');
+          toast.success('Contrat signé et archivé. Vous pouvez maintenant faire l’inspection de départ.');
+          router.push('/partner/rentals');
         }}
       />
     </div>

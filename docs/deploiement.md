@@ -116,9 +116,10 @@ Branche `partenaire-autonome` (partenaire autonome), en cours de développement 
 |---|---|
 | Migration `20261108100000_partner_profile_and_booking_requests` | WhatsApp et adresse du partenaire, demandes de réservation sans compte, numéro du partenaire dans le catalogue public |
 | Migration `20261108200000_partner_rentals` | Propriété partenaire (clients, locations, contrats), RLS, création de location et de contrat par le partenaire, exclusion de ses locations des chiffres de l'agence |
+| Migration `20261108300000_partner_rental_lifecycle` | Inspections, photos, paiement du solde, caution et pièces d'identité pour les locations du partenaire |
 | Fonction Edge `send-push` | À redéployer : l'alerte d'une demande de réservation ouvre la bonne page |
 
-À venir sur la même branche : inspections, caution et clôture des locations du partenaire, photos de pièces d'identité, contrat personnalisé du partenaire.
+À venir sur la même branche : contrat personnalisé du partenaire (PDF analysé).
 
 **Rappels en suspens**
 

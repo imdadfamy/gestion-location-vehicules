@@ -69,6 +69,25 @@ export function createPartnerRental(db: Db, c: WizardClient, r: WizardRental, wi
   });
 }
 
+/** Caution de la location (lecture seule : elle se modifie par les fonctions ci-dessous). */
+export function rentalDeposit(db: Db, rentalId: string) {
+  return db.from('deposits').select('*').eq('rental_id', rentalId).maybeSingle();
+}
+
+/** Paiement reçu sur le solde (le total ne peut pas dépasser le prix de la location). */
+export function partnerRecordPayment(db: Db, rentalId: string, amount: number) {
+  return db.rpc('partner_record_payment', { target_rental: rentalId, target_amount: amount });
+}
+
+export function partnerReceiveDeposit(db: Db, rentalId: string) {
+  return db.rpc('partner_receive_deposit', { target_rental: rentalId });
+}
+
+/** `retained` = 0 : restitution totale ; sinon montant retenu, avec son motif. */
+export function partnerSettleDeposit(db: Db, rentalId: string, retained: number, reason: string) {
+  return db.rpc('partner_settle_deposit', { target_rental: rentalId, target_retained: retained, target_observation: reason || undefined });
+}
+
 /** Contrat de la location, figé à partir du modèle actif (modèle de l'agence par défaut). */
 export function createPartnerContract(db: Db, rentalId: string) {
   return db.rpc('partner_create_contract', { target_rental_id: rentalId });
