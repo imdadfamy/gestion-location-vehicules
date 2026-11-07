@@ -55,7 +55,7 @@ export function ContractView({
   onChanged: (contract: Contract) => void;
 }) {
   const [contract, setContract] = useState<Contract | null>(null);
-  const [logo, setLogo] = useState('/logo.jpg');
+  const [logo, setLogo] = useState<string | null>('/logo.jpg');
   const [hasDocuments, setHasDocuments] = useState(false);
   const [signed, setSigned] = useState<string[]>([]);
   const [error, setError] = useState('');
@@ -83,6 +83,8 @@ export function ContractView({
     ]).then(([image, documents, signatures]) => {
       if (!active) return;
       if (image) setLogo(image);
+      // Contrat d'un partenaire sans logo : pas de logo de l'agence.
+      else if (contentOf(contract).company?.is_partner) setLogo(null);
       setHasDocuments(!!documents.data?.length);
       setSigned((signatures.data ?? []).map((signature) => signature.signer_type));
     });
@@ -154,10 +156,10 @@ export function ContractView({
           <div className="flex items-center gap-3 pr-8">
             {/* Logo en data URL ou fichier public : next/image n'apporte rien ici. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logo} alt="Logo de l’entreprise" className="size-12 rounded-md border object-contain" />
+            {logo && <img src={logo} alt="Logo de l’entreprise" className="size-12 rounded-md border object-contain" />}
             <div className="min-w-0">
               <p className="text-xs font-medium tracking-wide text-primary uppercase">
-                {company.company_name || 'FIMA AUTO'} · Location de véhicules
+                {company.company_name || (company.is_partner ? 'Loueur' : 'FIMA AUTO')} · Location de véhicules
               </p>
               <SheetTitle>Contrat de location</SheetTitle>
               <SheetDescription className="font-mono">N° {contract.contract_number}</SheetDescription>

@@ -29,7 +29,10 @@ const frDate = (value: unknown) =>
 /** Logo de l'entreprise (paramètres), sinon le logo FIMA AUTO du site. */
 export async function companyLogo(db: Db, contract?: Contract | null): Promise<string | null> {
   try {
-    let path = contract ? contentOf(contract).company?.logo_storage_path : null;
+    const company = contract ? contentOf(contract).company : null;
+    let path = company?.logo_storage_path;
+    // Contrat d'un partenaire sans logo : jamais le logo de l'agence.
+    if (!path && company?.is_partner) return null;
     if (!path) path = (await db.from('company_settings').select('logo_storage_path').limit(1).maybeSingle()).data?.logo_storage_path;
     if (path) {
       const signed = await db.storage.from('rental-documents').createSignedUrl(path, 60);

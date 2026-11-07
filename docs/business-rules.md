@@ -271,7 +271,8 @@ Page « Mon profil » dans l'espace partenaire : nom commercial, logo, télépho
 * Parcours unique et continu : véhicule → client → dates et prix → caution → contrat → signature. Pas d'étape « contrat » séparée à rejoindre après coup.
 * Onglet « Contrats » : liste des contrats signés du partenaire. Il gère aussi les inspections (départ et retour) de ses propres locations.
 * Le partenaire ne voit que ses véhicules, ses clients, ses locations et ses contrats ; l'équipe voit tout. Le calendrier est commun avec l'agence : un véhicule ne peut pas être loué deux fois sur des périodes qui se chevauchent.
-* À confirmer avant le code : commission éventuelle de l'agence sur les locations faites par le partenaire (et exclusion de ces locations du calcul de sa part sur les locations de l'agence) ; clients séparés de ceux de l'agence (recommandé).
+* Décisions retenues pour l'instant (modifiables) : **aucune commission** de l'agence sur les locations faites par le partenaire ; ces locations (et leurs paiements) sont **exclues** des chiffres de l'agence et de la part du partenaire sur les locations de l'agence ; les **clients du partenaire sont séparés** de ceux de l'agence (colonne `owner_partner_id`).
+* Étape livrée : clients, location, paiement en espèces, contrat (modèle actif de l'agence par défaut, identité du partenaire comme loueur) et signatures (locataire, loueur) avec PDF archivé. Restent : inspections de départ et de retour, caution, clôture de la location (la location reste « en attente » tant qu'il n'y a pas d'inspection de départ), photos de pièces d'identité, contrat personnalisé.
 
 ### Réservation sur le site public
 

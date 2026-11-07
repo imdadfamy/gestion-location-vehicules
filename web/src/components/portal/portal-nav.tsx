@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Bell, CalendarCheck, CalendarDays, CarFront, ClipboardCheck, FileSignature, Inbox, LayoutDashboard, LogOut, Menu, UserCircle, Wallet, Wrench } from 'lucide-react';
+import { Bell, CalendarCheck, CalendarDays, CarFront, ClipboardCheck, FileSignature, Inbox, KeyRound, LayoutDashboard, LogOut, Menu, UserCircle, Wallet, Wrench } from 'lucide-react';
 import { ThemeToggle } from '@/components/site/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -28,6 +28,8 @@ const LINKS = {
     { href: '/partner', label: 'Accueil', icon: LayoutDashboard },
     { href: '/partner/vehicles', label: 'Mes véhicules', icon: CarFront },
     { href: '/partner/calendar', label: 'Calendrier', icon: CalendarDays },
+    { href: '/partner/rentals', label: 'Locations', icon: KeyRound },
+    { href: '/partner/contracts', label: 'Contrats', icon: FileSignature },
     { href: '/partner/requests', label: 'Demandes', icon: Inbox },
     { href: '/partner/earnings', label: 'Mes revenus', icon: Wallet },
     { href: '/partner/maintenance', label: 'Maintenance', icon: Wrench },

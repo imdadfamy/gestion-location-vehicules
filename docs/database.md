@@ -529,6 +529,7 @@ sont dans `web/src/lib/database.types.ts`.
 | `reservations`, `rentals` | `with_driver`, `driver_daily_price` | `driver_option` |
 | `clients`, `transfer_requests` | `acquisition_source`, `acquisition_detail` | `acquisition` |
 | `partners` | `whatsapp_phone`, `address` (renseignés par le partenaire) | `partner_profile_and_booking_requests` |
+| `clients`, `rentals`, `contracts` | `owner_partner_id` (ce qui appartient à un partenaire ; immuable ; RLS dédiée) | `partner_rentals` |
 
 ## 7.3 Vues et fonctions importantes
 
@@ -543,6 +544,7 @@ sont dans `web/src/lib/database.types.ts`.
 | `partner_rental_earnings` | Revenus détaillés d'un partenaire |
 | `analytics_*` (vues), `analytics_metric(...)`, `analytics_day(...)` | Analyses : vues plates par sujet, agrégation par mesure et dimension, jour à l'heure de Porto-Novo |
 | `fleet_profitability()` | Rentabilité par véhicule de l'agence (réservée à `fleet_finance`) |
+| `my_partner_id()`, `partner_create_rental(...)`, `partner_create_contract(location)` | Partenaire autonome : identité du partenaire connecté, création client + location (+ paiement) et création du contrat figé ; seules ses locations sur ses véhicules validés |
 | `public_create_booking_request`, `set_booking_request_status` | Demande de réservation sans compte (contrôles, disponibilité, limite de 5 par heure et par téléphone, alerte équipe et partenaire) ; avancement par l'équipe ou le partenaire propriétaire |
 
 ## 7.4 Stockage (buckets)
@@ -568,6 +570,7 @@ sont dans `web/src/lib/database.types.ts`.
 | Tarifs selon la durée | `20261106100000`, `20261106110000` |
 | Rentabilité du parc | `20261107100000` |
 | Partenaire autonome (profil, demandes sans compte) | `20261108100000` |
+| Partenaire autonome (locations propres, contrats) | `20261108200000` |
 
 Règle : **ne jamais modifier une migration déjà appliquée en production** ; ajouter une nouvelle migration. Les migrations encore
 locales sont listées dans [deploiement.md](deploiement.md).

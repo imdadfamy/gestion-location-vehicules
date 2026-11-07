@@ -75,6 +75,7 @@ Fonctions Edge : `client-contract-download`, `client-inspection-photo`.
 Proposer un véhicule (assistant en 4 étapes, prix souhaité et paliers selon la durée), suivre ses véhicules, calendrier, revenus, maintenance :
 `components/portal/partner-*.tsx`, `lib/data/partner-portal.ts`, `lib/data/partner-stats.ts`, `lib/partner-earnings-export.ts`.
 Migrations : `partner_program`, `partner_space_improvements`, `partner_profile_and_booking_requests`. Un véhicule validé n'est plus modifiable côté partenaire, et tout véhicule ajouté reste validé par l'équipe avant publication.
+Locations propres : `/partner/rentals` (liste) et `/partner/rentals/new` (parcours continu véhicule → locataire → paiement → contrat → signatures), contrats : `/partner/contracts` (`components/portal/partner-rental-wizard.tsx`, `partner-rentals.tsx`, `lib/data/partner-rentals.ts`) ; le contrat réutilise `components/staff/contracts/contract-view.tsx`. Migration `partner_rentals`.
 Profil (téléphone, **numéro WhatsApp**, adresse) : `components/portal/partner-account.tsx`. Demandes de réservation reçues du site : `/partner/requests` (`components/staff/booking/booking-requests-list.tsx`, partagé avec l'écran de l'équipe).
 
 ## Fonctions transversales

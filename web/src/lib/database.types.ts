@@ -125,6 +125,7 @@ export type Database = {
       };
       clients: {
         Row: {
+          owner_partner_id: string | null;
           acquisition_detail: string | null;
           acquisition_source: string | null;
           address: string | null;
@@ -149,6 +150,7 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          owner_partner_id?: string | null;
           acquisition_detail?: string | null;
           acquisition_source?: string | null;
           address?: string | null;
@@ -173,6 +175,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          owner_partner_id?: string | null;
           acquisition_detail?: string | null;
           acquisition_source?: string | null;
           address?: string | null;
@@ -474,6 +477,7 @@ export type Database = {
       };
       contracts: {
         Row: {
+          owner_partner_id: string | null;
           contract_number: string | null;
           created_at: string;
           created_by: string | null;
@@ -490,6 +494,7 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          owner_partner_id?: string | null;
           contract_number?: string | null;
           created_at?: string;
           created_by?: string | null;
@@ -506,6 +511,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          owner_partner_id?: string | null;
           contract_number?: string | null;
           created_at?: string;
           created_by?: string | null;
@@ -1180,6 +1186,7 @@ export type Database = {
       };
       rentals: {
         Row: {
+          owner_partner_id: string | null;
           with_driver: boolean;
           driver_daily_price: number | null;
           client_id: string;
@@ -1201,6 +1208,7 @@ export type Database = {
           vehicle_id: string;
         };
         Insert: {
+          owner_partner_id?: string | null;
           with_driver?: boolean;
           driver_daily_price?: number | null;
           client_id: string;
@@ -1222,6 +1230,7 @@ export type Database = {
           vehicle_id: string;
         };
         Update: {
+          owner_partner_id?: string | null;
           with_driver?: boolean;
           driver_daily_price?: number | null;
           client_id?: string;
@@ -2355,6 +2364,27 @@ export type Database = {
           price_tiers: Json;
           contact_whatsapp: string | null;
         }[];
+      };
+      my_partner_id: {
+        Args: never;
+        Returns: string | null;
+      };
+      partner_create_rental: {
+        Args: {
+          target_existing_client_id?: string;
+          target_first_name: string; target_last_name: string; target_phone: string; target_email?: string;
+          target_id_document_number: string; target_driving_license_number: string; target_driving_license_expiry_date: string;
+          target_emergency_contact_name: string; target_emergency_contact_phone: string; target_address: string; target_residence?: string;
+          target_vehicle_id: string; target_departure_date: string; target_return_date: string;
+          target_departure_location: string; target_return_location: string;
+          target_rental_price: number; target_deposit_amount: number; target_driving_zone?: string;
+          target_payment_received: boolean; target_with_driver?: boolean;
+        };
+        Returns: Json;
+      };
+      partner_create_contract: {
+        Args: { target_rental_id: string };
+        Returns: Database['public']['Tables']['contracts']['Row'];
       };
       public_create_booking_request: {
         Args: {
