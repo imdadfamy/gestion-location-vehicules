@@ -172,6 +172,29 @@
   .grid > * {
     min-width: 0;
   }
+  /* Une grille sans colonnes déclarées a une seule colonne qui ne dépasse jamais son conteneur (sinon elle prend la largeur de son contenu,
+     par exemple celle d'un champ date sur iPhone). Les classes grid-cols-* et leurs variantes d'écran l'emportent. */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Champs date et heure : même cadre que les autres champs sur iPhone et Android (largeur du conteneur, hauteur fixe, texte à gauche). */
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  input[type="month"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+    text-align: left;
+  }
+  input::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.5em;
+  }
 }
 /* FullCalendar aux couleurs du thème (clair et sombre) ; ses variables sont posées sur `.fc`. */
 .staff-calendar .fc {
