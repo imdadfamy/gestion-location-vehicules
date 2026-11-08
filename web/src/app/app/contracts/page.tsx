@@ -12,6 +12,7 @@ async function Contracts() {
   return (
     <ContractsManager
       canCreate={can(profile, 'contracts', 'create')}
+      canSendLink={can(profile, 'contracts', 'validate')}
       // Nom du signataire côté agence (repris de l'écran Angular : nom complet du profil).
       staffName={profile?.full_name || displayName(profile) || 'Responsable'}
     />

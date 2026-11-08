@@ -27,7 +27,7 @@ import { ContractView } from './contract-view';
 type Candidate = NonNullable<Awaited<ReturnType<typeof rentalsWithoutContract>>['data']>[number];
 
 /** Back-office : liste des contrats de location et accès à leur suivi et leur signature. */
-export function ContractsManager({ canCreate, staffName }: { canCreate: boolean; staffName: string }) {
+export function ContractsManager({ canCreate, canSendLink, staffName }: { canCreate: boolean; canSendLink: boolean; staffName: string }) {
   const [rows, setRows] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -177,6 +177,7 @@ export function ContractsManager({ canCreate, staffName }: { canCreate: boolean;
       <ContractView
         contract={current}
         staffName={staffName}
+        canSendLink={canSendLink}
         onClose={() => setCurrent(null)}
         onChanged={(updated) => {
           setCurrent(updated);

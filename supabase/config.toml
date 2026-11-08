@@ -419,3 +419,6 @@ enabled = true
 # Appelée par un déclencheur de la base avec un identifiant à usage unique (pas de JWT).
 [functions.send-push]
 verify_jwt = false
+
+[functions.contract-link]
+verify_jwt = false

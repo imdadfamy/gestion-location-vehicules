@@ -63,6 +63,11 @@ async function documentImages(db: Db, clientId: string | null | undefined) {
   return images;
 }
 
+async function storedSignature(db: Db, signature: Signature) {
+  const file = await db.storage.from('contract-assets').download(signature.signature_storage_path);
+  return file.error ? null : asDataUrl(file.data);
+}
+
 /** Nom du fichier archivé : contrat-prenom-nom.pdf */
 export function contractFileName(contract: Contract) {
   const client = contentOf(contract).client ?? {};
@@ -75,7 +80,22 @@ export function contractFileName(contract: Contract) {
   return `contrat-${name || 'client'}.pdf`;
 }
 
-export async function buildContractPdf(db: Db, contract: Contract, signatures: Signature[]) {
+/**
+ * Images déjà chargées : utilisées par la page de signature à distance, où le locataire n'a aucun accès direct
+ * à la base ni au stockage (tout lui est fourni par la fonction Edge contract-link).
+ */
+export type ContractPdfAssets = {
+  logo: string | null;
+  documents: { title: string; image: string }[];
+  signatureImages: Record<string, string | null>;
+};
+
+export async function buildContractPdf(
+  db: Db | null,
+  contract: Contract,
+  signatures: Pick<Signature, 'signer_type' | 'signed_at'>[],
+  assets?: ContractPdfAssets,
+) {
   const { jsPDF } = await import('jspdf');
   const content = contentOf(contract);
   const c = content.company ?? {};
@@ -83,7 +103,7 @@ export async function buildContractPdf(db: Db, contract: Contract, signatures: S
   const vehicle = content.vehicle ?? {};
   const rental = content.rental ?? {};
   const companyName = c.company_name ?? 'FIMA AUTO';
-  const logo = await companyLogo(db, contract);
+  const logo = assets ? assets.logo : await companyLogo(db!, contract);
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
 
   const header = (doc: JsPdf) => {
@@ -171,7 +191,7 @@ export async function buildContractPdf(db: Db, contract: Contract, signatures: S
     'Le locataire reconnaît avoir lu les présentes conditions générales, les accepter et recevoir un exemplaire du présent contrat de location.',
   );
 
-  for (const document of await documentImages(db, client.id)) {
+  for (const document of assets ? assets.documents : await documentImages(db!, client.id)) {
     if (y + 86 > 277) page();
     heading(document.title);
     const props = pdf.getImageProperties(document.image);
@@ -186,7 +206,9 @@ export async function buildContractPdf(db: Db, contract: Contract, signatures: S
   heading('SIGNATURES');
   for (const signature of [...signatures].sort((a, b) => a.signer_type.localeCompare(b.signer_type))) {
     if (y + 38 > 277) page('SIGNATURES — SUITE');
-    const file = await db.storage.from('contract-assets').download(signature.signature_storage_path);
+    const signatureImage = assets
+      ? (assets.signatureImages[signature.signer_type] ?? null)
+      : await storedSignature(db!, signature as Signature);
     pdf.setDrawColor(173, 201, 205);
     pdf.roundedRect(15, y - 4, 180, 34, 2, 2, 'S');
     pdf.setTextColor(18, 74, 85);
@@ -197,10 +219,7 @@ export async function buildContractPdf(db: Db, contract: Contract, signatures: S
     pdf.setTextColor(60, 80, 85);
     pdf.setFontSize(8);
     pdf.text(`Signé le ${frDate(signature.signed_at)}`, 19, y + 10);
-    if (!file.error) {
-      const image = await asDataUrl(file.data);
-      pdf.addImage(image, imageFormat(image), 115, y - 1, 62, 23);
-    }
+    if (signatureImage) pdf.addImage(signatureImage, imageFormat(signatureImage), 115, y - 1, 62, 23);
     y += 40;
   }
 

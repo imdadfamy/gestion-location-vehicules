@@ -99,6 +99,11 @@ export async function createContract(db: Db, rental: PendingRental) {
     .single();
 }
 
+/** Lien de signature à distance pour le locataire (le code n'est renvoyé qu'une fois). */
+export function createSigningLink(db: Db, contractId: string) {
+  return db.rpc('create_contract_signing_link', { target_contract_id: contractId });
+}
+
 export function contractSignatures(db: Db, contractId: string) {
   return db.from('contract_signatures').select('*').eq('contract_id', contractId);
 }

@@ -31,8 +31,8 @@ Vérifier ensuite que les migrations apparaissent bien dans la liste des migrati
 
 ### 2. Fonctions Edge
 
-Fonctions : `manage-users`, `send-push`, `client-contract-download`, `client-inspection-photo` (dossier `supabase/functions/`).
-`send-push` se déploie **sans** vérification du jeton (`verify_jwt` désactivé) : elle est appelée par un déclencheur SQL et
+Fonctions : `manage-users`, `send-push`, `contract-link`, `client-contract-download`, `client-inspection-photo` (dossier `supabase/functions/`).
+`send-push` et `contract-link` se déploient **sans** vérification du jeton (`contract-link` est la page publique de signature : elle valide elle-même le code secret du lien). `send-push` (`verify_jwt` désactivé) est appelée par un déclencheur SQL et
 se protège elle-même (revendication de l'envoi par `push_sent_at`).
 
 À redéployer quand leur code change. Cas piège : la liste blanche des modules de permission de `manage-users`
@@ -115,7 +115,7 @@ Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des 
 
 - Infos de l’entreprise dans les contrats, en production : migration `20261112100000_contract_company_info` appliquée (fonction `contract_company_info`), fiche contrat qui ne plante plus sans ces infos, contrat LOC-2026-000002 complété dans la base.
 
-**Développé en local, pas en production** : rien pour le moment.
+**Développé en local, pas en production** : lien de signature à distance pour le locataire — migration `20261113100000_contract_signing_links`, fonction Edge `contract-link` (à déployer avec `verify_jwt` désactivé), page `/signer/[code]`, bouton « Copier le lien de signature » sur la fiche contrat. Testé en local (signature, PDF généré, archivage) ; en local le lien de téléchargement renvoyé pointe vers `kong:8000` et ne s'ouvre pas.
 
 À vérifier avec un vrai compte après la mise en ligne : l'import d'un PDF de contrat, l'envoi d'un logo, et la lecture automatique des pièces (le lecteur télécharge ses fichiers de langue la première fois).
 

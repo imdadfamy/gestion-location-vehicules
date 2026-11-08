@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Download, Eraser, FileCheck2, Loader2, PenLine } from 'lucide-react';
+import { CheckCircle2, Copy, Download, Eraser, FileCheck2, Link2, Loader2, PenLine, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
 import { StatusBadge } from '@/components/staff/status-badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { buildContractPdf, companyLogo, contractFileName } from '@/lib/contract-pdf';
@@ -19,6 +20,7 @@ import {
   contractMoney,
   contractPdfUrl,
   contractSignatures,
+  createSigningLink,
   identityDocuments,
   type Contract,
   type SignerType,
@@ -46,11 +48,13 @@ function Fact({ label, children, detail }: { label: string; children: React.Reac
 export function ContractView({
   contract: current,
   staffName,
+  canSendLink = false,
   onClose,
   onChanged,
 }: {
   contract: Contract | null;
   staffName: string;
+  canSendLink?: boolean;
   onClose: () => void;
   onChanged: (contract: Contract) => void;
 }) {
@@ -61,6 +65,8 @@ export function ContractView({
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [version, setVersion] = useState(0);
+  const [link, setLink] = useState('');
+  const [linking, setLinking] = useState(false);
   const clientPad = useRef<SignatureHandle>(null);
   const staffPad = useRef<SignatureHandle>(null);
   if (current && current !== contract) {
@@ -68,6 +74,7 @@ export function ContractView({
     setError('');
     setSigned([]);
     setHasDocuments(false);
+    setLink('');
   }
 
   const contractId = current?.id;
@@ -119,6 +126,32 @@ export function ContractView({
     pad.clear();
     toast.success('Signature enregistrée.');
     setVersion((value) => value + 1);
+  }
+
+  async function makeLink() {
+    if (!contract) return;
+    setError('');
+    setLinking(true);
+    const { data, error: failure } = await createSigningLink(createClient(), contract.id);
+    setLinking(false);
+    if (failure || !data) return setError(frenchError(failure));
+    const url = `${window.location.origin}/signer/${(data as { token: string }).token}`;
+    setLink(url);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Lien copié. Envoyez-le au locataire.');
+    } catch {
+      toast.message('Lien créé : copiez-le depuis la zone ci-dessous.');
+    }
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('Lien copié.');
+    } catch {
+      toast.error('Copie impossible : sélectionnez le lien et copiez-le à la main.');
+    }
   }
 
   async function finalize() {
@@ -327,6 +360,40 @@ export function ContractView({
                 <Button onClick={finalize} disabled={saving || signed.length < 2} className="justify-self-start">
                   {saving ? <Loader2 className="animate-spin" /> : <FileCheck2 />} Finaliser, générer et archiver le PDF
                 </Button>
+
+                {canSendLink && signed.includes('responsable') && !signed.includes('client') && (
+                  <div className="grid gap-2 rounded-lg border border-dashed p-3">
+                    <div>
+                      <h3 className="text-sm font-medium">Faire signer le locataire à distance</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Le locataire ouvre le lien, signe sur son téléphone, puis télécharge son contrat. Le lien est valable 7 jours ;
+                        en créer un nouveau annule le précédent.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" onClick={makeLink} disabled={linking}>
+                        {linking ? <Loader2 className="animate-spin" /> : <Link2 />} {link ? 'Créer un nouveau lien' : 'Copier le lien de signature'}
+                      </Button>
+                      {link && (
+                        <>
+                          <Button variant="outline" size="sm" onClick={copyLink}>
+                            <Copy /> Copier
+                          </Button>
+                          <Button variant="outline" size="sm" asChild>
+                            <a
+                              href={`https://wa.me/?text=${encodeURIComponent(`Bonjour, voici le lien pour signer votre contrat de location : ${link}`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Send /> WhatsApp
+                            </a>
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    {link && <Input readOnly value={link} aria-label="Lien de signature" onFocus={(event) => event.currentTarget.select()} />}
+                  </div>
+                )}
               </section>
             </>
           )}

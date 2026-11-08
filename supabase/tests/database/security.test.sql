@@ -286,5 +286,74 @@ select set_config('request.jwt.claims', '{"role":"anon"}', true);
 select throws_ok($$ select public.contract_company_info() $$, '42501', null, 'contrat : un visiteur ne peut pas appeler la fonction');
 reset role;
 
+-- ───────────────────────── Lien de signature à distance (locataire) ─────────────────────────
+insert into public.rentals (id, client_id, vehicle_id, departure_date, return_date, rental_price, deposit_amount)
+values ('50000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000001', :v_internal,
+        now() + interval '60 days', now() + interval '63 days', 75000, 100000);
+insert into public.contracts (id, rental_id, status, generated_content)
+values ('c0000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000005', 'pending_signature',
+        '{"company":{"company_name":"FIMA AUTO"},"client":{"first_name":"Test","last_name":"Client"},"template":{"sections":[]}}');
+
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :admin, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.create_contract_signing_link('c0000000-0000-0000-0000-000000000001') $$,
+                 '23514', null, 'lien : refusé tant que le responsable n’a pas signé');
+reset role;
+
+insert into public.contract_signatures (contract_id, signer_type, signer_name, signature_storage_path)
+values ('c0000000-0000-0000-0000-000000000001', 'responsable', 'Resp', 'contracts/c0000000-0000-0000-0000-000000000001/signatures/responsable.png');
+
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :responsable, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.create_contract_signing_link('c0000000-0000-0000-0000-000000000001') $$,
+                 '42501', null, 'lien : refusé sans la permission Valider du module Contrats');
+select set_config('request.jwt.claims', json_build_object('sub', :partner, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.create_contract_signing_link('c0000000-0000-0000-0000-000000000001') $$,
+                 '42501', null, 'lien : refusé à un partenaire');
+select set_config('request.jwt.claims', json_build_object('sub', :admin, 'role', 'authenticated')::text, true);
+select set_config('test.first_token', (public.create_contract_signing_link('c0000000-0000-0000-0000-000000000001') ->> 'token'), true);
+select is(char_length(current_setting('test.first_token')), 48, 'lien : code secret de 48 caractères');
+select set_config('test.token', (public.create_contract_signing_link('c0000000-0000-0000-0000-000000000001') ->> 'token'), true);
+reset role;
+
+select is((select count(*) from public.contract_signing_links where contract_id = 'c0000000-0000-0000-0000-000000000001' and revoked_at is null),
+          1::bigint, 'lien : un nouveau lien annule le précédent');
+select is((select count(*) from public.contract_signing_links where token_hash = current_setting('test.token')), 0::bigint,
+          'lien : le code en clair n’est jamais stocké');
+
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :admin, 'role', 'authenticated')::text, true);
+select throws_ok($$ select count(*) from public.contract_signing_links $$, '42501', null, 'lien : la table n’est lisible par personne côté API');
+select throws_ok($$ select public.contract_link_get('x') $$, '42501', null, 'lien : même un Super Admin ne peut pas appeler contract_link_get');
+reset role;
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select throws_ok($$ select public.contract_link_get('x') $$, '42501', null, 'lien : un visiteur ne peut pas appeler contract_link_get');
+reset role;
+
+set local role service_role;
+select is(public.contract_link_get(encode(extensions.digest(current_setting('test.first_token'), 'sha256'), 'hex')) ->> 'state', 'revoked', 'lien : l’ancien lien est annulé');
+select is(public.contract_link_get(encode(extensions.digest(current_setting('test.token'), 'sha256'), 'hex')) ->> 'state', 'ready', 'lien : le nouveau lien est prêt');
+select is(public.contract_link_get('inconnu'), null, 'lien : un code inconnu ne renvoie rien');
+select throws_ok($$ select public.contract_link_record_signature(encode(extensions.digest(current_setting('test.first_token'), 'sha256'), 'hex'), 'p.png', 'Test', 'h', '1.1.1.1', 'ua') $$,
+                 '42501', null, 'lien : signer avec un lien annulé est refusé');
+select lives_ok($$ select public.contract_link_record_signature(encode(extensions.digest(current_setting('test.token'), 'sha256'), 'hex'),
+                   'contracts/c0000000-0000-0000-0000-000000000001/signatures/client.png', 'Test Client', 'h', '1.1.1.1', 'ua') $$,
+                'lien : le locataire signe');
+select is(public.contract_link_get(encode(extensions.digest(current_setting('test.token'), 'sha256'), 'hex')) ->> 'state', 'finalizing', 'lien : après signature, en attente du PDF');
+select throws_ok($$ select public.contract_link_record_signature(encode(extensions.digest(current_setting('test.token'), 'sha256'), 'hex'),
+                   'x.png', 'Test Client', 'h', '1.1.1.1', 'ua') $$, '42501', null, 'lien : on ne signe qu’une fois');
+select throws_ok($$ select public.contract_link_archive(encode(extensions.digest(current_setting('test.token'), 'sha256'), 'hex'), 'contracts/autre/pdf/x.pdf') $$,
+                 '22023', null, 'lien : chemin de PDF d’un autre contrat refusé');
+select lives_ok($$ select public.contract_link_archive(encode(extensions.digest(current_setting('test.token'), 'sha256'), 'hex'),
+                   'contracts/c0000000-0000-0000-0000-000000000001/pdf/contrat-test.pdf') $$,
+                'lien : le contrat est finalisé');
+select is((select status from public.contracts where id = 'c0000000-0000-0000-0000-000000000001'), 'signed', 'lien : contrat « signé »');
+select is(public.contract_link_get(encode(extensions.digest(current_setting('test.token'), 'sha256'), 'hex')) ->> 'state', 'signed', 'lien : le locataire peut télécharger');
+select throws_ok($$ select public.contract_link_archive(encode(extensions.digest(current_setting('test.token'), 'sha256'), 'hex'),
+                   'contracts/c0000000-0000-0000-0000-000000000001/pdf/contrat-test.pdf') $$,
+                 '23514', null, 'lien : un contrat signé ne peut plus être finalisé de nouveau');
+reset role;
+
 select * from finish();
 rollback;

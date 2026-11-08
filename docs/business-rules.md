@@ -165,6 +165,17 @@ Aucun fournisseur externe de signature n'est utilisé en V1.
 
 La signature validée doit être sauvegardée avec le contrat.
 
+### Lien de signature pour le locataire
+
+Un responsable peut envoyer au locataire un lien pour signer le contrat à distance, sans compte client, sans OTP ni SMS.
+
+* Le lien n'est proposé qu'une fois le contrat en attente de signature **et déjà signé par le responsable**. Seul le locataire signe par lien.
+* Le lien contient un code secret long et aléatoire ; la base n'en garde que l'empreinte. Il est valable 7 jours pour signer et ne sert qu'une fois pour signer.
+* Générer un nouveau lien annule l'ancien. Le droit de le générer est la permission Valider du module Contrats.
+* Après la signature du locataire, le contrat est finalisé tout de suite : PDF généré dans le navigateur du locataire, archivé, contrat « Signé ». Le locataire peut télécharger son contrat sur le même lien pendant 30 jours.
+* Si la finalisation échoue (connexion coupée), le contrat reste « en attente » avec les deux signatures et le responsable le finalise avec le bouton existant.
+* La signature par lien enregistre la date, l'appareil et l'adresse IP. Ce n'est pas une preuve d'identité : celui qui détient le lien peut signer.
+
 ---
 
 ## 10. Contrat signé
