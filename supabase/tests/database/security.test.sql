@@ -402,5 +402,23 @@ select throws_ok($$ select * from public.partner_transfer_requests() $$, '42501'
 select throws_ok($$ select public.partner_open_requests_count() $$, '42501', null, 'transfert partenaire : un visiteur ne peut pas compter');
 reset role;
 
+-- ───────────────────────── Informations de l'entreprise du partenaire sur son contrat ─────────────────────────
+update public.partners set company_name = 'Garage Test', address = 'Rue 1, Cotonou', phone = '22911111111', whatsapp_phone = '22922222222',
+                           rccm = 'RB/COT/26 B 0001', ifu = '3202600000001', email = 'garage@test.bj'
+where profile_id = :partner;
+set local session_replication_role = replica;
+update public.rentals set owner_partner_id = (select id from public.partners where profile_id = :partner) where id = '50000000-0000-0000-0000-000000000002';
+delete from public.contract_signatures where contract_id in (select id from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002');
+delete from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002';
+set local session_replication_role = origin;
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :partner, 'role', 'authenticated')::text, true);
+select lives_ok($$ select public.partner_create_contract('50000000-0000-0000-0000-000000000002') $$, 'contrat partenaire : créé');
+select is((select generated_content #>> '{company,rccm}' from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002'), 'RB/COT/26 B 0001', 'contrat partenaire : le RCCM du partenaire est imprimé');
+select is((select generated_content #>> '{company,ifu}' from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002'), '3202600000001', 'contrat partenaire : l’IFU du partenaire est imprimé');
+select is((select generated_content #>> '{company,phone}' from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002'), '22911111111', 'contrat partenaire : le téléphone imprimé est celui de l’entreprise, pas le WhatsApp');
+select is((select generated_content #>> '{company,company_name}' from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002'), 'Garage Test', 'contrat partenaire : le nom de l’entreprise est imprimé');
+reset role;
+
 select * from finish();
 rollback;

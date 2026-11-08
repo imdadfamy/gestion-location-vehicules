@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
@@ -77,6 +78,18 @@ export function PartnerRentalWizard({ partnerName, requestId }: { partnerName: s
 
   // Demande de réservation du site : l'assistant s'ouvre déjà rempli (véhicule, dates, client). Tout reste modifiable.
   const [request, setRequest] = useState<BookingRequest | null>(null);
+  // Informations de l'entreprise imprimées sur le contrat : signalées tant qu'elles manquent.
+  const [missingCompany, setMissingCompany] = useState<string[]>([]);
+  useEffect(() => {
+    createClient()
+      .from('partners')
+      .select('company_name,address,phone')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) return;
+        setMissingCompany([!data.company_name?.trim() && 'le nom', !data.address?.trim() && 'l’adresse', !data.phone?.trim() && 'le téléphone'].filter(Boolean) as string[]);
+      });
+  }, []);
   const prefilled = useRef(false);
   useEffect(() => {
     if (!requestId) return;
@@ -222,6 +235,16 @@ export function PartnerRentalWizard({ partnerName, requestId }: { partnerName: s
       </ol>
 
       <FormMessage error={error} />
+
+      {missingCompany.length > 0 && (
+        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
+          Les informations de votre entreprise sont imprimées sur le contrat, mais {missingCompany.join(', ')} de l’entreprise {missingCompany.length > 1 ? 'manquent' : 'manque'}.{' '}
+          <Link href="/partner/account" className="font-medium underline underline-offset-2">
+            Les compléter dans Mon profil
+          </Link>
+          .
+        </p>
+      )}
 
       {step === 1 && (
         <Card>

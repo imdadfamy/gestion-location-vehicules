@@ -287,6 +287,8 @@ Tout véhicule ajouté par un partenaire reste soumis à la validation de l'équ
 
 Page « Mon profil » dans l'espace partenaire : nom commercial, logo, téléphone, numéro WhatsApp, adresse. Le partenaire la renseigne lui-même. Le numéro WhatsApp sert à la redirection des réservations du site public (voir plus bas) ; s'il est absent, la redirection retombe sur le numéro de l'agence.
 
+**Informations de l'entreprise du partenaire sur ses contrats** : comme l'agence (Paramètres), le partenaire renseigne dans « Mon profil » les informations de son entreprise : nom de l'entreprise, adresse, téléphone, e-mail, **RCCM** et **IFU** (le logo se règle dans « Mon contrat »). Elles sont imprimées en tête de chacun de ses contrats, comme loueur, à la place de celles de l'agence. Le téléphone imprimé est son téléphone d'entreprise (et non son numéro WhatsApp, qui sert aux réservations du site). Un champ vide n'est simplement pas imprimé (nom manquant : le nom du contact est utilisé). Un contrat déjà créé garde les informations qu'il avait à sa création ; seuls les nouveaux contrats utilisent les valeurs à jour. L'assistant de location prévient le partenaire tant que le nom, l'adresse ou le téléphone de l'entreprise manquent.
+
 ### Contrat personnalisé
 
 * Sans contrat propre, les locations du partenaire utilisent le modèle de l'agence (par défaut).

@@ -968,6 +968,8 @@ export type Database = {
       };
       partners: {
         Row: {
+          rccm: string | null;
+          ifu: string | null;
           logo_path: string | null;
           logo_public_consent: boolean;
           company_name: string | null;
@@ -986,6 +988,8 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          rccm?: string | null;
+          ifu?: string | null;
           logo_path?: string | null;
           logo_public_consent?: boolean;
           company_name?: string | null;
@@ -1004,6 +1008,8 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          rccm?: string | null;
+          ifu?: string | null;
           logo_path?: string | null;
           logo_public_consent?: boolean;
           company_name?: string | null;

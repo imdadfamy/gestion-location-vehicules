@@ -6,7 +6,8 @@ import { FormMessage } from '@/components/auth/form-message';
 import { PageHeading } from '@/components/portal/page-heading';
 import { Field } from '@/components/staff/form-field';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,6 +33,8 @@ export function PartnerAccount({ profileId, email }: { profileId: string; email:
         payout_details: data?.payout_details ?? '',
         whatsapp_phone: data?.whatsapp_phone ?? '',
         address: data?.address ?? '',
+        rccm: data?.rccm ?? '',
+        ifu: data?.ifu ?? '',
       });
     });
     // Chargement unique par compte.
@@ -62,43 +65,69 @@ export function PartnerAccount({ profileId, email }: { profileId: string; email:
   return (
     <div className="mx-auto grid max-w-2xl gap-6">
       <PageHeading eyebrow="Mon profil" title="Mes informations">
-        Ces informations servent à vous contacter, à vous reverser vos gains et à recevoir les demandes de réservation de vos véhicules.
+        Les informations de votre entreprise sont reprises sur vos contrats ; le reste sert à vous contacter, à vous reverser vos gains et à recevoir les demandes de réservation de vos véhicules.
       </PageHeading>
       <FormMessage error={error} message={error ? '' : message} />
       {!form ? (
         !error && <Skeleton className="h-80 rounded-xl" />
       ) : (
-        <Card>
-          <CardContent>
-            <form onSubmit={save} noValidate className="grid gap-4 sm:grid-cols-2">
-              <Field label="Nom de l’entreprise" htmlFor="partner-company_name">
+        <form onSubmit={save} noValidate className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Informations de votre entreprise</CardTitle>
+              <CardDescription>
+                Imprimées en tête de chacun de vos contrats, comme loueur : ce sont les informations qui figurent sur le contrat que signe votre locataire. Un champ vide n’est pas imprimé. Votre logo se règle dans{' '}
+                <Link href="/partner/contract-model" className="underline underline-offset-2">
+                  Mon contrat
+                </Link>
+                .
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <Field label="Nom de l’entreprise" htmlFor="partner-company_name" className="sm:col-span-2">
                 <Input {...field('company_name')} />
               </Field>
-              <Field label="Nom du contact" required htmlFor="partner-contact_name">
-                <Input {...field('contact_name')} />
+              <Field label="Adresse" htmlFor="partner-address" className="sm:col-span-2">
+                <Input {...field('address')} />
               </Field>
-              <Field label="Téléphone" required htmlFor="partner-phone">
+              <Field label="Téléphone de l’entreprise" required htmlFor="partner-phone">
                 <Input type="tel" inputMode="numeric" {...field('phone', true)} />
               </Field>
               <Field label="E-mail" htmlFor="partner-email">
                 <Input type="email" {...field('email')} />
               </Field>
+              <Field label="RCCM" htmlFor="partner-rccm">
+                <Input {...field('rccm')} />
+              </Field>
+              <Field label="IFU" htmlFor="partner-ifu">
+                <Input {...field('ifu')} />
+              </Field>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Contact, réservations et versements</CardTitle>
+              <CardDescription>Pour vous joindre, recevoir les demandes de réservation du site et vous reverser vos gains. Non imprimé sur les contrats.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <Field label="Nom du contact" required htmlFor="partner-contact_name">
+                <Input {...field('contact_name')} />
+              </Field>
               <Field label="Numéro WhatsApp" htmlFor="partner-whatsapp_phone">
                 <Input type="tel" inputMode="numeric" placeholder="22901020304" {...field('whatsapp_phone', true)} />
                 <p className="text-xs text-muted-foreground">Avec l’indicatif du pays, sans + ni espaces. Les visiteurs qui demandent un de vos véhicules sur le site sont envoyés vers ce numéro.</p>
               </Field>
-              <Field label="Adresse" htmlFor="partner-address">
-                <Input {...field('address')} />
-              </Field>
               <Field label="Coordonnées de versement (banque, mobile money…)" htmlFor="partner-payout_details" className="sm:col-span-2">
                 <Textarea rows={2} {...field('payout_details')} />
               </Field>
-              <Button type="submit" disabled={saving} className="justify-self-start">
-                {saving && <Loader2 className="animate-spin" />} Enregistrer
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Button type="submit" disabled={saving} className="justify-self-start">
+            {saving && <Loader2 className="animate-spin" />} Enregistrer
+          </Button>
+        </form>
       )}
     </div>
   );

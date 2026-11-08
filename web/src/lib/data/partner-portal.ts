@@ -29,6 +29,9 @@ export type ProfileForm = {
   /** Numéro WhatsApp en format international (chiffres, avec l'indicatif du pays) : reçoit les demandes de réservation du site. */
   whatsapp_phone: string;
   address: string;
+  /** Identifiants de l'entreprise imprimés sur ses contrats, comme ceux de l'agence. */
+  rccm: string;
+  ifu: string;
 };
 
 /** Crée ou met à jour la fiche (RPC) puis les coordonnées de versement, le WhatsApp et l'adresse. */
@@ -47,6 +50,8 @@ export async function savePartnerProfile(db: Db, form: ProfileForm) {
       payout_details: form.payout_details.trim() || null,
       whatsapp_phone: form.whatsapp_phone.trim() || null,
       address: form.address.trim() || null,
+      rccm: form.rccm.trim() || null,
+      ifu: form.ifu.trim() || null,
     })
     .eq('id', record.id)
     .select()

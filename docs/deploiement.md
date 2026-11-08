@@ -117,7 +117,7 @@ Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des 
 
 - Signature du contrat par lien, en production : migration `20261113100000_contract_signing_links` appliquée, fonction Edge `contract-link` déployée (version 1, `verify_jwt` désactivé), page `/signer/[code]` et bouton « Copier le lien de signature » (permission Valider du module Contrats). À essayer avec un vrai contrat : signature du responsable, lien, signature du locataire sur téléphone, téléchargement.
 
-**Développé en local, pas en production** : transferts d'un véhicule partenaire (migration `20261114100000_partner_transfer_requests`), page « Demandes » à deux onglets, pastille du menu, bandeau du tableau de bord, « Créer la location » depuis une demande ; lecture des pièces améliorée avec PDF ; délai maximum sur l'import du contrat PDF du partenaire.
+**Développé en local, pas en production** : informations de l'entreprise du partenaire sur ses contrats (migration `20261115100000_partner_company_info`, RCCM et IFU dans « Mon profil ») ; transferts d'un véhicule partenaire (migration `20261114100000_partner_transfer_requests`), page « Demandes » à deux onglets, pastille du menu, bandeau du tableau de bord, « Créer la location » depuis une demande ; lecture des pièces améliorée avec PDF ; délai maximum sur l'import du contrat PDF du partenaire.
 
 À vérifier avec un vrai compte après la mise en ligne : l'import d'un PDF de contrat, l'envoi d'un logo, et la lecture automatique des pièces (le lecteur télécharge ses fichiers de langue la première fois).
 
