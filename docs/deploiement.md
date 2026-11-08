@@ -115,7 +115,9 @@ Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des 
 
 - Infos de l’entreprise dans les contrats, en production : migration `20261112100000_contract_company_info` appliquée (fonction `contract_company_info`), fiche contrat qui ne plante plus sans ces infos, contrat LOC-2026-000002 complété dans la base.
 
-**Développé en local, pas en production** : lien de signature à distance pour le locataire — migration `20261113100000_contract_signing_links`, fonction Edge `contract-link` (à déployer avec `verify_jwt` désactivé), page `/signer/[code]`, bouton « Copier le lien de signature » sur la fiche contrat. Testé en local (signature, PDF généré, archivage) ; en local le lien de téléchargement renvoyé pointe vers `kong:8000` et ne s'ouvre pas.
+- Signature du contrat par lien, en production : migration `20261113100000_contract_signing_links` appliquée, fonction Edge `contract-link` déployée (version 1, `verify_jwt` désactivé), page `/signer/[code]` et bouton « Copier le lien de signature » (permission Valider du module Contrats). À essayer avec un vrai contrat : signature du responsable, lien, signature du locataire sur téléphone, téléchargement.
+
+**Développé en local, pas en production** : rien pour le moment.
 
 À vérifier avec un vrai compte après la mise en ligne : l'import d'un PDF de contrat, l'envoi d'un logo, et la lecture automatique des pièces (le lecteur télécharge ses fichiers de langue la première fois).
 
