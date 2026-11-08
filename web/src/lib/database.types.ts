@@ -1851,13 +1851,13 @@ export type Database = {
       transfer_requests: {
         Row: {
           acquisition_detail: string | null;
-          acquisition_source: string | null; driver_id: string | null; meeting_point: string | null; id: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number: string | null; passengers: number; luggage: number | null; vehicle_id: string | null; vehicle_label: string | null; quoted_price: number | null; final_price: number | null; customer_name: string; customer_phone: string; notes: string | null; status: string; staff_notes: string | null; created_at: string; updated_at: string; };
+          acquisition_source: string | null; partner_response: string | null; partner_responded_at: string | null; driver_id: string | null; meeting_point: string | null; id: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number: string | null; passengers: number; luggage: number | null; vehicle_id: string | null; vehicle_label: string | null; quoted_price: number | null; final_price: number | null; customer_name: string; customer_phone: string; notes: string | null; status: string; staff_notes: string | null; created_at: string; updated_at: string; };
         Insert: {
           acquisition_detail?: string | null;
-          acquisition_source?: string | null; driver_id?: string | null; meeting_point?: string | null; id?: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name: string; customer_phone: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
+          acquisition_source?: string | null; partner_response?: string | null; partner_responded_at?: string | null; driver_id?: string | null; meeting_point?: string | null; id?: string; reference: string; route_from: string; route_to: string; pickup_at: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name: string; customer_phone: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
         Update: {
           acquisition_detail?: string | null;
-          acquisition_source?: string | null; driver_id?: string | null; meeting_point?: string | null; id?: string; reference?: string; route_from?: string; route_to?: string; pickup_at?: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name?: string; customer_phone?: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
+          acquisition_source?: string | null; partner_response?: string | null; partner_responded_at?: string | null; driver_id?: string | null; meeting_point?: string | null; id?: string; reference?: string; route_from?: string; route_to?: string; pickup_at?: string; flight_number?: string | null; passengers?: number; luggage?: number | null; vehicle_id?: string | null; vehicle_label?: string | null; quoted_price?: number | null; final_price?: number | null; customer_name?: string; customer_phone?: string; notes?: string | null; status?: string; staff_notes?: string | null; created_at?: string; updated_at?: string; };
         Relationships: [
           {
             foreignKeyName: 'transfer_requests_driver_id_fkey';
@@ -2165,6 +2165,26 @@ export type Database = {
       };
       create_contract_signing_link: { Args: { target_contract_id: string }; Returns: Json };
       contract_company_info: { Args: Record<PropertyKey, never>; Returns: Json };
+      partner_open_requests_count: { Args: Record<PropertyKey, never>; Returns: number };
+      partner_respond_transfer: { Args: { is_available: boolean; target_id: string }; Returns: undefined };
+      partner_transfer_requests: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          created_at: string;
+          id: string;
+          luggage: number | null;
+          partner_responded_at: string | null;
+          partner_response: string | null;
+          passengers: number;
+          pickup_at: string;
+          reference: string;
+          route_from: string;
+          route_to: string;
+          status: string;
+          vehicle_id: string | null;
+          vehicle_label: string | null;
+        }[];
+      };
       force_complete_rental: {
         Args: { closure_reason: string; target_rental_id: string };
         Returns: undefined;

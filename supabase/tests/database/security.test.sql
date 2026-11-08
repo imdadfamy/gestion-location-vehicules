@@ -355,5 +355,52 @@ select throws_ok($$ select public.contract_link_archive(encode(extensions.digest
                  '23514', null, 'lien : un contrat signé ne peut plus être finalisé de nouveau');
 reset role;
 
+-- ───────────────────────── Transferts d'un véhicule partenaire ─────────────────────────
+alter table public.profiles disable trigger user;
+update public.profiles set is_active = true where id = :partner;
+alter table public.profiles enable trigger user;
+
+insert into public.transfer_requests (id, reference, route_from, route_to, pickup_at, passengers, luggage, vehicle_id, vehicle_label,
+                                      quoted_price, customer_name, customer_phone, notes, flight_number)
+values ('d0000000-0000-0000-0000-000000000001', 'TR-PARTNER1', 'Aéroport', 'Hôtel', now() + interval '3 days', 2, 3, :v_partner, 'Partner Car',
+        25000, 'Client Secret', '22900000001', 'note privée', 'AF123'),
+       ('d0000000-0000-0000-0000-000000000002', 'TR-AGENCY01', 'Aéroport', 'Gare', now() + interval '3 days', 1, 1, :v_internal, 'Voiture agence',
+        15000, 'Autre Client', '22900000002', null, null);
+
+select is((select count(*) from public.notifications where entity_id = 'd0000000-0000-0000-0000-000000000001' and notification_type = 'transfer_partner_request'
+           and user_id = :partner), 1::bigint, 'transfert partenaire : le partenaire est prévenu à la création');
+select is((select count(*) from public.notifications where entity_id = 'd0000000-0000-0000-0000-000000000002' and notification_type = 'transfer_partner_request'),
+          0::bigint, 'transfert partenaire : un véhicule de l’agence ne prévient aucun partenaire');
+
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :partner, 'role', 'authenticated')::text, true);
+select is((select count(*) from public.transfer_requests), 0::bigint, 'transfert partenaire : aucune ligne lisible directement dans la table');
+select is((select count(*) from public.partner_transfer_requests()), 1::bigint, 'transfert partenaire : il ne voit que le transfert de son véhicule');
+select is((select count(*) from public.partner_transfer_requests() t where to_jsonb(t) ?| array['customer_name','customer_phone','quoted_price','final_price','notes','flight_number']), 0::bigint,
+          'transfert partenaire : aucune donnée client ni prix dans la liste');
+select is((select partner_open_requests_count()), 1, 'transfert partenaire : une demande à traiter');
+select throws_ok($$ select public.partner_respond_transfer('d0000000-0000-0000-0000-000000000002', true) $$, '42501', null,
+                 'transfert partenaire : ne peut pas répondre pour un véhicule de l’agence');
+select lives_ok($$ select public.partner_respond_transfer('d0000000-0000-0000-0000-000000000001', true) $$, 'transfert partenaire : répond « disponible »');
+select is((select partner_response from public.partner_transfer_requests()), 'available', 'transfert partenaire : la réponse est enregistrée');
+select is((select partner_open_requests_count()), 0, 'transfert partenaire : plus rien à traiter après la réponse');
+select set_config('request.jwt.claims', json_build_object('sub', :responsable, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.partner_respond_transfer('d0000000-0000-0000-0000-000000000001', true) $$, '42501', null,
+                 'transfert partenaire : un responsable de l’agence ne répond pas à la place du partenaire');
+select is((select count(*) from public.partner_transfer_requests()), 0::bigint, 'transfert partenaire : la liste est vide pour qui n’est pas partenaire');
+reset role;
+select is((select count(*) from public.notifications where entity_id = 'd0000000-0000-0000-0000-000000000001' and notification_type = 'transfer_partner_response' and user_id = :admin),
+          1::bigint, 'transfert partenaire : l’équipe est prévenue de la réponse');
+
+update public.transfer_requests set vehicle_id = :v_internal where id = 'd0000000-0000-0000-0000-000000000001';
+select is((select partner_response from public.transfer_requests where id = 'd0000000-0000-0000-0000-000000000001'), null::text,
+          'transfert partenaire : changer de véhicule remet la réponse à zéro');
+
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select throws_ok($$ select * from public.partner_transfer_requests() $$, '42501', null, 'transfert partenaire : un visiteur ne peut pas lire la liste');
+select throws_ok($$ select public.partner_open_requests_count() $$, '42501', null, 'transfert partenaire : un visiteur ne peut pas compter');
+reset role;
+
 select * from finish();
 rollback;

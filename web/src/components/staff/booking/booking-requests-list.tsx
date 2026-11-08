@@ -1,10 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Inbox, Loader2, MessageCircle, Search } from 'lucide-react';
+import { Inbox, KeyRound, Loader2, MessageCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
 import { StatusBadge } from '@/components/staff/status-badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,7 +32,19 @@ const FILTERS: Record<string, string> = {
  * partenaire (celles de ses véhicules) : la base ne renvoie que ce que chacun a le droit de voir.
  * `canUpdate` : peut faire avancer le statut d'une demande (l'équipe en a besoin de la permission, le partenaire l'a toujours).
  */
-export function BookingRequestsList({ canUpdate, signature }: { canUpdate: boolean; signature: string }) {
+export function BookingRequestsList({
+  canUpdate,
+  signature,
+  createRentalLink = false,
+  onChanged,
+}: {
+  canUpdate: boolean;
+  signature: string;
+  /** Partenaire : propose « Créer la location » (assistant de location prérempli avec la demande). */
+  createRentalLink?: boolean;
+  /** Appelé après un changement de statut (le compteur de demandes à traiter se met à jour). */
+  onChanged?: () => void;
+}) {
   const [rows, setRows] = useState<BookingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -52,6 +66,7 @@ export function BookingRequestsList({ canUpdate, signature }: { canUpdate: boole
     setBusy(null);
     if (failure) return toast.error(frenchError(failure));
     setRows((current) => current.map((row) => (row.id === item.id ? { ...row, status } : row)));
+    onChanged?.();
   }
 
   const term = query.trim().toLowerCase();
@@ -143,6 +158,13 @@ export function BookingRequestsList({ canUpdate, signature }: { canUpdate: boole
                       </a>
                       <span className="block font-mono text-xs text-muted-foreground">{item.reference}</span>
                       {item.notes && <span className="mt-1 block text-xs text-muted-foreground">« {item.notes} »</span>}
+                      {createRentalLink && (item.status === 'new' || item.status === 'contacted') && (
+                        <Button asChild size="sm" variant="outline" className="mt-2">
+                          <Link href={`/partner/rentals/new?request=${item.id}`}>
+                            <KeyRound /> Créer la location
+                          </Link>
+                        </Button>
+                      )}
                       <div className="mt-2 sm:hidden">{statusControl}</div>
                     </TableCell>
                     <TableCell className="whitespace-normal">

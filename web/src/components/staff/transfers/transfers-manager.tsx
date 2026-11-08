@@ -16,7 +16,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { vehicleOptions } from '@/lib/data/reservations';
 import {
   addDriver,
   listDrivers,
@@ -29,11 +28,12 @@ import {
   type TransferDriver,
   type TransferRequest,
 } from '@/lib/data/transfers';
+import { PARTNER_RESPONSES } from '@/lib/data/booking-requests';
 import { frenchError } from '@/lib/errors';
 import { frDateTime, whatsappNumber } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 
-type VehicleChoice = { id: string; registration_number: string; make: string; model: string };
+type VehicleChoice = { id: string; registration_number: string; make: string; model: string; owner_type: string };
 
 const OPEN = ['new', 'confirmed', 'assigned', 'en_route', 'arrived'];
 const FILTERS: Record<string, string> = {
@@ -91,7 +91,7 @@ export function TransfersManager({ canUpdate }: { canUpdate: boolean }) {
 
   function load() {
     const db = createClient();
-    return Promise.all([listTransfers(db), vehicleOptions(db), listDrivers(db)]).then(([transfers, cars, people]) => {
+    return Promise.all([listTransfers(db), db.from('vehicles').select('id,registration_number,make,model,owner_type').order('registration_number'), listDrivers(db)]).then(([transfers, cars, people]) => {
       setRows(transfers.data ?? []);
       setVehicles(cars.data ?? []);
       setDrivers(people.data ?? []);
@@ -192,6 +192,8 @@ export function TransfersManager({ canUpdate }: { canUpdate: boolean }) {
               {visible.map((item) => {
                 const status = TRANSFER_STATUSES[item.status] ?? TRANSFER_STATUSES.new;
                 const unassigned = OPEN.includes(item.status) && !item.driver_id && startsWithin(item.pickup_at, 48);
+                const partnerVehicle = vehicles.find((v) => v.id === item.vehicle_id)?.owner_type === 'partner';
+                const partnerAnswer = item.partner_response ? PARTNER_RESPONSES[item.partner_response] : null;
                 return (
                   <TableRow key={item.id} className="cursor-pointer" onClick={() => setSelectedId(item.id)}>
                     <TableCell className="pl-4 whitespace-normal">
@@ -205,6 +207,11 @@ export function TransfersManager({ canUpdate }: { canUpdate: boolean }) {
                     <TableCell className="hidden text-xs tabular-nums md:table-cell">{frDateTime(item.pickup_at)}</TableCell>
                     <TableCell className="hidden text-xs lg:table-cell">
                       {item.vehicle_label ?? '—'}
+                      {partnerVehicle && OPEN.includes(item.status) && (
+                        <span className="mt-0.5 block">
+                          <StatusBadge tone={partnerAnswer?.tone ?? 'warning'}>{partnerAnswer ? `Partenaire : ${partnerAnswer.label.toLowerCase()}` : 'Attente du partenaire'}</StatusBadge>
+                        </span>
+                      )}
                       <span className="block text-muted-foreground">{driverName(item.driver_id) ?? (unassigned ? 'Sans chauffeur' : '—')}</span>
                     </TableCell>
                     <TableCell className="pr-4">
@@ -362,10 +369,20 @@ function TransferDetail({
                 {vehicles.map((v) => (
                   <SelectItem key={v.id} value={v.id}>
                     {v.registration_number} — {v.make} {v.model}
+                    {v.owner_type === 'partner' ? ' (partenaire)' : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {vehicle?.owner_type === 'partner' && (
+              <p className="text-xs text-muted-foreground">
+                {vehicleId === item.vehicle_id && item.partner_response
+                  ? `Réponse du partenaire : ${PARTNER_RESPONSES[item.partner_response]?.label.toLowerCase()}.`
+                  : vehicleId === item.vehicle_id
+                    ? 'Le partenaire a été prévenu : il n’a pas encore répondu.'
+                    : 'Véhicule d’un partenaire : il sera prévenu à l’enregistrement et répondra s’il est libre.'}
+              </p>
+            )}
           </Field>
           <Field label="Chauffeur" htmlFor="transfer-driver">
             <Select

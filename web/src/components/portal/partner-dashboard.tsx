@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowRight, Bell, CalendarClock, CarFront, CircleAlert, Hourglass, Plus, Wallet } from 'lucide-react';
+import { ArrowRight, Bell, CalendarClock, CarFront, CircleAlert, Hourglass, Inbox, Plus, Wallet } from 'lucide-react';
 import { FormMessage } from '@/components/auth/form-message';
 import { PageHeading } from '@/components/portal/page-heading';
 import { PushAlerts } from '@/components/staff/push-alerts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { openRequestsCount } from '@/lib/data/booking-requests';
 import { myNotifications, type Notification } from '@/lib/data/notifications';
 import { earnings, myPartner, myVehicles, type Earning, type MyVehicle } from '@/lib/data/partner-portal';
 import { summarize } from '@/lib/data/partner-stats';
@@ -17,7 +18,7 @@ import { frenchError } from '@/lib/errors';
 import { frDate, frDateTime } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
 
-type Data = { rows: Earning[]; vehicles: MyVehicle[]; unread: Notification[]; name: string };
+type Data = { rows: Earning[]; vehicles: MyVehicle[]; unread: Notification[]; name: string; requests: number };
 
 function Kpi({ icon, label, value, hint, href }: { icon: React.ReactNode; label: string; value: React.ReactNode; hint?: React.ReactNode; href?: string }) {
   const body = (
@@ -48,7 +49,7 @@ export function PartnerDashboard({ profileId }: { profileId: string }) {
 
   useEffect(() => {
     const db = createClient();
-    Promise.all([earnings(db), myVehicles(db), myNotifications(db, profileId), myPartner(db, profileId)]).then(([rows, vehicles, notifications, partner]) => {
+    Promise.all([earnings(db), myVehicles(db), myNotifications(db, profileId), myPartner(db, profileId), openRequestsCount(db)]).then(([rows, vehicles, notifications, partner, requests]) => {
       const failure = rows.error ?? vehicles.error ?? notifications.error ?? partner.error;
       if (failure) return setError(frenchError(failure));
       setData({
@@ -56,6 +57,7 @@ export function PartnerDashboard({ profileId }: { profileId: string }) {
         vehicles: vehicles.data ?? [],
         unread: (notifications.data ?? []).filter((item) => !item.is_read),
         name: partner.data?.contact_name || partner.data?.company_name || '',
+        requests,
       });
     });
   }, [profileId]);
@@ -79,6 +81,27 @@ export function PartnerDashboard({ profileId }: { profileId: string }) {
       </div>
 
       <PushAlerts kind="partner" hideWhenDone />
+
+      {data.requests > 0 && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <Inbox className="mt-0.5 size-5 shrink-0 text-primary" />
+              <div>
+                <p className="font-medium">
+                  {data.requests === 1 ? '1 demande à traiter' : `${data.requests} demandes à traiter`}
+                </p>
+                <p className="text-sm text-muted-foreground">Des clients demandent vos véhicules (réservations du site, transferts à confirmer).</p>
+              </div>
+            </div>
+            <Button asChild>
+              <Link href="/partner/requests">
+                Voir les demandes <ArrowRight />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {noVehicle && (
         <Card className="border-dashed">

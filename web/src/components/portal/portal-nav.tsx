@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/site/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ContactAgency, type AgencyContact } from '@/components/portal/contact-agency';
+import { openRequestsCount } from '@/lib/data/booking-requests';
 import { contractAlerts } from '@/lib/data/client-portal';
 import { unreadCount } from '@/lib/data/partner-portal';
 import { createClient } from '@/lib/supabase/client';
@@ -50,6 +51,7 @@ export function PortalNav({ space, userId, contact }: { space: Space; userId?: s
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [toSign, setToSign] = useState(0);
+  const [requests, setRequests] = useState(0);
   const links = LINKS[space];
   const title = space === 'client' ? 'Espace client' : 'Espace partenaire';
 
@@ -58,6 +60,12 @@ export function PortalNav({ space, userId, contact }: { space: Space; userId?: s
     if (space !== 'partner' || !userId) return;
     unreadCount(createClient(), userId).then(setUnread);
   }, [space, userId, pathname]);
+
+  // Pastille « Demandes » (espace partenaire) : réservations nouvelles et transferts sans réponse.
+  useEffect(() => {
+    if (space !== 'partner') return;
+    openRequestsCount(createClient()).then(setRequests);
+  }, [space, pathname]);
 
   // Pastille « Contrats » (espace client) : dossiers ou contrats qui attendent la signature.
   useEffect(() => {
@@ -74,7 +82,7 @@ export function PortalNav({ space, userId, contact }: { space: Space; userId?: s
   const items = (onNavigate?: () => void, inSheet = false) =>
     links.map((link) => {
       const active = link.href === '/partner' || link.href === '/client' ? pathname === link.href : pathname === link.href || pathname.startsWith(`${link.href}/`);
-      const badge = link.href === '/partner/notifications' ? unread : link.href === '/client/contracts' ? toSign : 0;
+      const badge = link.href === '/partner/notifications' ? unread : link.href === '/client/contracts' ? toSign : link.href === '/partner/requests' ? requests : 0;
       return (
         <Button key={link.href} asChild variant={active ? 'secondary' : 'ghost'} size={inSheet ? 'lg' : 'sm'} className={cn('justify-start', inSheet && 'gap-3 text-base [&_svg:not([class*=size-])]:size-[22px]', active && 'font-semibold')}>
           <Link href={link.href} onClick={onNavigate} aria-current={active ? 'page' : undefined} title={link.label} aria-label={badge ? `${link.label} (${badge} à traiter)` : link.label}>

@@ -51,3 +51,27 @@ export function listBookingRequests(db: Db) {
 export function setBookingStatus(db: Db, id: string, status: string) {
   return db.rpc('set_booking_request_status', { target_id: id, target_status: status });
 }
+
+// --- Demandes concernant un véhicule partenaire (docs/business-rules.md) ---
+
+/** Transfert d'un véhicule du partenaire : jamais de client, de téléphone ni de prix (la base ne les renvoie pas). */
+export type PartnerTransfer = Database['public']['Functions']['partner_transfer_requests']['Returns'][number];
+
+export const PARTNER_RESPONSES: Record<string, { label: string; tone: 'success' | 'danger' | 'warning' }> = {
+  available: { label: 'Disponible', tone: 'success' },
+  unavailable: { label: 'Indisponible', tone: 'danger' },
+};
+
+export function listPartnerTransfers(db: Db) {
+  return db.rpc('partner_transfer_requests');
+}
+
+export function respondToTransfer(db: Db, id: string, available: boolean) {
+  return db.rpc('partner_respond_transfer', { target_id: id, is_available: available });
+}
+
+/** Nombre de demandes à traiter : réservations « nouvelles » et transferts sans réponse (menu et tableau de bord). */
+export async function openRequestsCount(db: Db) {
+  const { data } = await db.rpc('partner_open_requests_count');
+  return Number(data ?? 0);
+}

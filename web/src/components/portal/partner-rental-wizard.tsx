@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { setBookingStatus, type BookingRequest } from '@/lib/data/booking-requests';
 import { uploadClientDocument } from '@/lib/data/clients';
 import type { Contract } from '@/lib/data/contracts';
 import { loadTiers } from '@/lib/data/price-tiers';
@@ -30,6 +31,13 @@ type Vehicle = { id: string; registration_number: string; make: string; model: s
 const NEW_CLIENT = 'new';
 const STEPS = ['Véhicule et dates', 'Locataire', 'Paiement', 'Contrat et signatures'];
 
+/** Date ISO → valeur d'un champ « datetime-local » (heure de l'appareil). */
+const localInput = (iso: string) => {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
 const durationLabel = (days: number) => (!days ? '—' : days === 1 ? '1 jour' : `${days.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} jours`);
 
 /**
@@ -37,7 +45,7 @@ const durationLabel = (days: number) => (!days ? '—' : days === 1 ? '1 jour' :
  * Le contrat se crée dès que la location est enregistrée et s'ouvre aussitôt pour les deux signatures ; il n'y a pas
  * d'écran « contrat » séparé à aller chercher ensuite.
  */
-export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
+export function PartnerRentalWizard({ partnerName, requestId }: { partnerName: string; requestId?: string }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [vehicles, setVehicles] = useState<Vehicle[] | null>(null);
@@ -66,6 +74,37 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
       if (failure) setError(frenchError(failure));
     });
   }, []);
+
+  // Demande de réservation du site : l'assistant s'ouvre déjà rempli (véhicule, dates, client). Tout reste modifiable.
+  const [request, setRequest] = useState<BookingRequest | null>(null);
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (!requestId) return;
+    createClient()
+      .from('booking_requests')
+      .select('*')
+      .eq('id', requestId)
+      .maybeSingle()
+      .then(({ data }) => setRequest(data));
+  }, [requestId]);
+  useEffect(() => {
+    if (!request || !vehicles || prefilled.current) return;
+    prefilled.current = true;
+    const picked = vehicles.find((item) => item.id === request.vehicle_id);
+    const [first = '', ...rest] = request.customer_name.trim().split(/\s+/);
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setRental((value) => ({
+      ...value,
+      vehicle_id: picked?.id ?? '',
+      deposit_amount: String(picked?.deposit_amount ?? 0),
+      departure_date: localInput(request.departure_date),
+      return_date: localInput(request.return_date),
+    }));
+    setWithDriver(request.with_driver);
+    setClient({ ...EMPTY_WIZARD_CLIENT, first_name: first, last_name: rest.join(' '), phone: digitsOnly(request.customer_phone) });
+    if (!picked) setError('Le véhicule de cette demande n’est pas disponible à la location : choisissez-en un autre.');
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [request, vehicles]);
 
   useEffect(() => {
     if (!rental.vehicle_id) return;
@@ -137,6 +176,8 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
       setSaving(false);
       return setError(frenchError(created.error));
     }
+    // La demande du site est conclue dès que la location existe.
+    if (requestId) await setBookingStatus(db, requestId, 'converted');
     const clientId = (created.data as { client_id?: string } | null)?.client_id;
     if (clientId) {
       for (const [type, file] of Object.entries(documents) as ['identity_document' | 'driving_license' | 'document', File][]) {

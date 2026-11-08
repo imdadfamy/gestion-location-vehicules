@@ -7,14 +7,17 @@ import { displayName, sessionProfile } from '@/lib/session';
 
 export const metadata: Metadata = { title: 'Nouvelle location' };
 
-async function Page() {
-  return <PartnerRentalWizard partnerName={displayName(await sessionProfile())} />;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function Page({ searchParams }: { searchParams: Promise<{ request?: string }> }) {
+  const { request } = await searchParams;
+  return <PartnerRentalWizard partnerName={displayName(await sessionProfile())} requestId={request && UUID.test(request) ? request : undefined} />;
 }
 
-export default function NewPartnerRentalPage() {
+export default function NewPartnerRentalPage({ searchParams }: { searchParams: Promise<{ request?: string }> }) {
   return (
     <Suspense fallback={<Skeleton className="h-96 rounded-xl" />}>
-      <Page />
+      <Page searchParams={searchParams} />
     </Suspense>
   );
 }

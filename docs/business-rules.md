@@ -313,6 +313,14 @@ Page « Mon profil » dans l'espace partenaire : nom commercial, logo, télépho
 * Destinataire : véhicule de l'agence → numéro WhatsApp de l'agence ; véhicule d'un partenaire → numéro WhatsApp du partenaire (à défaut, celui de l'agence).
 * La demande est enregistrée avant la redirection (suivi, canal d'acquisition, retrouvable par le partenaire ou l'équipe), avec une limite de demandes par numéro comme pour les transferts.
 
+### Demandes concernant un véhicule partenaire (réservations et transferts)
+
+* Le partenaire a une seule page « Demandes » : ses demandes de réservation du site et les transferts (par exemple aéroport → destination) qui concernent un de ses véhicules.
+* **Transferts** : ils restent gérés par l'équipe. Dès que l'équipe lie un véhicule partenaire à un transfert (ou que le visiteur le choisit sur le site), le partenaire est notifié et répond « Disponible » ou « Indisponible ». Sa réponse est vue par l'équipe (notification et badge dans la gestion des transferts). Si l'équipe change de véhicule, la réponse est remise à zéro et le nouveau partenaire est notifié. La réponse du partenaire n'assigne ni ne confirme rien : l'équipe décide.
+* **Ce que le partenaire voit d'un transfert** : trajet, date et heure de prise en charge, nombre de passagers et de bagages, véhicule, statut et sa réponse. Il ne voit jamais le nom ni le téléphone du client, ni le prix de la course, ni le numéro de vol, ni les notes. Il ne voit que les transferts de ses propres véhicules.
+* **Alerte** : le menu « Demandes » affiche le nombre de demandes à traiter (réservations « nouvelles » + transferts sans réponse dont la prise en charge est à venir), et le tableau de bord du partenaire un bandeau avec le même chiffre. Les notifications sont aussi envoyées sur le téléphone s'il a activé les alertes.
+* **Créer la location** : sur une demande de réservation, le bouton ouvre l'assistant de location déjà rempli (véhicule, dates, nom et téléphone du client). À l'enregistrement de la location, la demande passe en « Réservation conclue ». Rien n'est créé sans que le partenaire valide les étapes de l'assistant.
+
 ## 18. Logos des partenaires sur le site public (branche `partenaires-logos`)
 
 Une section « Nos partenaires » du site public fait défiler les logos des partenaires.

@@ -1,20 +1,25 @@
-/** Page `/partner/requests` — Demandes de réservation reçues du site pour les véhicules du partenaire. */
+/** Page `/partner/requests` — Demandes reçues pour les véhicules du partenaire : réservations du site et transferts. */
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { PageHeading } from '@/components/portal/page-heading';
-import { BookingRequestsList } from '@/components/staff/booking/booking-requests-list';
+import { PartnerRequests } from '@/components/portal/partner-requests';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export const metadata: Metadata = { title: 'Demandes de réservation' };
+export const metadata: Metadata = { title: 'Demandes' };
 
-export default function PartnerRequestsPage() {
+async function Requests({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab } = await searchParams;
+  return <PartnerRequests initialTab={tab === 'transfers' ? 'transfers' : 'reservations'} />;
+}
+
+export default function PartnerRequestsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   return (
     <div className="mx-auto grid max-w-6xl gap-6">
-      <PageHeading eyebrow="Réservations" title="Demandes de réservation">
-        Les visiteurs du site qui demandent un de vos véhicules arrivent sur votre WhatsApp. Retrouvez ici chaque demande et marquez son avancement.
+      <PageHeading eyebrow="Demandes" title="Demandes sur vos véhicules">
+        Les visiteurs du site qui demandent un de vos véhicules arrivent sur votre WhatsApp : retrouvez ici chaque demande. Les transferts, gérés par l’équipe, vous sont signalés ici pour confirmer que votre véhicule est libre.
       </PageHeading>
       <Suspense fallback={<Skeleton className="h-96 rounded-xl" />}>
-        <BookingRequestsList canUpdate signature="ici votre loueur" />
+        <Requests searchParams={searchParams} />
       </Suspense>
     </div>
   );
