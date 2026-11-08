@@ -442,6 +442,7 @@ export function PartnerRentalWizard({ partnerName, requestId }: { partnerName: s
       <ContractView
         contract={contract}
         staffName={partnerName}
+        canSendLink
         onClose={() => router.push('/partner/rentals')}
         onChanged={() => {
           toast.success('Contrat signé et archivé. Vous pouvez maintenant faire l’inspection de départ.');

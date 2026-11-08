@@ -156,6 +156,7 @@ export function PartnerRentals({ partnerName }: { partnerName: string }) {
       <ContractView
         contract={open}
         staffName={partnerName}
+        canSendLink
         onClose={() => setOpen(null)}
         onChanged={(updated) => {
           setOpen(updated);
@@ -234,6 +235,7 @@ export function PartnerContracts({ partnerName }: { partnerName: string }) {
       <ContractView
         contract={open}
         staffName={partnerName}
+        canSendLink
         onClose={() => setOpen(null)}
         onChanged={(updated) => {
           setOpen(updated);

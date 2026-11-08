@@ -420,5 +420,29 @@ select is((select generated_content #>> '{company,phone}' from public.contracts 
 select is((select generated_content #>> '{company,company_name}' from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002'), 'Garage Test', 'contrat partenaire : le nom de l’entreprise est imprimé');
 reset role;
 
+-- ───────────────────────── Lien de signature : contrats d'un partenaire ─────────────────────────
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :partner, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.create_contract_signing_link('c0000000-0000-0000-0000-000000000001') $$, '42501', null,
+                 'lien partenaire : refusé pour un contrat de l’agence');
+select throws_ok($$ select public.create_contract_signing_link((select id from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002')) $$,
+                 '23514', null, 'lien partenaire : refusé tant que le loueur n’a pas signé');
+reset role;
+insert into public.contract_signatures (contract_id, signer_type, signer_name, signature_storage_path)
+select id, 'responsable', 'Loueur Test', 'contracts/' || id || '/signatures/responsable.png' from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002';
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :partner, 'role', 'authenticated')::text, true);
+select is(char_length(public.create_contract_signing_link((select id from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002')) ->> 'token'), 48,
+          'lien partenaire : le partenaire crée le lien de son propre contrat');
+select set_config('request.jwt.claims', json_build_object('sub', :responsable, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.create_contract_signing_link((select id from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002')) $$,
+                 '42501', null, 'lien partenaire : un responsable sans la permission Valider ne peut pas créer le lien');
+reset role;
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select throws_ok($$ select public.create_contract_signing_link((select id from public.contracts where rental_id = '50000000-0000-0000-0000-000000000002')) $$,
+                 '42501', null, 'lien partenaire : un visiteur ne peut pas créer de lien');
+reset role;
+
 select * from finish();
 rollback;
