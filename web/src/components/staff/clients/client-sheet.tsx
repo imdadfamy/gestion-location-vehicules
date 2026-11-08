@@ -209,8 +209,8 @@ export function ClientSheet({
               <Button variant="outline" size="sm" asChild className={scanning ? 'pointer-events-none opacity-50' : undefined}>
                 <label className="cursor-pointer">
                   {scanning ? <Loader2 className="animate-spin" /> : <ScanLine />}
-                  {scanning ? 'Lecture en cours…' : 'Choisir et lire une image'}
-                  <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={scan} />
+                  {scanning ? 'Lecture en cours…' : 'Choisir et lire une pièce (photo ou PDF)'}
+                  <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" onChange={scan} />
                 </label>
               </Button>
             </div>

@@ -290,15 +290,15 @@ export function PartnerRentalWizard({ partnerName }: { partnerName: string }) {
               <Input type="tel" {...clientField('emergency_contact_phone')} />
             </Field>
             <Field label="Photo de la pièce d’identité (lue automatiquement)" htmlFor="pr-doc-identity">
-              <Input id="pr-doc-identity" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; setDocuments({ ...documents, identity_document: file }); documentScan.scan('identity', file); }} />
+              <Input id="pr-doc-identity" type="file" accept="image/*,application/pdf" onChange={(event) => { const file = event.target.files?.[0]; setDocuments({ ...documents, identity_document: file }); documentScan.scan('identity', file); }} />
               {documentScan.notes.identity && <p className="text-xs text-muted-foreground" role="status">{documentScan.notes.identity}</p>}
             </Field>
             <Field label="Photo du permis (lue automatiquement)" htmlFor="pr-doc-license">
-              <Input id="pr-doc-license" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; setDocuments({ ...documents, driving_license: file }); documentScan.scan('license', file); }} />
+              <Input id="pr-doc-license" type="file" accept="image/*,application/pdf" onChange={(event) => { const file = event.target.files?.[0]; setDocuments({ ...documents, driving_license: file }); documentScan.scan('license', file); }} />
               {documentScan.notes.license && <p className="text-xs text-muted-foreground" role="status">{documentScan.notes.license}</p>}
             </Field>
             <Field label="Autre pièce (passeport, justificatif…, lue automatiquement)" htmlFor="pr-doc-other" className="sm:col-span-2">
-              <Input id="pr-doc-other" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; setDocuments({ ...documents, document: file }); documentScan.scan('any', file); }} />
+              <Input id="pr-doc-other" type="file" accept="image/*,application/pdf" onChange={(event) => { const file = event.target.files?.[0]; setDocuments({ ...documents, document: file }); documentScan.scan('any', file); }} />
               {documentScan.notes.any && <p className="text-xs text-muted-foreground" role="status">{documentScan.notes.any}</p>}
             </Field>
           </CardContent>
