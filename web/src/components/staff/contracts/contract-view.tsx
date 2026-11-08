@@ -96,7 +96,13 @@ export function ContractView({
   }, [contractId, clientId, version]);
 
   if (!contract) return null;
-  const { company = {}, client = {}, vehicle = {}, rental = {}, template } = contentOf(contract);
+  // Les champs peuvent valoir null (ex. paramètres de l'entreprise jamais renseignés) : une valeur par défaut ne suffit pas.
+  const content = contentOf(contract);
+  const company = content.company ?? {};
+  const client = content.client ?? {};
+  const vehicle = content.vehicle ?? {};
+  const rental = content.rental ?? {};
+  const template = content.template;
   const state = CONTRACT_STATUSES[contract.status];
 
   async function sign(type: SignerType) {
