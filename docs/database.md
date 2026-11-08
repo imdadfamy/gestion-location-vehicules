@@ -584,6 +584,7 @@ sont dans `web/src/lib/database.types.ts`.
 | Logos des partenaires sur le site public | `20261110100000`, `20261110110000` (JPEG et WebP autorisés pour les logos) |
 | Photos du catalogue public pour un visiteur connecté | `20261110120000` (la policy de lecture des photos vise `anon` et `authenticated`) |
 | Clôture forcée d'une location | `20261111100000` (colonnes `forced` et `reason` de `rental_status_history`, fonction `force_complete_rental(rental, reason)` : permission `rentals.validate`, location en cours ou en retard, motif obligatoire) |
+| Infos entreprise d'un contrat | `20261112100000` (fonction `contract_company_info()` : permission `contracts.create` ou `view`, renvoie les seuls champs imprimés sur un contrat ; un responsable n'a pas besoin du droit Paramètres pour créer un contrat) |
 
 Règle : **ne jamais modifier une migration déjà appliquée en production** ; ajouter une nouvelle migration. Les migrations encore
 locales sont listées dans [deploiement.md](deploiement.md).

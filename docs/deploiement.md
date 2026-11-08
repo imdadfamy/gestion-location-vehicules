@@ -113,7 +113,7 @@ Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des 
 
 - Bouton « Terminer la location » (clôture forcée par un responsable), en production : migration `20261111100000_force_complete_rental` appliquée (colonnes `forced` et `reason` de l'historique des statuts, fonction `force_complete_rental`). Pas de fonction Edge ni de variable. Le droit se donne par la case « Valider » du module Locations dans Utilisateurs (le Super Admin l'a toujours).
 
-**Développé en local, pas en production** : rien pour le moment.
+**Développé en local, pas en production** : migration `20261112100000_contract_company_info` (les contrats créés par un responsable reprennent les infos de l’entreprise) et correctif de la fiche contrat qui plantait quand ces infos manquaient. Le contrat LOC-2026-000002, créé sans ces infos, est à compléter dans la base.
 
 À vérifier avec un vrai compte après la mise en ligne : l'import d'un PDF de contrat, l'envoi d'un logo, et la lecture automatique des pièces (le lecteur télécharge ses fichiers de langue la première fois).
 

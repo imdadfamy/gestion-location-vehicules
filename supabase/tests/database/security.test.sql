@@ -269,5 +269,22 @@ select throws_ok($$ select public.force_complete_rental('50000000-0000-0000-0000
                  '23514', null, 'clôture forcée : impossible sur une location déjà terminée');
 reset role;
 
+-- ───────────────────────── Infos entreprise d'un contrat (responsable sans accès Paramètres) ─────────────────────────
+alter table public.profiles disable trigger user;
+update public.profiles set is_active = true, permissions = '{"contracts":{"view":true,"create":true}}'::jsonb where id = :responsable;
+alter table public.profiles enable trigger user;
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :responsable, 'role', 'authenticated')::text, true);
+select is((select count(*) from public.company_settings)::int, 0, 'contrat : le responsable ne lit pas company_settings directement');
+select isnt((public.contract_company_info() ->> 'company_name'), null, 'contrat : le responsable obtient les infos entreprise par la fonction');
+select is((public.contract_company_info() ? 'partner_minimum_margin'), false, 'contrat : la marge partenaire n’est pas exposée');
+select set_config('request.jwt.claims', json_build_object('sub', :partner, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.contract_company_info() $$, '42501', null, 'contrat : un partenaire ne peut pas appeler la fonction');
+reset role;
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select throws_ok($$ select public.contract_company_info() $$, '42501', null, 'contrat : un visiteur ne peut pas appeler la fonction');
+reset role;
+
 select * from finish();
 rollback;

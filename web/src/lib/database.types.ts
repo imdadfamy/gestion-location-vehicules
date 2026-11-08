@@ -2163,6 +2163,7 @@ export type Database = {
         Args: { target_rental_id: string };
         Returns: Json;
       };
+      contract_company_info: { Args: Record<PropertyKey, never>; Returns: Json };
       force_complete_rental: {
         Args: { closure_reason: string; target_rental_id: string };
         Returns: undefined;

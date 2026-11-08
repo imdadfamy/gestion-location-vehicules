@@ -74,7 +74,8 @@ export async function createContract(db: Db, rental: PendingRental) {
     .limit(1)
     .single();
   if (version.error) return { data: null, error: version.error };
-  const company = await db.from('company_settings').select('*').limit(1).maybeSingle();
+  // Fonction de la base : un responsable crée des contrats sans avoir accès aux Paramètres.
+  const company = await db.rpc('contract_company_info');
   if (company.error) return { data: null, error: company.error };
   const content = {
     template: version.data.content,
