@@ -5,6 +5,10 @@ import { sessionProfile } from '@/lib/session';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_PAGES = 40;
+const READ_TIMEOUT_MS = 40_000;
+
+// Laisse à la lecture le temps de finir ; au-delà, on répond une erreur claire plutôt que de laisser l'écran tourner.
+export const maxDuration = 60;
 
 /**
  * Lit le PDF du contrat d'un partenaire et le découpe en sections et clauses (voir `lib/contract-import.ts`).
@@ -29,13 +33,29 @@ export async function POST(request: Request) {
   // Un vrai PDF commence par « %PDF » (le type envoyé par le navigateur ne suffit pas).
   if (String.fromCharCode(...bytes.slice(0, 4)) !== '%PDF') return NextResponse.json({ error: 'Ce fichier n’est pas un PDF.' }, { status: 400 });
 
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    const pdf = await getDocumentProxy(bytes);
-    if (pdf.numPages > MAX_PAGES) return NextResponse.json({ error: `Le PDF dépasse ${MAX_PAGES} pages.` }, { status: 400 });
-    const { text, totalPages } = await extractText(pdf, { mergePages: false });
+    const read = async () => {
+      const pdf = await getDocumentProxy(bytes);
+      if (pdf.numPages > MAX_PAGES) return null;
+      return extractText(pdf, { mergePages: false });
+    };
+    const timeout = new Promise<'timeout'>((resolve) => {
+      timer = setTimeout(() => resolve('timeout'), READ_TIMEOUT_MS);
+    });
+    const outcome = await Promise.race([read(), timeout]);
+    if (outcome === 'timeout') {
+      console.error('partner-contract/extract: lecture trop longue', file.size, 'octets');
+      return NextResponse.json({ error: 'La lecture de ce PDF prend trop de temps. Essayez un PDF plus simple (exporté depuis un traitement de texte) ou saisissez les clauses à la main.' }, { status: 408 });
+    }
+    if (!outcome) return NextResponse.json({ error: `Le PDF dépasse ${MAX_PAGES} pages.` }, { status: 400 });
+    const { text, totalPages } = outcome;
     const result = structureContract(text);
     return NextResponse.json({ ...result, pages: totalPages, fileName: file.name.slice(0, 200) }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch {
+  } catch (error) {
+    console.error('partner-contract/extract:', error);
     return NextResponse.json({ error: 'Ce PDF n’a pas pu être lu (protégé ou abîmé ?).' }, { status: 422 });
+  } finally {
+    clearTimeout(timer);
   }
 }

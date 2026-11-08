@@ -33,7 +33,12 @@ export function submitTemplate(db: Db, partnerId: string, sections: ContractSect
 export async function importPdf(file: File) {
   const body = new FormData();
   body.set('file', file);
-  const response = await fetch('/api/partner-contract/extract', { method: 'POST', body });
+  let response: Response;
+  try {
+    response = await fetch('/api/partner-contract/extract', { method: 'POST', body, signal: AbortSignal.timeout(75_000) });
+  } catch {
+    return { data: null, error: 'L’envoi ou la lecture du PDF a échoué (connexion lente ou fichier trop lourd). Réessayez, ou saisissez les clauses à la main.' };
+  }
   const payload = (await response.json().catch(() => ({}))) as { error?: string; sections?: ContractSection[]; warnings?: string[]; pages?: number; fileName?: string };
   if (!response.ok) return { data: null, error: payload.error ?? 'Lecture impossible.' };
   return { data: { sections: payload.sections ?? [], warnings: payload.warnings ?? [], pages: payload.pages ?? 0, fileName: payload.fileName ?? file.name }, error: null };
