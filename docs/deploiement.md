@@ -119,7 +119,9 @@ Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des 
 
 - Demandes du partenaire, informations d'entreprise du partenaire sur ses contrats, lecture des pièces avec PDF et délai maximum de l'import du contrat PDF, en production : migrations `20261114100000_partner_transfer_requests` et `20261115100000_partner_company_info` appliquées, site déployé. À essayer avec de vrais comptes : réponse d'un partenaire à un transfert, « Créer la location » depuis une demande, RCCM et IFU sur un nouveau contrat, lecture d'une vraie pièce (photo et PDF), import d'un PDF de contrat.
 
-**Développé en local, pas en production** : lien de signature à distance pour les contrats d'un partenaire (migration `20261116100000_partner_contract_signing_link`, bouton « Copier le lien de signature » dans ses contrats).
+- Lien de signature à distance pour les contrats d'un partenaire, en production : migration `20261116100000_partner_contract_signing_link` appliquée, bouton « Copier le lien de signature » dans ses contrats. À essayer avec un vrai contrat partenaire : signature du loueur, lien, signature du locataire, téléchargement.
+
+**Développé en local, pas en production** : rien pour le moment.
 
 À vérifier avec un vrai compte après la mise en ligne : l'import d'un PDF de contrat, l'envoi d'un logo, et la lecture automatique des pièces (le lecteur télécharge ses fichiers de langue la première fois).
 
