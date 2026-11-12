@@ -41,7 +41,7 @@ export async function loadDashboard(db: Db): Promise<DashboardData> {
     db.from('clients').select('id', { count: 'exact', head: true }),
     db.from('rentals').select('id,status,departure_date,vehicles(make,model)'),
     db.from('contracts').select('id', { count: 'exact', head: true }).eq('status', 'pending_signature'),
-    db.from('payments').select('amount,payment_date,rentals(vehicles(make,model))'),
+    db.from('payments').select('amount,payment_date,rentals(status,vehicles(make,model))'),
     db.from('vehicle_maintenance').select('id', { count: 'exact', head: true }).eq('status', 'in_progress'),
   ]);
   const problem = vehicles.error ?? clients.error ?? rentals.error ?? contracts.error ?? payments.error ?? maintenance.error;
@@ -57,6 +57,8 @@ export async function loadDashboard(db: Db): Promise<DashboardData> {
   const monthly = new Map<string, number>();
   const byVehicle = new Map<string, number>();
   for (const payment of ps) {
+    // L'argent d'une location annulée n'est pas une recette.
+    if (one(payment.rentals)?.status === 'cancelled') continue;
     const amount = Number(payment.amount || 0);
     const key = day(payment.payment_date);
     if (key === today) revenue.today += amount;
@@ -70,6 +72,7 @@ export async function loadDashboard(db: Db): Promise<DashboardData> {
   const rentalMonths = new Map<string, number>();
   const top = new Map<string, number>();
   for (const rental of rs) {
+    if (rental.status === 'cancelled') continue;
     const key = day(rental.departure_date).slice(0, 7);
     rentalMonths.set(key, (rentalMonths.get(key) ?? 0) + 1);
     const name = carName(one(rental.vehicles), 'Véhicule');

@@ -52,11 +52,13 @@ export async function loadFinancialRows(db: Db) {
 
 export const received = (row: Pick<FinancialRow, 'payments'>) =>
   row.payments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0);
-export const outstanding = (row: Pick<FinancialRow, 'payments' | 'rental_price'>) =>
-  Math.max(0, Number(row.rental_price ?? 0) - received(row));
+/** Solde restant : toujours 0 pour une location annulée (rien n'est plus à encaisser, et son argent n'est plus dans les recettes). */
+export const outstanding = (row: Pick<FinancialRow, 'payments' | 'rental_price' | 'status'>) =>
+  row.status === 'cancelled' ? 0 : Math.max(0, Number(row.rental_price ?? 0) - received(row));
 
-export function paymentState(row: Pick<FinancialRow, 'payments' | 'rental_price'>): { label: string; tone: Tone } {
+export function paymentState(row: Pick<FinancialRow, 'payments' | 'rental_price' | 'status'>): { label: string; tone: Tone } {
   const amount = received(row);
+  if (row.status === 'cancelled') return { label: amount > 0 ? 'Location annulée : à régler avec le client' : 'Location annulée', tone: 'muted' };
   if (amount <= 0) return { label: 'Non payé', tone: 'muted' };
   return amount < Number(row.rental_price ?? 0) ? { label: 'Partiellement payé', tone: 'warning' } : { label: 'Payé', tone: 'success' };
 }

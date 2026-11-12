@@ -123,7 +123,7 @@ Mis à jour à la main : **vérifier avant de s'y fier** (comparer la liste des 
 
 - Annulation d'une location en attente, en production : migration `20261117100000_cancel_rental` appliquée, bouton « Annuler la location » côté équipe (permission Modifier sur Locations) et côté partenaire. À essayer avec une vraie location en attente.
 
-**Développé en local, pas en production** : rien pour le moment.
+**Développé en local, pas en production** : l'argent d'une location annulée sort des recettes (migration `20261118100000_cancelled_rentals_out_of_revenue`, tableau de bord et écran Paiements).
 
 À vérifier avec un vrai compte après la mise en ligne : l'import d'un PDF de contrat, l'envoi d'un logo, et la lecture automatique des pièces (le lecteur télécharge ses fichiers de langue la première fois).
 

@@ -137,6 +137,7 @@ export function PaymentsManager({ permissions }: { permissions: PaymentPermissio
                       Total : <strong>{formatMoney(row.rental_price)}</strong>
                       <br />
                       Reçu : {formatMoney(received(row))}
+                      {row.status === 'cancelled' && received(row) > 0 && <span className="text-muted-foreground"> (hors recettes)</span>}
                       <br />
                       Solde :{' '}
                       <span className={balance > 0 ? 'font-medium text-amber-700 dark:text-amber-400' : ''}>{formatMoney(balance)}</span>

@@ -104,6 +104,7 @@ Une location peut être **annulée tant qu'elle n'est pas « en cours »**, c'es
 * **Quand** : seulement pour une location « en attente ». Une location en cours, en retard, terminée ou déjà annulée ne peut pas être annulée (une location en cours se termine par l'inspection de retour, ou par la clôture forcée).
 * **Motif obligatoire** (3 caractères au minimum), conservé dans l'historique des statuts avec la date et l'auteur.
 * **Effets** : la location passe à « Annulée » (définitif) ; le véhicule reste disponible et peut être loué sur les mêmes dates. Un contrat **en attente de signature** est annulé et son lien de signature à distance ne fonctionne plus. Un contrat **déjà signé** n'est jamais modifié : il reste tel quel, comme trace. Les paiements et la caution déjà enregistrés ne sont **pas** modifiés ni remboursés par l'application : l'écran l'indique, à traiter avec le client.
+* **Recettes** : l'argent d'une location annulée n'est plus compté dans les recettes (tableau de bord du jour, du mois et de l'année, analytique, rentabilité des véhicules). Les paiements restent enregistrés et visibles sur la location, car ils sont à régler avec le client, mais ils n'entrent dans aucun chiffre de recettes. On ne peut plus enregistrer de nouveau paiement sur une location annulée. Les locations annulées ne comptent pas non plus dans le nombre de locations ni dans les véhicules les plus loués.
 * L'autre partie est prévenue : le partenaire quand l'agence annule sa location, l'équipe quand un partenaire annule la sienne.
 
 ---

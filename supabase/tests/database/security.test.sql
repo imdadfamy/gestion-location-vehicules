@@ -487,5 +487,23 @@ select is((select count(*) from public.notifications where entity_id = '50000000
 select is((select count(*) from public.notifications where entity_id = '50000000-0000-0000-0000-0000000000a1' and notification_type = 'rental_cancelled'), 0::bigint,
           'annulation : une location de l’agence ne prévient pas de partenaire');
 
+-- ───────────────────────── Recettes : une location annulée n'en fait plus partie ─────────────────────────
+set local session_replication_role = replica;
+insert into public.rentals (id, client_id, vehicle_id, departure_date, return_date, rental_price, deposit_amount, status, owner_partner_id)
+values ('50000000-0000-0000-0000-0000000000a4', '20000000-0000-0000-0000-000000000001', :v_internal, now() + interval '240 days', now() + interval '241 days', 50000, 0, 'pending', null);
+set local session_replication_role = origin;
+insert into public.payments (rental_id, amount, payment_method) values ('50000000-0000-0000-0000-0000000000a4', 10000, 'cash');
+select is((select count(*) from public.analytics_payments where rental_id = '50000000-0000-0000-0000-0000000000a4'), 1::bigint, 'recettes : le paiement d’une location en attente est compté');
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :admin, 'role', 'authenticated')::text, true);
+select lives_ok($$ select public.cancel_rental('50000000-0000-0000-0000-0000000000a4', 'Client annulé') $$, 'recettes : la location payée est annulée');
+reset role;
+select is((select count(*) from public.analytics_payments where rental_id = '50000000-0000-0000-0000-0000000000a4'), 0::bigint, 'recettes : le paiement d’une location annulée n’est plus compté');
+select is((select count(*) from public.payments where rental_id = '50000000-0000-0000-0000-0000000000a4'), 1::bigint, 'recettes : le paiement reste enregistré sur la location');
+select throws_ok($$ insert into public.payments (rental_id, amount, payment_method) values ('50000000-0000-0000-0000-0000000000a4', 5000, 'cash') $$,
+                 '23514', null, 'recettes : plus de nouveau paiement sur une location annulée');
+select is((select (select sum(pay.amount) from public.payments pay join public.rentals r on r.id = pay.rental_id where r.status <> 'cancelled' and r.id = '50000000-0000-0000-0000-0000000000a4')), null::numeric,
+          'recettes : la somme hors locations annulées ne contient pas ce paiement');
+
 select * from finish();
 rollback;
