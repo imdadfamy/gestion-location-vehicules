@@ -444,5 +444,48 @@ select throws_ok($$ select public.create_contract_signing_link((select id from p
                  '42501', null, 'lien partenaire : un visiteur ne peut pas créer de lien');
 reset role;
 
+-- ───────────────────────── Annulation d'une location qui n'a pas commencé ─────────────────────────
+set local session_replication_role = replica;
+insert into public.rentals (id, client_id, vehicle_id, departure_date, return_date, rental_price, deposit_amount, status, owner_partner_id)
+values ('50000000-0000-0000-0000-0000000000a1', '20000000-0000-0000-0000-000000000001', :v_internal, now() + interval '200 days', now() + interval '201 days', 50000, 0, 'pending', null),
+       ('50000000-0000-0000-0000-0000000000a2', '20000000-0000-0000-0000-000000000001', :v_internal, now() + interval '210 days', now() + interval '211 days', 50000, 0, 'active', null),
+       ('50000000-0000-0000-0000-0000000000a3', '20000000-0000-0000-0000-000000000001', :v_internal, now() + interval '220 days', now() + interval '221 days', 50000, 0, 'pending', null),
+       ('50000000-0000-0000-0000-0000000000b1', '20000000-0000-0000-0000-000000000002', :v_partner, now() + interval '230 days', now() + interval '231 days', 50000, 0, 'pending',
+        (select id from public.partners where profile_id = :partner));
+insert into public.contracts (id, rental_id, status, generated_content)
+values ('c0000000-0000-0000-0000-0000000000a1', '50000000-0000-0000-0000-0000000000a1', 'pending_signature', '{}'),
+       ('c0000000-0000-0000-0000-0000000000a3', '50000000-0000-0000-0000-0000000000a3', 'signed', '{}'),
+       ('c0000000-0000-0000-0000-0000000000b1', '50000000-0000-0000-0000-0000000000b1', 'pending_signature', '{}');
+update public.contracts set final_pdf_storage_path = 'contracts/x/pdf/x.pdf', signed_at = now() where id = 'c0000000-0000-0000-0000-0000000000a3';
+set local session_replication_role = origin;
+
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+select throws_ok($$ select public.cancel_rental('50000000-0000-0000-0000-0000000000a1', 'Test') $$, '42501', null, 'annulation : un visiteur ne peut pas annuler');
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims', json_build_object('sub', :partner, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.cancel_rental('50000000-0000-0000-0000-0000000000a1', 'Test') $$, '42501', null, 'annulation : un partenaire ne peut pas annuler une location de l’agence');
+select set_config('request.jwt.claims', json_build_object('sub', :responsable, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.cancel_rental('50000000-0000-0000-0000-0000000000a1', 'Test') $$, '42501', null, 'annulation : refusée sans la permission Modifier sur Locations');
+select set_config('request.jwt.claims', json_build_object('sub', :admin, 'role', 'authenticated')::text, true);
+select throws_ok($$ select public.cancel_rental('50000000-0000-0000-0000-0000000000a1', ' x ') $$, '22023', null, 'annulation : motif obligatoire');
+select throws_ok($$ select public.cancel_rental('50000000-0000-0000-0000-0000000000a2', 'Client absent') $$, '23514', null, 'annulation : refusée pour une location en cours');
+select lives_ok($$ select public.cancel_rental('50000000-0000-0000-0000-0000000000a1', 'Le client a changé d’avis') $$, 'annulation : une location en attente est annulée');
+select is((select status from public.rentals where id = '50000000-0000-0000-0000-0000000000a1'), 'cancelled', 'annulation : la location est « annulée »');
+select is((select reason from public.rental_status_history where rental_id = '50000000-0000-0000-0000-0000000000a1' and new_status = 'cancelled'), 'Le client a changé d’avis', 'annulation : le motif est dans l’historique');
+select is((select status from public.contracts where id = 'c0000000-0000-0000-0000-0000000000a1'), 'cancelled', 'annulation : le contrat en attente est annulé');
+select throws_ok($$ select public.cancel_rental('50000000-0000-0000-0000-0000000000a1', 'Encore') $$, '23514', null, 'annulation : une location déjà annulée ne l’est pas deux fois');
+select lives_ok($$ select public.cancel_rental('50000000-0000-0000-0000-0000000000a3', 'Client a renoncé') $$, 'annulation : location avec contrat signé annulée');
+select is((select status from public.contracts where id = 'c0000000-0000-0000-0000-0000000000a3'), 'signed', 'annulation : un contrat signé n’est jamais modifié');
+select set_config('request.jwt.claims', json_build_object('sub', :partner, 'role', 'authenticated')::text, true);
+select lives_ok($$ select public.cancel_rental('50000000-0000-0000-0000-0000000000b1', 'Véhicule indisponible') $$, 'annulation : le partenaire annule sa propre location');
+reset role;
+select is((select status from public.rentals where id = '50000000-0000-0000-0000-0000000000b1'), 'cancelled', 'annulation : location du partenaire annulée');
+select is((select count(*) from public.notifications where entity_id = '50000000-0000-0000-0000-0000000000b1' and notification_type = 'rental_cancelled' and user_id = :admin), 1::bigint,
+          'annulation : l’équipe est prévenue quand un partenaire annule');
+select is((select count(*) from public.notifications where entity_id = '50000000-0000-0000-0000-0000000000a1' and notification_type = 'rental_cancelled'), 0::bigint,
+          'annulation : une location de l’agence ne prévient pas de partenaire');
+
 select * from finish();
 rollback;

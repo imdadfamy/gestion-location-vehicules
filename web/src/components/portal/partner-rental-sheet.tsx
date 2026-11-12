@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CheckCircle2, Circle, ClipboardCheck, FileSignature, HandCoins, Loader2, ShieldCheck } from 'lucide-react';
+import { Ban, CheckCircle2, Circle, ClipboardCheck, FileSignature, HandCoins, Loader2, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
 import { Field } from '@/components/staff/form-field';
+import { CancelRentalDialog } from '@/components/staff/rentals/cancel-rental-dialog';
 import { StatusBadge } from '@/components/staff/status-badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -66,6 +67,7 @@ export function PartnerRentalSheet({
   const [retained, setRetained] = useState('');
   const [reason, setReason] = useState('');
   const [inspecting, setInspecting] = useState<'departure' | 'return' | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const rentalId = rental?.id;
   useEffect(() => {
@@ -127,6 +129,12 @@ export function PartnerRentalSheet({
 
           <div className="grid grid-cols-1 gap-3 p-4 [&>*]:min-w-0">
             <FormMessage error={error} />
+
+            {rental.status === 'pending' && (
+              <Button size="sm" variant="outline" className="w-fit" onClick={() => setCancelling(true)}>
+                <Ban /> Annuler la location
+              </Button>
+            )}
 
             <Step done={signed} icon={FileSignature} title="Contrat signé">
               <p className="text-muted-foreground">{contract ? (CONTRACT_STATUSES[contract.status]?.label ?? contract.status) : 'Pas encore de contrat.'}</p>
@@ -234,6 +242,17 @@ export function PartnerRentalSheet({
           </div>
         </SheetContent>
       </Sheet>
+
+      <CancelRentalDialog
+        rentalId={rental.id}
+        open={cancelling}
+        onOpenChange={setCancelling}
+        received={received}
+        onDone={() => {
+          setVersion((value) => value + 1);
+          onChanged();
+        }}
+      />
 
       <InspectionDialog
         rental={rental}

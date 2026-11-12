@@ -96,6 +96,16 @@ Une location se termine normalement toute seule (inspection de retour faite, pai
 * **Effets** : la location passe à « Terminée » et le véhicule est remis disponible, comme pour une clôture normale. Les points non réglés (solde, caution, incidents) ne sont **pas** effacés : le paiement, la caution et les incidents gardent leur état et restent à traiter dans leurs écrans.
 * La clôture forcée est définitive : une location terminée ne revient pas en arrière.
 
+### Annulation d'une location qui n'a pas commencé
+
+Une location peut être **annulée tant qu'elle n'est pas « en cours »**, c'est-à-dire tant qu'elle est « en attente » (contrat et inspection de départ pas tous les deux faits).
+
+* **Qui** : un compte de l'agence qui a la permission « Modifier » sur le module Locations (le Super Admin l'a toujours) ; pour une location de partenaire, le partenaire propriétaire peut aussi annuler sa propre location. La vérification est faite côté serveur.
+* **Quand** : seulement pour une location « en attente ». Une location en cours, en retard, terminée ou déjà annulée ne peut pas être annulée (une location en cours se termine par l'inspection de retour, ou par la clôture forcée).
+* **Motif obligatoire** (3 caractères au minimum), conservé dans l'historique des statuts avec la date et l'auteur.
+* **Effets** : la location passe à « Annulée » (définitif) ; le véhicule reste disponible et peut être loué sur les mêmes dates. Un contrat **en attente de signature** est annulé et son lien de signature à distance ne fonctionne plus. Un contrat **déjà signé** n'est jamais modifié : il reste tel quel, comme trace. Les paiements et la caution déjà enregistrés ne sont **pas** modifiés ni remboursés par l'application : l'écran l'indique, à traiter avec le client.
+* L'autre partie est prévenue : le partenaire quand l'agence annule sa location, l'équipe quand un partenaire annule la sienne.
+
 ---
 
 ## 6. Paiements

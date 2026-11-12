@@ -2191,6 +2191,7 @@ export type Database = {
           vehicle_label: string | null;
         }[];
       };
+      cancel_rental: { Args: { cancel_reason: string; target_rental_id: string }; Returns: undefined };
       force_complete_rental: {
         Args: { closure_reason: string; target_rental_id: string };
         Returns: undefined;

@@ -86,6 +86,11 @@ export function forceCompleteRental(db: Db, rentalId: string, reason: string) {
   return db.rpc('force_complete_rental', { target_rental_id: rentalId, closure_reason: reason });
 }
 
+/** Annule une location qui n'a pas commencé (statut « en attente ») ; motif obligatoire. Équipe (Modifier sur Locations) ou partenaire propriétaire. */
+export function cancelRental(db: Db, rentalId: string, reason: string) {
+  return db.rpc('cancel_rental', { target_rental_id: rentalId, cancel_reason: reason });
+}
+
 /** Noms des membres du personnel (historique, encaissements). */
 export async function staffNames(db: Db, ids: (string | null | undefined)[]) {
   const unique = [...new Set(ids.filter((id): id is string => !!id))];

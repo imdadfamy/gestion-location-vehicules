@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AlertTriangle, CheckCheck, ClipboardCheck, FileText, Pencil, Wallet } from 'lucide-react';
+import { AlertTriangle, Ban, CheckCheck, ClipboardCheck, FileText, Pencil, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { FormMessage } from '@/components/auth/form-message';
 import { StatusBadge } from '@/components/staff/status-badge';
@@ -41,6 +41,7 @@ import {
 import { frenchError } from '@/lib/errors';
 import { frDate, frDateTime } from '@/lib/format';
 import { createClient } from '@/lib/supabase/client';
+import { CancelRentalDialog } from './cancel-rental-dialog';
 import type { RentalPermissions } from './rentals-manager';
 
 type History = {
@@ -91,6 +92,7 @@ export function RentalDetailSheet({
   const [saving, setSaving] = useState(false);
   const [version, setVersion] = useState(0);
   const [closing, setClosing] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [reason, setReason] = useState('');
   const [source, setSource] = useState<string | null>(null);
   if (rentalId && rentalId !== source) {
@@ -352,6 +354,11 @@ export function RentalDetailSheet({
                     <Pencil /> Modifier
                   </Button>
                 )}
+                {permissions.update && rental.status === 'pending' && (
+                  <Button variant="outline" size="sm" onClick={() => setCancelling(true)}>
+                    <Ban /> Annuler la location
+                  </Button>
+                )}
                 {permissions.forceClose && (rental.status === 'active' || rental.status === 'overdue') && (
                   <Button
                     variant="outline"
@@ -384,6 +391,19 @@ export function RentalDetailSheet({
           )
         )}
       </SheetContent>
+
+      {rental && (
+        <CancelRentalDialog
+          rentalId={rental.id}
+          open={cancelling}
+          onOpenChange={setCancelling}
+          received={loaded?.received ?? 0}
+          onDone={() => {
+            setVersion((value) => value + 1);
+            onChanged();
+          }}
+        />
+      )}
 
       <AlertDialog open={closing} onOpenChange={(open) => !saving && setClosing(open)}>
         <AlertDialogContent>
